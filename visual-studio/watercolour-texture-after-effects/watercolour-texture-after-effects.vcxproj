@@ -103,6 +103,7 @@
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\hosts\after-effects\ae.h" />
+    <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h" />
   </ItemGroup>
   <ItemGroup>
