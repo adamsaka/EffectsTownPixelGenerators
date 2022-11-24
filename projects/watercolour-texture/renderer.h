@@ -20,10 +20,10 @@ Authors:
 #include <concepts>
 #include <string>
 
-#include "../../../common/colour.h"
-#include "../../../common/linear-algebra.h"
-#include "../../../common/noise.h"
-#include "../../../hosts/fxhash/jsutil.h"
+#include "../../common/colour.h"
+#include "../../common/linear-algebra.h"
+#include "../../common/noise.h"
+#include "../../hosts/fxhash/jsutil.h"  //TODO: make host independant
 
 
 template <std::floating_point FloatType>

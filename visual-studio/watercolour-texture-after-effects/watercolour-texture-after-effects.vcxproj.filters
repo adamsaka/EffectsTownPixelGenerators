@@ -36,11 +36,11 @@
     <ClInclude Include="..\..\common\noise.h">
       <Filter>Source Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\projects\watercolour-texture\renderer\renderer.h">
+    <ClInclude Include="..\..\projects\watercolour-texture\renderer.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
     <ClInclude Include="..\..\hosts\after-effects\ae.h">
-      <Filter>Source Files\Project</Filter>
+      <Filter>Source Files\host-ae</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

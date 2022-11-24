@@ -57,7 +57,7 @@ $(htmldir_fxhash)\main-background-cpp.js : $(builddir_fxhash)\main-background.o 
 $(htmldir_fxhash)\main-render-worker-cpp.js : $(builddir_fxhash)\main-render-worker.o $(builddir_fxhash)\jsutil.o
 	emcc $^ -o  $@ -lembind -O2 -std=c++20  -sENVIRONMENT=worker --closure 1 
 
-$(builddir_fxhash)\main-render-worker.o: hosts\fxhash\main-render-worker.cpp projects\watercolour-texture\renderer\renderer.h $(common_depend) 
+$(builddir_fxhash)\main-render-worker.o: hosts\fxhash\main-render-worker.cpp projects\watercolour-texture\renderer.h $(common_depend) 
 	emcc hosts\fxhash\main-render-worker.cpp -std=c++20 -c -o $@ -O2 -Wall -Wpedantic -Wextra
 
 #Common

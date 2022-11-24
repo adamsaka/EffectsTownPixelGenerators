@@ -28,7 +28,7 @@ Authors:
 #include <emscripten/val.h>
 #include <emscripten/bind.h>
 
-#include "../../projects/watercolour-texture/renderer/renderer.h"
+#include "../../projects/watercolour-texture/renderer.h"
 #include "../../common/colour.h"
 #include "jsutil.h"
 
