@@ -1,7 +1,6 @@
 /********************************************************************************************************
-A 'meta header' to include all required After Effects SDK headers.
 
-Author:			(c) 2022 Maths Town
+Authors:		(c) 2022 Maths Town
 
 Licence:		The GNU General Public License Version 3
 
@@ -16,8 +15,16 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program.
 If not, see <https://www.gnu.org/licenses/>.
-********************************************************************************************************/
+********************************************************************************************************
+
+Description:
+
+A 'meta header' to include all required After Effects SDK headers.
+
+
+*******************************************************************************************************/
 #pragma once
+
 
 /***********************************************************************************************************
 Project Configuration Notes :

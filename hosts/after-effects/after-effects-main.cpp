@@ -1,9 +1,6 @@
 /********************************************************************************************************
-The main entry for point for After Effects Plug-ins
 
-This is a .dll (renamed .aex) 
-
-Author:			(c) 2022 Maths Town
+Authors:		(c) 2022 Maths Town
 
 Licence:		The GNU General Public License Version 3
 
@@ -18,6 +15,12 @@ See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this program.
 If not, see <https://www.gnu.org/licenses/>.
+********************************************************************************************************
+
+Description:
+
+	The main entry for point for After Effects Plug-ins
+	This is a .dll (renamed .aex) 
 ********************************************************************************************************/
 
 //Plug name and version information.

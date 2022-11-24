@@ -1,29 +1,29 @@
-/*********************************************************************************************************
-This program is free software: you can redistribute it and/or modify it under the terms of the 
-GNU General Public License as published by the Free Software Foundation, either version 3 of the License, 
+/********************************************************************************************************
+
+Authors:		(c) 2022 Maths Town
+
+Licence:		The GNU General Public License Version 3
+
+*********************************************************************************************************
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program. 
-If not, see <https://www.gnu.org/licenses/>. 
+You should have received a copy of the GNU General Public License along with this program.
+If not, see <https://www.gnu.org/licenses/>.
+********************************************************************************************************
 
-Authors:
-	Adam - Maths Town
-
-*********************************************************************************************************/
-
-/**************************************************************************************************
- * (EMSCRIPTEN only)
- * main-background.cpp
- * 
- * Called as a WebWorker
- * Main Background Worker Thread Entry Point.  This thread manages rendering.
- * Owns the OffscreenCanvas.
- * This threads starts a number of child "Render Workers" for the actual calculations.
- * ************************************************************************************************/
+Description:
+    Main Background Worker Thread Entry Point.  This thread manages rendering.
+    (EMSCRIPTEN only)
+    Called as a WebWorker    
+    Owns the OffscreenCanvas.
+    This threads starts a number of child "Render Workers" for the actual calculations.
+*************************************************************************************************/
 
 #include "jsutil.h"
 
