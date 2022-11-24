@@ -1,0 +1,9 @@
+3rd-party/
+*.log
+*.db
+*.tmp
+*.lock
+
+
+.vs/
+.vscode/
