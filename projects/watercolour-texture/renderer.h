@@ -26,10 +26,14 @@ Description:
 
 #include <concepts>
 #include <string>
+#include <vector>
+#include <numbers>
 
 #include "../../common/colour.h"
 #include "../../common/linear-algebra.h"
 #include "../../common/noise.h"
+#include "../../common/parameter-list.h"
+
 
 
 
@@ -43,6 +47,7 @@ class Renderer{
         FloatType aspect {};
         std::string seed_string{};
         uint64_t seed{};
+        ParameterList params{};
 
     public:
         //Constructor
@@ -62,10 +67,13 @@ class Renderer{
         void set_seed_int(uint64_t s){
             this->seed = s;
         }
-
         std::string get_seed() const { return seed_string;}
         uint64_t get_seed_int() const { return seed;}
         
+        //Parameters
+        void set_parameters(ParameterList plist){
+            params = plist;
+        }
 
         //Render
         ColourSRGB<FloatType> render_pixel(int x, int y) const;
@@ -86,6 +94,9 @@ void Renderer<FloatType>::set_size(int w, int h) noexcept {
 }
 
 
+
+
+
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
@@ -94,8 +105,13 @@ ColourSRGB<FloatType> Renderer<FloatType>::render_pixel(int x, int y) const {
     if (width <=0 || height <=0) return ColourSRGB<FloatType>{};
     next_random<FloatType>(seed); //Reset random seed so it is the same for each pixel
     
-    auto xf = static_cast<FloatType>(x);
-    auto yf = static_cast<FloatType>(y);
+    FloatType parameter_scale = static_cast<FloatType>(params.get_value(ParameterID::scale));
+    FloatType parameter_directional_bias = static_cast<FloatType>(params.get_value(ParameterID::directional_bias));
+    
+    if (parameter_scale <= 0.0) parameter_scale = 0.000001;
+
+    auto xf = static_cast<FloatType>(x) ;
+    auto yf = static_cast<FloatType>(y) ;
     
 
 
@@ -103,10 +119,11 @@ ColourSRGB<FloatType> Renderer<FloatType>::render_pixel(int x, int y) const {
     vec2<FloatType> p(aspect* (2.0*xf/width_f-1.0) , 2.0*yf/height_f - 1.0);
  
     
-    auto r1 = next_random<FloatType>();
-    auto r2 = next_random<FloatType>();
+    //auto r1 = next_random<FloatType>();
+    vec2<FloatType> d{ 1.0,1.0 };
+    if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;
     
-    p = p*vec2(r1*4.0+0.5, r2*3.0+0.5);
+    p = p* normalize(d) * sqrt(2) * parameter_scale;
     
     auto nVec2 = p + vec2(fbm(p,10,seed),fbm(p+1.0,10,seed))-0.5;
     auto nVec3 = nVec2 + vec2(fbm(nVec2+5.0, 8,seed),fbm(nVec2+9.0, 8,seed))-0.5;
@@ -129,9 +146,6 @@ ColourSRGB<FloatType> Renderer<FloatType>::render_pixel(int x, int y) const {
     
     //return ColourSRGB<FloatType>(a.x,a.y,1.0);
 }    
-
-
-
 
 
 

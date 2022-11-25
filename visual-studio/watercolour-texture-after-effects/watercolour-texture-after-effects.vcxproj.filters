@@ -45,7 +45,7 @@
     <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h">
       <Filter>Source Files\host-ae</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h">
+    <ClInclude Include="..\..\projects\watercolour-texture\parameters.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
     <ClInclude Include="..\..\projects\watercolour-texture\config.h">
@@ -59,6 +59,12 @@
     </ClInclude>
     <ClInclude Include="..\..\common\util.h">
       <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\parameter-list.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h">
+      <Filter>Source Files\Project</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="..\..\common\util.cpp">
       <Filter>Source Files\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp">
+      <Filter>Source Files\Project</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

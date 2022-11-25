@@ -26,9 +26,11 @@ Description:
 //Project Specific includes
 #include "config.h"
 #include "renderer.h"
+#include "parameters.h"
 
 //General Includes
 #include "after-effects-render.h"
+#include "after-effect-parameter-helper.h"
 #include "..\..\common\util.h"
 
 
@@ -114,13 +116,42 @@ static std::tuple<int, int> calculate_size(const PF_InData* in_data) {
 }
 
 /*******************************************************************************************************
+Read Parameters from After Effects and put into data into our parameter list.
+*******************************************************************************************************/
+ParameterList read_parameters() {
+	auto params = build_project_parameters();
+	for (auto & p : params.entries) {
+		switch (p.type) {
+		case ParameterType::seed:
+			p.value = ParameterHelper::ReadSlider(p.id);
+			break;
+		case ParameterType::number:
+			p.value = ParameterHelper::ReadSlider(p.id);			
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return params;
+}
+
+
+/*******************************************************************************************************
 Setup Host Independant Renderer
 *******************************************************************************************************/
 void setup_render(Renderer<Precision>& renderer, const PF_InData* in_data, int width, int height) {
 	check_null(in_data);
+	auto params = read_parameters();
+	
 	renderer.set_size(width, height);
 	renderer.set_seed("After Effects");
-	renderer.set_seed_int(99);
+	if (params.contains(ParameterID::seed)) {
+		renderer.set_seed_int(static_cast<uint64_t>(params.get_value(ParameterID::seed)));
+	}
+	
+	renderer.set_parameters(std::move(params));
 
 }
 

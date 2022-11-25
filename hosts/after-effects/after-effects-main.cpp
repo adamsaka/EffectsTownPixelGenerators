@@ -27,6 +27,7 @@ Description:
 //Set project include directories to direct to the correct project
 //Plug name and version information stored in config.h
 #include "config.h"  
+#include "parameters.h"
 
 //After Effects SDK 'meta-header'
 #include "after-effects-sdk.h"
@@ -165,6 +166,23 @@ ParameterSetup event.
 Inform AE of our parameter list.
 *******************************************************************************************************/
 static void after_effects_parameter_setup(PF_OutData* out_data) {
+	//Get parameters from project
+	auto params = build_project_parameters();
+
+	//Build After Effect Parameters
+	for (auto p : params.entries) {
+		switch (p.type) {
+		case ParameterType::seed:
+			ParameterHelper::AddSlider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
+			break;
+		case ParameterType::number:
+			ParameterHelper::AddSlider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
+			break;
+
+		default:
+			break;
+		}
+	}
 
 
 	out_data->num_params = ParameterHelper::GetNumberParameters();

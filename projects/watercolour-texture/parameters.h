@@ -19,31 +19,13 @@ If not, see <https://www.gnu.org/licenses/>.
 
 Description:
 
-	A list of parameterID to refer to each parameter.
+	For the actual list of project parameters.
 
-	After Effects requires that ID remain the same accross different versions.
-	So, do not remove ununsed parameters from list, just add new ones.
-
-	Actual specification for project parameters in parameters.cpp
 
 
 *******************************************************************************************************/
 #pragma once
 
+#include "..\..\common\parameter-list.h"
 
-
-enum class ParameterID {
-	input = 0,	   //Reserve ID zero (for AE).
-	seed,		   //Reserved for Random Seed.
-	seed_button,   //Reserved
-	seed_int,	   //Reserved
-	scale,
-	directional_bias,
-
-
-	__last  //Must be last (used for array memory allocation)
-};
-
-constexpr int parameter_id_to_int(ParameterID p) noexcept { return static_cast<int>(p); }
-
-
+ParameterList build_project_parameters();

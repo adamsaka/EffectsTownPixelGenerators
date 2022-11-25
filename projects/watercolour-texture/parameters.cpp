@@ -19,31 +19,24 @@ If not, see <https://www.gnu.org/licenses/>.
 
 Description:
 
-	A list of parameterID to refer to each parameter.
+	This is the list of parameters that will actually be displayed to the user.  
+	Each entry must have a unique parameter-id
 
 	After Effects requires that ID remain the same accross different versions.
-	So, do not remove ununsed parameters from list, just add new ones.
+	So, do not remove ununsed parameter-ids, just add new ones.
 
-	Actual specification for project parameters in parameters.cpp
-
+	Add ParameterIF::seed if you'd like to expose the random seed selection to user.
 
 *******************************************************************************************************/
-#pragma once
 
+#include "parameters.h"
+#include "parameter-id.h" 
 
+ParameterList build_project_parameters() {
+	ParameterList params;
+	params.add_entry(ParameterEntry::make_seed(ParameterID::seed, "Random Seed"));
+	params.add_entry(ParameterEntry::make_number(ParameterID::scale, "Scale",0.0000001,10000.0,1.0,0.000001,100.0,2));
+	params.add_entry(ParameterEntry::make_number(ParameterID::directional_bias, "Directional Bias", -10000, 10000.0, 0.0, -100.0, 100.0, 2));
 
-enum class ParameterID {
-	input = 0,	   //Reserve ID zero (for AE).
-	seed,		   //Reserved for Random Seed.
-	seed_button,   //Reserved
-	seed_int,	   //Reserved
-	scale,
-	directional_bias,
-
-
-	__last  //Must be last (used for array memory allocation)
-};
-
-constexpr int parameter_id_to_int(ParameterID p) noexcept { return static_cast<int>(p); }
-
-
+	return params;
+}

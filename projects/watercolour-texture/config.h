@@ -23,8 +23,9 @@ Description:
 
 
 *******************************************************************************************************/
-
 #pragma once
+
+
 
 //**WARNING**: ALSO update these constants in AE.r.  They must match.
 #define PluginName					"Watercolour Texture"
@@ -40,3 +41,4 @@ constexpr bool project_is_solid_render = true;
 
 //Floating point precesion to use for this project.
 typedef double Precision;
+
