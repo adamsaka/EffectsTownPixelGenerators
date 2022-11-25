@@ -45,6 +45,9 @@
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\projects\watercolour-texture\config.h">
+      <Filter>Source Files\Project</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp">

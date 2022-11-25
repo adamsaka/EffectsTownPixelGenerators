@@ -23,15 +23,13 @@ Description:
 	This is a .dll (renamed .aex) 
 ********************************************************************************************************/
 
-//Plug name and version information.
-//**WARNING**: ALSO update these constants in AE.r.  They must match.
-#define PluginName					"Watercolour Texture"
-#define PluginMenu					"Effects Town"
-#define PluginIdentifier			"Town.Effects.WatercolourTexture"
-#define	PluginMajorVersion			1
-#define	PluginMinorVersion			0
-#define	PluginBugVersion			0
-#define	PluginBuildVersion			1
+//Set project include directories to direct to the correct project
+//Plug name and version information stored in config.h
+#include "config.h"  
+
+
+
+
 
 
 #include "ae.h"

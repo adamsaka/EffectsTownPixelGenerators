@@ -19,20 +19,18 @@ If not, see <https://www.gnu.org/licenses/>.
 
 Description:
 
-	A list of parameterID to refer to each parameter.
-
-	After Effects requires that ID remain the same accross different versions.
-	So, do not remove ununsed parameters from list, just add new ones.
+	Project configuration
 
 
 *******************************************************************************************************/
+
 #pragma once
 
-enum class ParameterID {
-	input = 0,	//Reserve ID zero (for AE).
-	seed,
-
-	__last  //Must be last (used for array memory allocation)
-};
-
-constexpr int parameter_id_to_int(ParameterID p) noexcept { return static_cast<int>(p); }
+//**WARNING**: ALSO update these constants in AE.r.  They must match.
+#define PluginName					"Watercolour Texture"
+#define PluginMenu					"Effects Town"
+#define PluginIdentifier			"Town.Effects.WatercolourTexture"
+#define	PluginMajorVersion			1
+#define	PluginMinorVersion			0
+#define	PluginBugVersion			0
+#define	PluginBuildVersion			1

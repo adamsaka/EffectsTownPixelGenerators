@@ -70,8 +70,9 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,8 +89,9 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,6 +105,7 @@
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\hosts\after-effects\ae.h" />
+    <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h" />
   </ItemGroup>
