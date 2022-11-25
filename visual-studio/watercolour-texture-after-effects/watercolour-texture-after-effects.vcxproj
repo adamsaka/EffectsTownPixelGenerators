@@ -105,12 +105,16 @@
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\hosts\after-effects\ae.h" />
+    <ClInclude Include="..\..\hosts\after-effects\parameter-helper.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp" />
+    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp" />
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\parameter-helper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ae.r">

@@ -23,17 +23,14 @@ Description:
 	This is a .dll (renamed .aex) 
 ********************************************************************************************************/
 
+
 //Set project include directories to direct to the correct project
 //Plug name and version information stored in config.h
 #include "config.h"  
 
-
-
-
-
-
+//After Effects SDK 'meta-header'
 #include "ae.h"
-
+#include "parameter-helper.h"
 
 #include <string>
 #include <sstream>
@@ -41,6 +38,7 @@ Description:
 
 static void GlobalSetup(const PF_InData* in_data, PF_OutData* out_data) noexcept;
 static void About(const PF_InData* in_data, PF_OutData* out_data);
+static void ParameterSetup(PF_InData* in_data, PF_OutData* out_data);
 
 /*******************************************************************************************************
 Global Thread-local Variables
@@ -83,7 +81,7 @@ PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_Param
 			break;
 
 		case PF_Cmd_PARAMS_SETUP:
-			
+			ParameterSetup(in_data, out_data);
 			break;
 
 		case PF_Cmd_USER_CHANGED_PARAM:
@@ -160,4 +158,16 @@ static void About(const PF_InData* in_data, PF_OutData* out_data) {
 	str << PluginName << " v" << PluginMajorVersion << "." << PluginMinorVersion;
 	strncpy_s(out_data->return_msg, str.str().c_str(), sizeof(out_data->return_msg));
 	
+}
+
+
+/*******************************************************************************************************
+ParameterSetup event.
+Inform AE of our parameter list.
+*******************************************************************************************************/
+static void ParameterSetup(PF_InData* in_data, PF_OutData* out_data) {
+
+
+
+	out_data->num_params = ParameterHelper::GetNumberParameters();
 }
