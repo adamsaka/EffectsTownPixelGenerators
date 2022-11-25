@@ -88,7 +88,7 @@ extern thread_local PF_InData* globalTL_in_data;
 
 //A helper function that checks for an error and throws if there is one.
 //Note: It is very important to ensure that all AE errors get back to After Effects, and they occur often, because it includes UI stopping render.
-inline void CheckErrorAE(PF_Err err) {
+inline void check_after_effects(PF_Err err) {
 	if (err != PF_Err_NONE) throw (err);
 }
 

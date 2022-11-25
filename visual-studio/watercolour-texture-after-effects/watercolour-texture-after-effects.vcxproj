@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>MSWindows;WIN32;_WINDOWS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -81,7 +81,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
@@ -104,8 +104,10 @@
     <ClInclude Include="..\..\common\colour.h" />
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
-    <ClInclude Include="..\..\hosts\after-effects\ae.h" />
-    <ClInclude Include="..\..\hosts\after-effects\parameter-helper.h" />
+    <ClInclude Include="..\..\common\util.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h" />
@@ -113,8 +115,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp" />
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp" />
+    <ClCompile Include="..\..\common\util.cpp" />
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp" />
-    <ClCompile Include="..\..\hosts\after-effects\parameter-helper.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-render.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="ae.r">

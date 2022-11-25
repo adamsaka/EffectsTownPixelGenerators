@@ -42,7 +42,7 @@
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\ae.h">
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h">
       <Filter>Source Files\host-ae</Filter>
     </ClInclude>
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h">
@@ -51,15 +51,21 @@
     <ClInclude Include="..\..\projects\watercolour-texture\config.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\parameter-helper.h">
+    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h">
       <Filter>Source Files\host-ae</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h">
+      <Filter>Source Files\host-ae</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\util.h">
+      <Filter>Source Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp">
       <Filter>Source Files\host-ae</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\hosts\after-effects\parameter-helper.cpp">
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp">
       <Filter>Source Files\host-ae</Filter>
     </ClCompile>
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp">
@@ -67,6 +73,12 @@
     </ClCompile>
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp">
       <Filter>Source Files\After Effects SDK Cpp Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-render.cpp">
+      <Filter>Source Files\host-ae</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\util.cpp">
+      <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -19,21 +19,14 @@ If not, see <https://www.gnu.org/licenses/>.
 
 Description:
 
-	Project configuration
-
+    Render functions for After Effects host.
 
 *******************************************************************************************************/
-
 #pragma once
 
-//**WARNING**: ALSO update these constants in AE.r.  They must match.
-#define PluginName					"Watercolour Texture"
-#define PluginMenu					"Effects Town"
-#define PluginIdentifier			"Town.Effects.WatercolourTexture"
-#define	PluginMajorVersion			1
-#define	PluginMinorVersion			0
-#define	PluginBugVersion			0
-#define	PluginBuildVersion			1
+#pragma once
+#include "after-effects-sdk.h"
 
-//Indicates that a project will not return any transparent pixels.
-constexpr bool project_is_solid_render = true;
+void after_effects_smart_pre_render(const PF_InData* in_data, PF_PreRenderExtra* preRender);
+void after_effects_smart_render(PF_InData* in_data, PF_OutData* out_data, PF_SmartRenderExtra* smartRender);
+void after_effects_non_smart_render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output);

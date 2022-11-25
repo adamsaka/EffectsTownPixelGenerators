@@ -23,7 +23,7 @@ Description:
 
 *******************************************************************************************************/
 #pragma once
-#include "ae.h"
+#include "after-effects-sdk.h"
 #include "parameter-id.h"
 #include <array>
 #include <string>
