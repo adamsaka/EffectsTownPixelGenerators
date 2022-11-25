@@ -37,3 +37,6 @@ Description:
 
 //Indicates that a project will not return any transparent pixels.
 constexpr bool project_is_solid_render = true;
+
+//Floating point precesion to use for this project.
+typedef double Precision;

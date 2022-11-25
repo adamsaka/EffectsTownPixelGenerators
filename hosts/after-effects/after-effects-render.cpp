@@ -22,12 +22,86 @@ Description:
     Render functions for After Effects host.
 
 *******************************************************************************************************/
+
+//Project Specific includes
 #include "config.h"
+#include "renderer.h"
+
+//General Includes
 #include "after-effects-render.h"
 #include "..\..\common\util.h"
 
 
-std::tuple<int, int> calculate_size(const PF_InData* in_data) {
+/*******************************************************************************************************
+Converts a colour component from the renderer to an 8-bit component
+*******************************************************************************************************/
+inline static uint8_t to_adobe_8bit(Precision c) { 
+	constexpr unsigned short adobe_white8 = 0xff;
+	return static_cast<uint8_t>(clamp(c * white8, 0.0, static_cast<Precision>(adobe_white8)));
+}
+
+/*******************************************************************************************************
+Converts a colour component from the renderer to an 16-bit component
+Note: Adobe 16 bit is not full 16-bit.  White is 0x8000
+*******************************************************************************************************/
+inline static uint16_t to_adobe_16bit(Precision c) {
+	constexpr unsigned short adobe_white16 = 0x8000;
+	return static_cast<uint16_t>(clamp(c * adobe_white16, 0.0, static_cast<Precision>(adobe_white16)));
+}
+
+/*******************************************************************************************************
+Callback for After Effects Iteration Suite.  Renders an 8-bit pixel.
+*******************************************************************************************************/
+static PF_Err render_8bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]]  PF_Pixel8* in, PF_Pixel8* out) noexcept {
+	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
+	const auto c = renderer->render_pixel(x, y);
+	
+	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
+	out->alpha = to_adobe_8bit(c.alpha);
+	out->red = to_adobe_8bit(c.red);
+	out->green = to_adobe_8bit(c.green);
+	out->blue = to_adobe_8bit(c.blue);
+	return PF_Err_NONE;
+
+}
+
+/*******************************************************************************************************
+Callback for After Effects Iteration Suite.  Renders an 16-bit pixel.
+*******************************************************************************************************/
+static PF_Err render_16bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]] PF_Pixel16* in, PF_Pixel16* out) noexcept {
+	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
+	const auto c = renderer->render_pixel(x, y);
+
+	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
+	out->alpha = to_adobe_16bit(c.alpha);
+	out->red = to_adobe_16bit(c.red);
+	out->green = to_adobe_16bit(c.green);
+	out->blue = to_adobe_16bit(c.blue);
+	return PF_Err_NONE;
+}
+
+/*******************************************************************************************************
+Callback for After Effects Iteration Suite.  Renders an 32-bit pixel.
+*******************************************************************************************************/
+static PF_Err render_32bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]] PF_Pixel32* in, PF_Pixel32* out) noexcept {
+	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
+	const auto c = renderer->render_pixel(x, y);
+
+	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
+	out->alpha = static_cast<float>(c.alpha);
+	out->red = static_cast<float>(c.red);
+	out->green = static_cast<float>(c.green);
+	out->blue = static_cast<float>(c.blue);
+	return PF_Err_NONE;
+
+}
+
+
+/*******************************************************************************************************
+Calculates the width and height of the image we are working with.  (From layer size)
+Size may vary in low resolution renders.
+*******************************************************************************************************/
+static std::tuple<int, int> calculate_size(const PF_InData* in_data) {
 	//We may be redering a low resolution version, get the scaleFactor
 	const float scaleFactorX = static_cast<float>(in_data->downsample_x.den) / static_cast<float>(in_data->downsample_x.num);
 	const float scaleFactorY = static_cast<float>(in_data->downsample_y.den) / static_cast<float>(in_data->downsample_y.num);
@@ -35,8 +109,19 @@ std::tuple<int, int> calculate_size(const PF_InData* in_data) {
 	//Calculate the size of our output using the full layer size.
 	int width = static_cast<int>(static_cast<float>(in_data->width) / scaleFactorX);
 	int height = static_cast<int>(static_cast<float>(in_data->height) / scaleFactorY);
+
+	return std::tuple<int, int>(width, height);
 }
 
+/*******************************************************************************************************
+Setup Host Independant Renderer
+*******************************************************************************************************/
+void setup_render(Renderer<Precision>& renderer, const PF_InData* in_data, int width, int height) {
+	check_null(in_data);
+	renderer.set_size(width, height);
+	renderer.set_seed("After Effects");
+
+}
 
 /*******************************************************************************************************
 After Effects SmartPreRender Command
@@ -75,6 +160,8 @@ void after_effects_smart_pre_render(const PF_InData* in_data, PF_PreRenderExtra*
 	preRender->output->solid = project_is_solid_render; //Project setting from config.h
 }
 
+
+
 /*******************************************************************************************************
 After Effects Smart Render Command
 This render likely comes from After Effects.
@@ -85,6 +172,48 @@ void after_effects_smart_render(PF_InData* in_data, PF_OutData* out_data, PF_Sma
 	check_null(smartRender);
 
 	const auto [width, height] = calculate_size(in_data);
+
+	//Setup Host Independant Renderer
+	Renderer<Precision> renderer{};
+	setup_render(renderer, in_data, width, height);
+
+	//Checkout the input buffer
+	PF_EffectWorld* inputLayer{ nullptr };
+	check_after_effects(smartRender->cb->checkout_layer_pixels(in_data->effect_ref, 0, &inputLayer));
+	if (!inputLayer) throw (std::exception("Unable to checkout input layer."));
+
+	//Checkout Output buffer
+	PF_EffectWorld* output{ nullptr };
+	check_after_effects(smartRender->cb->checkout_output(in_data->effect_ref, &output));
+	if (!output) throw (std::exception("Unable to checkout input layer."));
+
+
+
+
+	PF_Rect area;
+	area.left = 0;
+	area.right = output->width;
+	area.top = 0;
+	area.bottom = output->height;
+	
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+
+	switch (smartRender->input->bitdepth) {
+	case 8:
+	{
+		check_after_effects(suites.Iterate8Suite1()->iterate(in_data, 0, output->height, inputLayer, &area,  &renderer, render_8bit_pixel_callback, output));
+		break;
+	}
+	case 16: {
+		check_after_effects(suites.Iterate16Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_16bit_pixel_callback, output));
+		break;
+	}
+	case 32: {
+		check_after_effects(suites.IterateFloatSuite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_32bit_pixel_callback, output));
+		break;
+	}
+	default: break;
+	}
 }
 
 /*******************************************************************************************************
@@ -98,5 +227,28 @@ void after_effects_non_smart_render(PF_InData* in_data, PF_OutData* out_data, PF
 	check_null(params);
 
 	const auto [width, height] = calculate_size(in_data);
+	
+	//Setup Host Independant Renderer
+	Renderer<Precision> renderer{};
+	setup_render(renderer, in_data, width, height);
+
+
+
+	PF_Rect area;
+	area.left = 0;
+	area.right = width;
+	area.top = 0;
+	area.bottom = height;
+
+	auto inputLayer = &params[0]->u.ld;
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	if (output->world_flags & PF_WorldFlag_DEEP) {
+		//16-bit
+		check_after_effects(suites.Iterate16Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_16bit_pixel_callback, output));
+	}
+	else {
+		//8-bit
+		check_after_effects(suites.Iterate8Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_8bit_pixel_callback, output));
+	}
 
 }

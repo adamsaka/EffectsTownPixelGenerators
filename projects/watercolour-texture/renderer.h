@@ -30,7 +30,7 @@ Description:
 #include "../../common/colour.h"
 #include "../../common/linear-algebra.h"
 #include "../../common/noise.h"
-#include "../../hosts/fxhash/jsutil.h"  //TODO: make host independant
+
 
 
 template <std::floating_point FloatType>
@@ -55,8 +55,7 @@ class Renderer{
 
         //Seed
         void set_seed(const std::string & s){
-            this->seed=string_to_seed(s); 
-            next_random<FloatType> (this->seed);
+            this->seed=string_to_seed(s);             
             this->seed_string = s; 
         }
         std::string get_seed() const { return seed_string;}
@@ -72,11 +71,11 @@ class Renderer{
  * Set the size of the image to render in pixels.
  * ************************************************************************************************/
 template <std::floating_point FloatType>
-void Renderer<FloatType>::set_size(int width, int height) noexcept {
-    this->width = width;
-    this->height = height;
-    this->width_f = static_cast<double>(width);
-    this->height_f = static_cast<double>(height);
+void Renderer<FloatType>::set_size(int w, int h) noexcept {
+    this->width = w;
+    this->height = h;
+    this->width_f = static_cast<double>(w);
+    this->height_f = static_cast<double>(h);
     if (height==0) return;
     this->aspect = width_f/height_f;
 }
