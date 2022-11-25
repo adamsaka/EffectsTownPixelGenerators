@@ -120,6 +120,7 @@ void setup_render(Renderer<Precision>& renderer, const PF_InData* in_data, int w
 	check_null(in_data);
 	renderer.set_size(width, height);
 	renderer.set_seed("After Effects");
+	renderer.set_seed_int(99);
 
 }
 
@@ -231,7 +232,6 @@ void after_effects_non_smart_render(PF_InData* in_data, PF_OutData* out_data, PF
 	//Setup Host Independant Renderer
 	Renderer<Precision> renderer{};
 	setup_render(renderer, in_data, width, height);
-
 
 
 	PF_Rect area;

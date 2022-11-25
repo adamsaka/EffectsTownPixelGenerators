@@ -53,11 +53,16 @@ class Renderer{
         int get_width() const  { return width;}
         int get_height() const { return height;}
 
-        //Seed
+        //Set the seed as a string (an integer seed will be calculated)
         void set_seed(const std::string & s){
             this->seed=string_to_seed(s);             
             this->seed_string = s; 
         }
+        //Set an integer seed. (string will be ignored)
+        void set_seed_int(uint64_t s){
+            this->seed = s;
+        }
+
         std::string get_seed() const { return seed_string;}
         uint64_t get_seed_int() const { return seed;}
         
