@@ -39,7 +39,7 @@ Converts a colour component from the renderer to an 8-bit component
 *******************************************************************************************************/
 inline static uint8_t to_adobe_8bit(Precision c) { 
 	constexpr unsigned short adobe_white8 = 0xff;
-	return static_cast<uint8_t>(clamp(c * white8, 0.0, static_cast<Precision>(adobe_white8)));
+	return static_cast<uint8_t>(clamp(c * white8, static_cast<Precision>(0.0), static_cast<Precision>(adobe_white8)));
 }
 
 /*******************************************************************************************************
@@ -48,7 +48,7 @@ Note: Adobe 16 bit is not full 16-bit.  White is 0x8000
 *******************************************************************************************************/
 inline static uint16_t to_adobe_16bit(Precision c) {
 	constexpr unsigned short adobe_white16 = 0x8000;
-	return static_cast<uint16_t>(clamp(c * adobe_white16, 0.0, static_cast<Precision>(adobe_white16)));
+	return static_cast<uint16_t>(clamp(c * adobe_white16, static_cast<Precision>(0.0), static_cast<Precision>(adobe_white16)));
 }
 
 /*******************************************************************************************************

@@ -72,7 +72,8 @@
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -91,13 +92,17 @@
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <FloatingPointModel>Precise</FloatingPointModel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

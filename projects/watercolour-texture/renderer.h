@@ -36,15 +36,19 @@ Description:
 
 
 
-
-template <std::floating_point FloatType>
+/**************************************************************************************************
+ * The renderer class.
+ * Implements a host independent pixel renderer.
+ * Use type parameter to select floating point precision.
+ * ************************************************************************************************/
+template <std::floating_point F>
 class Renderer{
     private:
         int width {};
         int height {};
-        FloatType width_f {};
-        FloatType height_f {};
-        FloatType aspect {};
+        F width_f {};
+        F height_f {};
+        F aspect {};
         std::string seed_string{};
         uint64_t seed{};
         ParameterList params{};
@@ -76,19 +80,23 @@ class Renderer{
         }
 
         //Render
-        ColourSRGB<FloatType> render_pixel(int x, int y) const;
+        ColourSRGB<F> render_pixel(int x, int y) const;
+
+    private:
+
+
 };
 
 
 /**************************************************************************************************
  * Set the size of the image to render in pixels.
  * ************************************************************************************************/
-template <std::floating_point FloatType>
-void Renderer<FloatType>::set_size(int w, int h) noexcept {
+template <std::floating_point F>
+void Renderer<F>::set_size(int w, int h) noexcept {
     this->width = w;
     this->height = h;
-    this->width_f = static_cast<double>(w);
-    this->height_f = static_cast<double>(h);
+    this->width_f = static_cast<F>(w);
+    this->height_f = static_cast<F>(h);
     if (height==0) return;
     this->aspect = width_f/height_f;
 }
@@ -100,37 +108,37 @@ void Renderer<FloatType>::set_size(int w, int h) noexcept {
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
-template <std::floating_point FloatType>
-ColourSRGB<FloatType> Renderer<FloatType>::render_pixel(int x, int y) const {
-    if (width <=0 || height <=0) return ColourSRGB<FloatType>{};
-    next_random<FloatType>(seed); //Reset random seed so it is the same for each pixel
+template <std::floating_point F>
+ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
+    if (width <=0 || height <=0) return ColourSRGB<F>{};
+    next_random<F>(seed); //Reset random seed so it is the same for each pixel
     
-    FloatType parameter_scale = static_cast<FloatType>(params.get_value(ParameterID::scale));
-    FloatType parameter_directional_bias = static_cast<FloatType>(params.get_value(ParameterID::directional_bias));
+    F parameter_scale = static_cast<F>(params.get_value(ParameterID::scale));
+    F parameter_directional_bias = static_cast<F>(params.get_value(ParameterID::directional_bias));
     
-    if (parameter_scale <= 0.0) parameter_scale = 0.000001;
+    if (parameter_scale <= 0.0) parameter_scale = static_cast<F>(0.000001);
 
-    auto xf = static_cast<FloatType>(x) ;
-    auto yf = static_cast<FloatType>(y) ;
+    auto xf = static_cast<F>(x) ;
+    auto yf = static_cast<F>(y) ;
     
 
 
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
-    vec2<FloatType> p(aspect* (2.0*xf/width_f-1.0) , 2.0*yf/height_f - 1.0);
+    vec2<F> p(aspect* (static_cast<F>(2.0)*xf/width_f- static_cast<F>(1.0)) , static_cast<F>(2.0) * yf/height_f - static_cast<F>(1.0));
  
     
-    //auto r1 = next_random<FloatType>();
-    vec2<FloatType> d{ 1.0,1.0 };
+    //auto r1 = next_random<F>();
+    vec2<F> d{ 1.0,1.0 };
     if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;
     
-    p = p* normalize(d) * sqrt(2) * parameter_scale;
+    p = p* normalize(d) * static_cast<F>(sqrt(2)) * parameter_scale;
     
-    auto nVec2 = p + vec2(fbm(p,10,seed),fbm(p+1.0,10,seed))-0.5;
-    auto nVec3 = nVec2 + vec2(fbm(nVec2+5.0, 8,seed),fbm(nVec2+9.0, 8,seed))-0.5;
-    auto nVec4 = nVec3 + vec2(fbm(nVec3+25.0, 8,seed),fbm(nVec3+19.0, 8,seed))-0.5;
-    auto nVec5 = nVec4 + vec2(fbm(nVec4-2.0, 5,seed),fbm(nVec4-19.0, 5,seed))-0.5;
-    auto nVec6 = nVec5 + vec2(fbm(nVec5-5.0, 5,seed),fbm(nVec5-9.0, 5,seed))-0.5;
-    auto nVec7 = nVec6 + vec2(fbm(nVec6-8.0, 5,seed),fbm(nVec6-1.0, 5,seed))-0.5;
+    auto nVec2 = p +     vec2(fbm(p,10,seed),fbm(p+ static_cast<F>(1.0),10,seed))- static_cast<F>(0.5);
+    auto nVec3 = nVec2 + vec2(fbm(nVec2 + static_cast<F>(5.0),  8, seed), fbm(nVec2+ static_cast<F>(9.0),  8, seed))- static_cast<F>(0.5);
+    auto nVec4 = nVec3 + vec2(fbm(nVec3 + static_cast<F>(25.0), 8, seed), fbm(nVec3+ static_cast<F>(19.0), 8, seed))- static_cast<F>(0.5);
+    auto nVec5 = nVec4 + vec2(fbm(nVec4 - static_cast<F>(2.0),  5, seed), fbm(nVec4- static_cast<F>(19.0), 5, seed))- static_cast<F>(0.5);
+    auto nVec6 = nVec5 + vec2(fbm(nVec5 - static_cast<F>(5.0),  5, seed), fbm(nVec5- static_cast<F>(9.0),  5, seed))- static_cast<F>(0.5);
+    auto nVec7 = nVec6 + vec2(fbm(nVec6 - static_cast<F>(8.0),  5, seed), fbm(nVec6- static_cast<F>(1.0),  5, seed))- static_cast<F>(0.5);
     
     auto r = fbm(nVec5,8,seed)*0.68;
     auto g = fbm(nVec6,8,seed)*0.68;
@@ -144,7 +152,7 @@ ColourSRGB<FloatType> Renderer<FloatType>::render_pixel(int x, int y) const {
 
     //auto a = fract(p*2.0);
     
-    //return ColourSRGB<FloatType>(a.x,a.y,1.0);
+    //return ColourSRGB<F>(a.x,a.y,1.0);
 }    
 
 

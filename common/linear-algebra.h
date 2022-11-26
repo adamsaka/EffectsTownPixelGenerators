@@ -48,8 +48,8 @@ constexpr inline F fract(F value){
  * ************************************************************************************************/
 template <std::floating_point F>
 constexpr inline F fract_negative_adjust(F value){
-	const auto f = fmod(value,1.0) ;
-	return (signbit(value))? ((f>=-0.0) ? 0.0: 1.0+f) : f;
+	const F f = fmod(value, static_cast<F>(1.0)) ;
+	return (signbit(value))? ((f>=static_cast<F>(-0.0)) ? static_cast<F>(0.0) : static_cast<F>(1.0) + f) : f;
 }
 
 /**************************************************************************************************
@@ -585,7 +585,7 @@ constexpr inline F step(F edge, F value) {
  * ************************************************************************************************/
 template <class T, std::floating_point F>
 constexpr inline T mix(T v1, T v2, F weight) {
-	return (v2 * weight) + ((1.0-weight)* v1);
+	return (v2 * weight) + ((static_cast<F>(1.0)-weight)* v1);
 	
 }
 

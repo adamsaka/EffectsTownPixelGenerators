@@ -128,10 +128,10 @@ Value Noise
 *************************************************************************************************/
 template <std::floating_point F>
 static F value_noise(vec2<F> p , uint64_t seed=0){
-    auto i = floor(p);
-    auto f = fract_negative_adjust(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
-    auto u = f*f*(3.0-2.0*f);
-    return mix( mix( hash( i + vec2(0.0,0.0), seed ), hash( i + vec2(1.0,0.0),seed ), u.x),mix( hash( i + vec2(0.0,1.0),seed ),hash( i + vec2(1.0,1.0),seed ), u.x), u.y);
+    vec2<F> i = floor(p);
+    vec2<F> f = fract_negative_adjust(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+    vec2<F> u = f*f*(static_cast<F>(3.0)- static_cast<F>(2.0)*f);
+    return mix( mix( hash( i + vec2<F>(0.0,0.0), seed ), hash( i + vec2<F>(1.0,0.0),seed ), u.x),mix( hash( i + vec2<F>(0.0,1.0),seed ),hash( i + vec2<F>(1.0,1.0),seed ), u.x), u.y);
 }
 
 
