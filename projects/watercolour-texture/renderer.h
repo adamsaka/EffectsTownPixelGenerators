@@ -106,7 +106,7 @@ void Renderer<F>::set_size(int w, int h) noexcept {
 
 
 /**************************************************************************************************
- * 
+ * Render a pixel
  * ************************************************************************************************/
 template <std::floating_point F>
 ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
@@ -118,13 +118,13 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     
     if (parameter_scale <= 0.0f) parameter_scale = 0.000001f;
 
-    auto xf = static_cast<F>(x) ;
-    auto yf = static_cast<F>(y) ;
+    F xf = static_cast<F>(x) ;
+    F yf = static_cast<F>(y) ;
     
 
 
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
-    vec2<F> p(aspect* (static_cast<F>(2.0)*xf/width_f- static_cast<F>(1.0)) , static_cast<F>(2.0) * yf/height_f - static_cast<F>(1.0));
+    vec2<F> p(aspect* (static_cast<F>(2.0)*xf/ width_f- static_cast<F>(1.0)) , static_cast<F>(2.0) * yf/height_f - static_cast<F>(1.0));
  
     
     vec2<F> d{ 1.0,1.0 };
@@ -142,12 +142,7 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     auto r = fbm(nVec5,5,seed)*0.68;
     auto g = fbm(nVec6,5,seed)*0.68;
     auto b = fbm(nVec7,5,seed)*0.68;
-	return ColourSRGB{r,g,b};
-    
-
-
-
-
+	return ColourSRGB{r,g,b};  
 
 }    
 

@@ -13,10 +13,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{70cc3854-783f-43ed-a5c3-ea11556606f3}</ProjectGuid>
+    <ProjectGuid>{B0447034-FAA9-4A05-929E-798EF99976E5}</ProjectGuid>
     <RootNamespace>watercolourtextureaftereffects</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>watercolour-texture-after-effects</ProjectName>
+    <ProjectName>watercolour-texture-openfx</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -48,18 +48,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>..\..\..\build-vs\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Effects Town\</OutDir>
+    <OutDir>C:\Program Files\Common Files\OFX\Plugins\$(ProjectName).ofx.bundle\Contents\Win64\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <TargetExt>.aex</TargetExt>
+    <TargetExt>.ofx</TargetExt>
     <ExtensionsToDeleteOnClean>*.rrc;*.rr;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>..\..\..\build-vs\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
-    <OutDir>C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Effects Town\</OutDir>
+    <OutDir>C:\Program Files\Common Files\OFX\Plugins\$(ProjectName).ofx.bundle\Contents\Win64\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <TargetExt>.aex</TargetExt>
+    <TargetExt>.ofx</TargetExt>
     <ExtensionsToDeleteOnClean>*.rrc;*.rr;*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -70,10 +70,10 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;..\..\3rd-party\OpenFX\OpenFX-1.4\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
-      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../projects/watercolour-texture/;..\..\3rd-party\OpenFX\OpenFX-1.4\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -111,40 +111,16 @@
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\common\parameter-list.h" />
     <ClInclude Include="..\..\common\util.h" />
-    <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h" />
-    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h" />
-    <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h" />
+    <ClInclude Include="..\..\hosts\openfx\openfx-helper.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameters.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp" />
-    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp" />
     <ClCompile Include="..\..\common\util.cpp" />
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp" />
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp" />
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-render.cpp" />
+    <ClCompile Include="..\..\hosts\openfx\openfx-main.cpp" />
     <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="ae.r">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cl /I "$(ProjectDir)..\..\3rd-party\AfterEffectsSDK\Examples\Headers" /EP "%(Filename).r" &gt; "$(IntDir)"\\"%(Filename).rr"
-"$(ProjectDir)..\..\3rd-party\AfterEffectsSDK\Examples\Resources\PiPLTool" "$(IntDir)%(Filename).rr" "$(IntDir)%(Filename).rrc"
-cl /D "MSWindows" /EP $(IntDir)%(Filename).rrc &gt;               "$(ProjectDir)"\\"%(Filename)".rc</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cl /I "$(ProjectDir)..\..\3rd-party\AfterEffectsSDK\Examples\Headers" /EP "%(Filename).r" &gt; "$(IntDir)"\\"%(Filename).rr"
-"$(ProjectDir)..\..\3rd-party\AfterEffectsSDK\Examples\Resources\PiPLTool" "$(IntDir)%(Filename).rr" "$(IntDir)%(Filename).rrc"
-cl /D "MSWindows" /EP $(IntDir)%(Filename).rrc &gt;               "$(ProjectDir)"\\"%(Filename)".rc</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Performing Custom Build Tools - Building PIPL</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)%(Filename).rc;</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Performing Custom Build Tools - Building PIPL</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)%(Filename).rc;</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ae.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -22,11 +22,8 @@
     <Filter Include="Source Files\Resources">
       <UniqueIdentifier>{d2282c1c-daa7-4e51-9972-b01aba2e82fb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\After Effects SDK Cpp Files">
-      <UniqueIdentifier>{a262aea1-a7f8-4dcb-bb55-13f6830fad69}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\host-after-effects">
-      <UniqueIdentifier>{08479815-1e2c-4a6a-82b6-eae7850ef679}</UniqueIdentifier>
+    <Filter Include="Source Files\host-openfx">
+      <UniqueIdentifier>{74f46bb4-826a-4173-a673-86176ef5e7c7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,20 +39,11 @@
     <ClInclude Include="..\..\projects\watercolour-texture\renderer.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h">
-      <Filter>Source Files\host-after-effects</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\projects\watercolour-texture\parameters.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
     <ClInclude Include="..\..\projects\watercolour-texture\config.h">
       <Filter>Source Files\Project</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h">
-      <Filter>Source Files\host-after-effects</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h">
-      <Filter>Source Files\host-after-effects</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\util.h">
       <Filter>Source Files\Common</Filter>
@@ -66,38 +54,19 @@
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\hosts\openfx\openfx-helper.h">
+      <Filter>Source Files\host-openfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp">
-      <Filter>Source Files\host-after-effects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp">
-      <Filter>Source Files\host-after-effects</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp">
-      <Filter>Source Files\After Effects SDK Cpp Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp">
-      <Filter>Source Files\After Effects SDK Cpp Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\hosts\after-effects\after-effects-render.cpp">
-      <Filter>Source Files\host-after-effects</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\util.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp">
       <Filter>Source Files\Project</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="ae.r">
-      <Filter>Source Files\Resources</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ae.rc">
-      <Filter>Source Files\Resources</Filter>
-    </ResourceCompile>
+    <ClCompile Include="..\..\hosts\openfx\openfx-main.cpp">
+      <Filter>Source Files\host-openfx</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
