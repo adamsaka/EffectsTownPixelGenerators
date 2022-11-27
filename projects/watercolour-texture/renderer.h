@@ -116,7 +116,7 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     F parameter_scale = static_cast<F>(params.get_value(ParameterID::scale));
     F parameter_directional_bias = static_cast<F>(params.get_value(ParameterID::directional_bias));
     
-    if (parameter_scale <= 0.0) parameter_scale = static_cast<F>(0.000001);
+    if (parameter_scale <= 0.0f) parameter_scale = 0.000001f;
 
     auto xf = static_cast<F>(x) ;
     auto yf = static_cast<F>(y) ;
@@ -127,22 +127,21 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     vec2<F> p(aspect* (static_cast<F>(2.0)*xf/width_f- static_cast<F>(1.0)) , static_cast<F>(2.0) * yf/height_f - static_cast<F>(1.0));
  
     
-    //auto r1 = next_random<F>();
     vec2<F> d{ 1.0,1.0 };
     if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;
     
     p = p* normalize(d) * static_cast<F>(sqrt(2)) * parameter_scale;
     
-    auto nVec2 = p +     vec2(fbm(p,10,seed),fbm(p+ static_cast<F>(1.0),10,seed))- static_cast<F>(0.5);
-    auto nVec3 = nVec2 + vec2(fbm(nVec2 + static_cast<F>(5.0),  8, seed), fbm(nVec2+ static_cast<F>(9.0),  8, seed))- static_cast<F>(0.5);
-    auto nVec4 = nVec3 + vec2(fbm(nVec3 + static_cast<F>(25.0), 8, seed), fbm(nVec3+ static_cast<F>(19.0), 8, seed))- static_cast<F>(0.5);
-    auto nVec5 = nVec4 + vec2(fbm(nVec4 - static_cast<F>(2.0),  5, seed), fbm(nVec4- static_cast<F>(19.0), 5, seed))- static_cast<F>(0.5);
-    auto nVec6 = nVec5 + vec2(fbm(nVec5 - static_cast<F>(5.0),  5, seed), fbm(nVec5- static_cast<F>(9.0),  5, seed))- static_cast<F>(0.5);
-    auto nVec7 = nVec6 + vec2(fbm(nVec6 - static_cast<F>(8.0),  5, seed), fbm(nVec6- static_cast<F>(1.0),  5, seed))- static_cast<F>(0.5);
+    auto nVec2 = p +     vec2(fbm(p,10,seed),fbm(p+ 1.0,8,seed))- 0.5;
+    auto nVec3 = nVec2 + vec2(fbm(nVec2 + 5.0,  8, seed), fbm(nVec2+ 9.0,  8, seed))- 0.5;
+    auto nVec4 = nVec3 + vec2(fbm(nVec3 + 25.0, 8, seed), fbm(nVec3+ 19.0, 8, seed))- 0.5;
+    auto nVec5 = nVec4 + vec2(fbm(nVec4 - 2.0,  5, seed), fbm(nVec4- 19.0, 5, seed))- 0.5;
+    auto nVec6 = nVec5 + vec2(fbm(nVec5 - 5.0,  5, seed), fbm(nVec5- 9.0,  5, seed))- 0.5;
+    auto nVec7 = nVec6 + vec2(fbm(nVec6 - 8.0,  5, seed), fbm(nVec6- 1.0,  5, seed))- 0.5;
     
-    auto r = fbm(nVec5,8,seed)*0.68;
-    auto g = fbm(nVec6,8,seed)*0.68;
-    auto b = fbm(nVec7,8,seed)*0.68;
+    auto r = fbm(nVec5,5,seed)*0.68;
+    auto g = fbm(nVec6,5,seed)*0.68;
+    auto b = fbm(nVec7,5,seed)*0.68;
 	return ColourSRGB{r,g,b};
     
 
@@ -150,9 +149,6 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
 
 
 
-    //auto a = fract(p*2.0);
-    
-    //return ColourSRGB<F>(a.x,a.y,1.0);
 }    
 
 

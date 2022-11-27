@@ -84,13 +84,13 @@ template <std::floating_point F> inline vec2<F> operator+(vec2<F> lhs, const vec
 template <std::floating_point F> inline vec2<F> operator-(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs -= rhs;	return lhs; }
 template <std::floating_point F> inline vec2<F> operator*(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs *= rhs;	return lhs; }
 template <std::floating_point F> inline vec2<F> operator/(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator+(vec2<F> lhs, F rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator-(vec2<F> lhs, F rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator*(vec2<F> lhs, F rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator/(vec2<F> lhs, F rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator+(F lhs, vec2<F> rhs) noexcept {return rhs + lhs; }
-template <std::floating_point F> inline vec2<F> operator-(F lhs, vec2<F> rhs) noexcept { return -rhs + lhs; }
-template <std::floating_point F> inline vec2<F> operator*(F lhs, vec2<F> rhs) noexcept { return rhs * lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator+(vec2<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator-(vec2<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator*(vec2<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator/(vec2<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator+(F2 lhs, vec2<F> rhs) noexcept {return rhs + static_cast<F>(lhs); }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator-(F2 lhs, vec2<F> rhs) noexcept { return -rhs + static_cast<F>(lhs); }
+template <std::floating_point F, std::floating_point F2> inline vec2<F> operator*(F2 lhs, vec2<F> rhs) noexcept { return rhs * static_cast<F>(lhs); }
 
 template <std::floating_point F> inline static F dot(const vec2<F>& a, const vec2<F>& b) noexcept { return a.x * b.x + a.y * b.y; }
 template <std::floating_point F> inline vec2<F> normalize(vec2<F> v) noexcept {v.normalize(); return v;}
@@ -140,10 +140,10 @@ template <std::floating_point F> inline vec3<F> operator+(vec3<F> lhs, const vec
 template <std::floating_point F> inline vec3<F> operator-(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
 template <std::floating_point F> inline vec3<F> operator*(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
 template <std::floating_point F> inline vec3<F> operator/(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator+(vec3<F> lhs, F rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator-(vec3<F> lhs, F rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator*(vec3<F> lhs, F rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator/(vec3<F> lhs, F rhs) noexcept { lhs /= rhs;	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec3<F> operator+(vec3<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec3<F> operator-(vec3<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec3<F> operator*(vec3<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec3<F> operator/(vec3<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
 template <std::floating_point F> inline vec3<F> operator+(F lhs, vec3<F> rhs) noexcept { return rhs + lhs; }
 template <std::floating_point F> inline vec3<F> operator-(F lhs, vec3<F> rhs) noexcept { return -rhs + lhs; }
 template <std::floating_point F> inline vec3<F> operator*(F lhs, vec3<F> rhs) noexcept { return rhs * lhs; }
@@ -204,10 +204,10 @@ template <std::floating_point F> inline vec4<F> operator+(vec4<F> lhs, const vec
 template <std::floating_point F> inline vec4<F> operator-(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
 template <std::floating_point F> inline vec4<F> operator*(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
 template <std::floating_point F> inline vec4<F> operator/(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator+(vec4<F> lhs, F rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator-(vec4<F> lhs, F rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator*(vec4<F> lhs, F rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator/(vec4<F> lhs, F rhs) noexcept { lhs /= rhs;	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec4<F> operator+(vec4<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec4<F> operator-(vec4<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec4<F> operator*(vec4<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
+template <std::floating_point F, std::floating_point F2> inline vec4<F> operator/(vec4<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
 template <std::floating_point F> inline vec4<F> operator+(F lhs, vec4<F> rhs) noexcept { return rhs + lhs; }
 template <std::floating_point F> inline vec4<F> operator-(F lhs, vec4<F> rhs) noexcept { return -rhs + lhs; }
 template <std::floating_point F> inline vec4<F> operator*(F lhs, vec4<F> rhs) noexcept { return rhs * lhs; }
