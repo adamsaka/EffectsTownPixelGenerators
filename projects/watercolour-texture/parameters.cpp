@@ -23,13 +23,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Description:
 
-	The main entry for point for OpenFX Plug-ins
-	This is a .dll (renamed .ofx)
-********************************************************************************************************/
-********************************************************************************************************
-
-Description:
-
 	This is the list of parameters that will actually be displayed to the user.  
 	Each entry must have a unique parameter-id
 

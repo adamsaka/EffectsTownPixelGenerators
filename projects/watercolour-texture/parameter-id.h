@@ -23,13 +23,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Description:
 
-	The main entry for point for OpenFX Plug-ins
-	This is a .dll (renamed .ofx)
-********************************************************************************************************/
-********************************************************************************************************
-
-Description:
-
 	A list of parameterID to refer to each parameter.
 
 	After Effects requires that ID remain the same accross different versions.

@@ -20,14 +20,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
-
-Description:
-
-    The main entry for point for OpenFX Plug-ins
-    This is a .dll (renamed .ofx)
-********************************************************************************************************/
-********************************************************************************************************
-
 Description:
 
 	The main entry for point for OpenFX Plug-ins
