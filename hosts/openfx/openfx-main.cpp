@@ -27,8 +27,10 @@ Description:
 ********************************************************************************************************/
 
 #include "config.h"
-#include "openfx-helper.h"
 #include "../../common/util.h"
+
+#include "openfx-render.h"
+#include "openfx-helper.h"
 
 
 #include <exception>
@@ -45,11 +47,11 @@ HostData global_hostData{};
 /*******************************************************************************************************
 Forward Declarations
 *******************************************************************************************************/
-static OfxStatus OFXPluginMain(const char* action, const void* handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs) noexcept;
-static void OFXSetHostFunc(OfxHost* hostStruct) noexcept;
-static OfxStatus DescribeAction(const OfxImageEffectHandle effect);
-static OfxStatus OnLoadAction(void);
-static OfxStatus DescribeInContextAction(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs);
+static OfxStatus openfx_plugin_main(const char* action, const void* handle, OfxPropertySetHandle inArgs, OfxPropertySetHandle outArgs) noexcept;
+static void openfx_set_host_function(OfxHost* hostStruct) noexcept;
+static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect);
+static OfxStatus openfx_on_load_action(void);
+static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs);
 
 /*******************************************************************************************************
 A struct that provides the host with information about this OFX plugin.
@@ -61,24 +63,15 @@ static OfxPlugin pluginStruct =
       PluginIdentifier,             //Plugin Unique Identifier (see Config.h)
       PluginMajorVersion,           //Plugin Major Version (see Config.h)
       PluginMinorVersion,           //Plugin Minor Version (see Config.h)
-      OFXSetHostFunc,               //Set callback function.
-      OFXPluginMain                 //Set callback function.
+      openfx_set_host_function,     //Set callback function.
+      openfx_plugin_main            //Set callback function.
 };
 
 /*******************************************************************************************************
-(Mandated OFX function)
-Returns the plugin struct, that gives the host information about this plug-in.
-*******************************************************************************************************/
-OfxExport OfxPlugin* OfxGetPlugin(int nth)
-{
-    
-    if (nth == 0) return &pluginStruct;
-    return 0;
-}
-
-/*******************************************************************************************************
+[DLL Export]
 (Mandated OFX function)
 Returns the number of plug-ins in this file.
+The first call from the OpenFX host. It will ask for the number of plugins in this file.
 *******************************************************************************************************/
 OfxExport int OfxGetNumberOfPlugins(void)
 {
@@ -86,10 +79,24 @@ OfxExport int OfxGetNumberOfPlugins(void)
 }
 
 /*******************************************************************************************************
+[DLL Export]
+(Mandated OFX function)
+Returns the plugin struct, that gives the host information about this plug-in.
+The host will call this once for each plug-in.  
+The plug-in struct contains function pointers for those plug-ins.
+*******************************************************************************************************/
+OfxExport OfxPlugin* OfxGetPlugin(int nth)
+{    
+    if (nth == 0) return &pluginStruct;
+    return 0;
+}
+
+
+/*******************************************************************************************************
 (OFX Callback)
 Callback called by the host to provide information about the host.
 *******************************************************************************************************/
-static void OFXSetHostFunc(OfxHost* hostStruct) noexcept {
+static void openfx_set_host_function(OfxHost* hostStruct) noexcept {
     global_OFXHost = hostStruct;
 }
 
@@ -98,18 +105,19 @@ static void OFXSetHostFunc(OfxHost* hostStruct) noexcept {
 Main entry point for calls to the plug-in.
 Dispatches to another function based on the requested action.
 *******************************************************************************************************/
-static OfxStatus OFXPluginMain(const char* action, const void* handle, [[maybe_unused]]  OfxPropertySetHandle inArgs, OfxPropertySetHandle) noexcept {
+static OfxStatus openfx_plugin_main(const char* action, const void* handle,  OfxPropertySetHandle inArgs, OfxPropertySetHandle) noexcept {
 
     try {
+        dev_log(std::string("Action : ") + action);
         #pragma warning(suppress:26462 26493) 
         const OfxImageEffectHandle effect = (const OfxImageEffectHandle)handle;  //Effect Handle (A blind struct*)
 
-        //if (strcmp(action, kOfxImageEffectActionRender) == 0) return RenderOFX(effect, inArgs);
+        if (strcmp(action, kOfxImageEffectActionRender) == 0) return openfx_render(effect, inArgs);
         if (strcmp(action, kOfxActionCreateInstance) == 0) return kOfxStatOK;
         if (strcmp(action, kOfxActionDestroyInstance) == 0) return kOfxStatOK;
-        if (strcmp(action, kOfxActionLoad) == 0) return OnLoadAction();
-        if (strcmp(action, kOfxActionDescribe) == 0) return DescribeAction(effect);
-        if (strcmp(action, kOfxImageEffectActionDescribeInContext) == 0) return DescribeInContextAction(effect, inArgs);
+        if (strcmp(action, kOfxActionLoad) == 0) return openfx_on_load_action();
+        if (strcmp(action, kOfxActionDescribe) == 0) return openfx_describe_action(effect);
+        if (strcmp(action, kOfxImageEffectActionDescribeInContext) == 0) return openfx_describe_in_context_action(effect, inArgs);
         return kOfxStatReplyDefault;
     }
     catch (const OfxStatus) {
@@ -139,7 +147,7 @@ From: https://openfx.readthedocs.io/en/master/Reference/ofxImageEffectActions.ht
 It is there to allow a plug-in to create any global data structures it may need and is also when the plug-in should fetch suites from the host.
 The handle, inArgs and outArgs arguments to the mainEntry are redundant and should be set to NULL."
 *******************************************************************************************************/
-static OfxStatus OnLoadAction(void) {
+static OfxStatus openfx_on_load_action(void) {
     dev_log("===================================================\nOnLoad Action");
     if (!global_OFXHost) return kOfxStatErrMissingHostFeature;
 
@@ -249,30 +257,30 @@ The plug-in is at liberty to cache the handle away for future reference until th
 Most importantly, the effect must set what image effect contexts it is capable of working in.
 This action must be trapped, it is not optional."
 *******************************************************************************************************/
-static OfxStatus DescribeAction(const OfxImageEffectHandle effect) {
+static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect) {
     dev_log("Describe Action");
     //Get the effect's properties structure. (This is a blind structure manipulated with the PropertySuite).
     OfxPropertySetHandle effectProperties;
-    CheckOFX(global_EffectSuite->getPropertySet(effect, &effectProperties));
+    check_openfx(global_EffectSuite->getPropertySet(effect, &effectProperties));
 
 
 
     //Set the effects properties.
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxPropLabel, 0, PluginName));                                        //Plug-in name
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPluginPropGrouping, 0, PluginMenu));                    //Plug-in menu location
-    CheckOFX(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsTiles, 0, false));                             //Disable tiling (we want whole frames)
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxPropLabel, 0, PluginName));                                        //Plug-in name
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPluginPropGrouping, 0, PluginMenu));                    //Plug-in menu location
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsTiles, 0, false));                             //Disable tiling (we want whole frames)
 
 
     //Indicate which bit depths we can support.
     //Note: Resolve seems to always send Floats as images, regarless of what we ask for.
-    CheckOFX(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultipleClipDepths, 0, false));                //Multiple Bit Depths
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat));       //32 Bit Float Colour
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultipleClipDepths, 0, false));                //Multiple Bit Depths
+    //check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat));       //32 Bit Float Colour
 
     // define the contexts we can be used in
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGenerator));  //Support Generator context
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 1, kOfxImageEffectContextFilter));     //Support Effect Context
-    CheckOFX(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 2, kOfxImageEffectContextGeneral));    //General Effect Context
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGenerator));  //Support Generator context
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 1, kOfxImageEffectContextFilter));     //Support Effect Context
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 2, kOfxImageEffectContextGeneral));    //General Effect Context
     return kOfxStatOK;
 }
 
@@ -288,13 +296,13 @@ each separate context will need to be described individually. It is within this 
 This action will be called multiple times, one for each of the contexts the plugin says it is capable of implementing. If a host does not support a certain context,
 then it need not call kOfxImageEffectActionDescribeInContext for that context."
 *******************************************************************************************************/
-static OfxStatus DescribeInContextAction(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
+static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs) {
     dev_log("DescribeInContext Action");
 
     //Find out which context we are setting up.
     char* contextString;
     OFXContext context;
-    CheckOFX(global_PropertySuite->propGetString(inArgs, kOfxImageEffectPropContext, 0, &contextString));
+    check_openfx(global_PropertySuite->propGetString(inArgs, kOfxImageEffectPropContext, 0, &contextString));
     context = GetContextFromString(contextString);
     if (context == OFXContext::invalid) return kOfxStatFailed;
     dev_log(std::string("Context is ") + contextString);
@@ -305,19 +313,21 @@ static OfxStatus DescribeInContextAction(const OfxImageEffectHandle effect, OfxP
 
     //Define the mandated output clip for all contexts
     dev_log("Adding Output Clip");
-    CheckOFX(global_EffectSuite->clipDefine(effect, "Output", &properties));
-    if (global_hostData.supportsComponentRGBA) CheckOFX(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA));  //RGBA format 
-    if (global_hostData.supportsComponentRGB) CheckOFX(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB));   //RGB format 
+    check_openfx(global_EffectSuite->clipDefine(effect, "Output", &properties));
+    if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA));  //RGBA format 
+    if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB));   //RGB format 
 
 
-
+    /*
     //We only have an input clip for general and filter contexts.
     if (context == OFXContext::filter || context == OFXContext::general) {
         dev_log("Adding Input Clip");
-        CheckOFX(global_EffectSuite->clipDefine(effect, "Source", &properties));
-        if (global_hostData.supportsComponentRGBA) CheckOFX(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA)); //RGBA format
-        if (global_hostData.supportsComponentRGB) CheckOFX(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
+        check_openfx(global_EffectSuite->clipDefine(effect, "Source", &properties));
+        if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA)); //RGBA format
+        if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
     }
+    */
+
     //dev_log("DescribeInContext Action Complete");
     return kOfxStatOK;
 }

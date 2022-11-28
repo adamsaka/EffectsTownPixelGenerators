@@ -46,6 +46,9 @@
     <ClInclude Include="..\..\hosts\openfx\openfx-helper.h">
       <Filter>Source Files\host-openfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\hosts\openfx\openfx-render.h">
+      <Filter>Source Files\host-openfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp">
@@ -55,6 +58,9 @@
       <Filter>Source Files\Project</Filter>
     </ClCompile>
     <ClCompile Include="..\..\hosts\openfx\openfx-main.cpp">
+      <Filter>Source Files\host-openfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\hosts\openfx\openfx-render.cpp">
       <Filter>Source Files\host-openfx</Filter>
     </ClCompile>
   </ItemGroup>

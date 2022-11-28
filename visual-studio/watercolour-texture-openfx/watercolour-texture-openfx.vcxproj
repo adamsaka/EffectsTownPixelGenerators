@@ -73,7 +73,7 @@
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;..\..\3rd-party\OpenFX\OpenFX-1.4\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,6 +112,7 @@
     <ClInclude Include="..\..\common\parameter-list.h" />
     <ClInclude Include="..\..\common\util.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-helper.h" />
+    <ClInclude Include="..\..\hosts\openfx\openfx-render.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameters.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
@@ -120,6 +121,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp" />
     <ClCompile Include="..\..\hosts\openfx\openfx-main.cpp" />
+    <ClCompile Include="..\..\hosts\openfx\openfx-render.cpp" />
     <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

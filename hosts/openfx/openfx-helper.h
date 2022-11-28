@@ -67,10 +67,10 @@ enum class OFXContext {
 /*******************************************************************************************************
 Throws code if there is an error
 *******************************************************************************************************/
-/*inline void CheckOFX(OfxStatus status) {
+/*inline void check_openfx(OfxStatus status) {
     if (status != kOfxStatOK) throw(status);
 }*/
-#define CheckOFX(STATUS) if((STATUS != kOfxStatOK )) {dev_log(std::string("OFX Error : ") + std::string(__FILE__) + " " +std::to_string(__LINE__)) ; throw(STATUS); }
+#define check_openfx(STATUS) if((STATUS != kOfxStatOK )) {dev_log(std::string("OFX Error : ") + std::string(__FILE__) + " " +std::to_string(__LINE__)) ; throw(STATUS); }
 
 
 /*******************************************************************************************************
@@ -158,79 +158,61 @@ struct ClipHolder {
         char* cstr{};
         int rowBytes32{};
         dev_log(std::string("Load Clip: ") + clipName);
+        
         //Get Clip Handle and property set
         OfxPropertySetHandle clipInstanceProperties;
-        CheckOFX(global_EffectSuite->clipGetHandle(instance, clipName, &clipHandle, &clipInstanceProperties));
+        check_openfx(global_EffectSuite->clipGetHandle(instance, clipName, &clipHandle, &clipInstanceProperties));
         if (!clipHandle) throw (kOfxStatFailed);
 
-
-        //Get Bit Depth from image descriptor
-        CheckOFX(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropPixelDepth, 0, &cstr));
-        bitDepth = GetBitDepthFromString(cstr);
-        dev_log(cstr);
-        if (bitDepth == 0) {
-            dev_log(std::string("ERROR: Unsupported Bit Depth: ") + cstr);
-            if (strcmp(global_hostData.hostLabel, "DaVinci Resolve") == 0) {
-                dev_log("Host is DaVinci Resolve, so ignoring for now.  We will check it in the instance. (Due to bug in generator context v17.1.1)");
-            }
-            else {
-                throw (kOfxStatFailed);
-            }
-        }
-
-        //Get clip pixel layout from image descriptor
-        CheckOFX(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropComponents, 0, &cstr));
-        componentsPerPixel = GetCompentsPerPixelFromString(cstr);
-        dev_log(cstr);
-        if (!(componentsPerPixel == 4 || componentsPerPixel == 3 || componentsPerPixel == 1)) {
-            dev_log(std::string("ERROR: Unsupported Pixel Format: ") + cstr);
-            if (componentsPerPixel == 0 && strcmp(global_hostData.hostLabel, "DaVinci Resolve") == 0) {
-                dev_log("Host is DaVinci Resolve, so assuming bit depth is RGBA.  (Due to bug in generator context v17.1.1)");
-                componentsPerPixel = 4;
-            }
-            else {
-
-                throw (kOfxStatErrUnsupported);
-            }
-        }
-
-        //Get Pre Multiplication
-        CheckOFX(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropPreMultiplication, 0, &cstr));
+        //Get Pre-Multiplication Status
+        check_openfx(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropPreMultiplication, 0, &cstr));
         if (strcmp(cstr, kOfxImageUnPreMultiplied) == 0)  preMultiplied = false;
         dev_log(cstr);
 
         //Get clip image
-        CheckOFX(global_EffectSuite->clipGetImage(clipHandle, time, NULL, &clipImage));
+        check_openfx(global_EffectSuite->clipGetImage(clipHandle, time, NULL, &clipImage));
         if (!clipImage) throw (kOfxStatFailed);
 
         try {
             //Get clip rectangle
-            CheckOFX(global_PropertySuite->propGetIntN(clipImage, kOfxImagePropBounds, 4, &bounds.x1));
+            check_openfx(global_PropertySuite->propGetIntN(clipImage, kOfxImagePropBounds, 4, &bounds.x1));
 
             //Get clip pointer and row addressing mode
-#pragma warning(suppress:26490) 
-            CheckOFX(global_PropertySuite->propGetPointer(clipImage, kOfxImagePropData, 0, reinterpret_cast<void**>(&baseAddress)));
+            #pragma warning(suppress:26490) 
+            check_openfx(global_PropertySuite->propGetPointer(clipImage, kOfxImagePropData, 0, reinterpret_cast<void**>(&baseAddress)));
             if (!baseAddress) throw (kOfxStatFailed);
-            CheckOFX(global_PropertySuite->propGetInt(clipImage, kOfxImagePropRowBytes, 0, &rowBytes32));
+            check_openfx(global_PropertySuite->propGetInt(clipImage, kOfxImagePropRowBytes, 0, &rowBytes32));
             if (rowBytes32 == 0) throw (kOfxStatFailed);
             rowBytes = rowBytes32;
 
-            //Check bit depth of image matches descriptor (some hosts report 0, so we take the higher option).
-            CheckOFX(global_PropertySuite->propGetString(clipImage, kOfxImageEffectPropPixelDepth, 0, &cstr));
-            if (bitDepth != GetBitDepthFromString(cstr)) {
-                dev_log(std::string("Mismatch between bit depths (descripter vs instance): ") + cstr);
-                bitDepth = std::max(bitDepth, GetBitDepthFromString(cstr));
+            //Bit Depth
+            //Some hosts (Resolve) don't always report correctly so we take the higher in case one is set to zero.
+            check_openfx(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropPixelDepth, 0, &cstr));
+            const int depth1 = GetBitDepthFromString(cstr);
+            check_openfx(global_PropertySuite->propGetString(clipImage, kOfxImageEffectPropPixelDepth, 0, &cstr));
+            const int depth2 = bitDepth = GetBitDepthFromString(cstr);
+            
+            bitDepth = std::max(depth1, depth2);            
+            if (bitDepth == 0) {
+                dev_log(std::string("ERROR: Unsupported Bit Depth: ") + cstr);
+                throw (kOfxStatFailed);                
             }
 
-            //Get clip pixel layout matches the descriptor found above (some hosts report 0, so we take the higher option)
-            CheckOFX(global_PropertySuite->propGetString(clipImage, kOfxImageEffectPropComponents, 0, &cstr));
-            if (componentsPerPixel != GetCompentsPerPixelFromString(cstr)) {
-                dev_log(std::string("Mismatch between components (descripter vs instance): ") + cstr);
-                componentsPerPixel = std::max(componentsPerPixel, static_cast<size_t>(GetCompentsPerPixelFromString(cstr)));
+            // Pixel Layout
+            // We cross check the values in clipInstanceProperties and clipImage and take the higher in case one is set to zero.
+            // There is a bug in Reslove where the generator context may return 0.  We default to 4 in this case.
+            check_openfx(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropComponents, 0, &cstr));
+            const size_t cpp1 = GetCompentsPerPixelFromString(cstr);
+            check_openfx(global_PropertySuite->propGetString(clipImage, kOfxImageEffectPropComponents, 0, &cstr));
+            const size_t cpp2 = GetCompentsPerPixelFromString(cstr);                          
+            componentsPerPixel = std::max(cpp1, cpp2);     
+            
+            if (componentsPerPixel == 0 && strcmp(global_hostData.hostLabel, "DaVinci Resolve") == 0) componentsPerPixel = 4;  //DaVinci Resolve bug work around.
 
-            }
-            dev_log(std::to_string(bitDepth));
-            dev_log(std::to_string(componentsPerPixel));
+            if (!(componentsPerPixel == 4 || componentsPerPixel == 3 || componentsPerPixel == 1)) {  
+                dev_log(std::string("ERROR: Unsupported Pixel Format: ") + cstr);
+                throw (kOfxStatErrUnsupported);
+            }          
 
 
         }
