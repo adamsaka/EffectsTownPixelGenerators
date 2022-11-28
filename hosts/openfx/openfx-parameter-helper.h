@@ -20,13 +20,35 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
+
 Description:
 
-	Render functions for the openFX host.
-	
-********************************************************************************************************/
-#pragma once
-#include "openfx-helper.h"
-#include "openfx-parameter-helper.h"
+	A helper class for managing OpenFX Parameters.
 
-OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args, ParameterHelper& parameter_helper);
+*******************************************************************************************************/
+#pragma once
+
+#include "openfx-helper.h"
+#include "parameter-id.h"
+
+#include <array>
+
+class ParameterHelper {
+private:
+	int paramsAdded{};  ///Counter used to track parameters as they are added .
+	std::array<bool, static_cast<int>(ParameterID::__last)> param_is_added; ///To translate param ID to handle
+	std::array<OfxParamHandle, static_cast<int>(ParameterID::__last)> param_handle; ///To translate param ID to handle
+	std::array<std::string, static_cast<int>(ParameterID::__last)> param_name; ///Name (used by OFX as the index)
+
+
+	OfxParamSetHandle paramset{ nullptr };
+
+public:
+	ParameterHelper();
+	void set_paramset(OfxParamSetHandle p) { paramset = p; }  //Must be called at the start of each action that uses this class
+	void load_handles();									  //Must be called in create instance action.
+
+	void add_slider(ParameterID id, const std::string& name, double min, double max, double sliderMin, double sliderMax, double value, short precision);
+	double read_slider(ParameterID id, OfxTime time);
+
+};

@@ -113,6 +113,7 @@
     <ClInclude Include="..\..\common\util.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-helper.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-render.h" />
+    <ClInclude Include="..\..\hosts\openfx\openfx-parameter-helper.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameters.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameter-id.h" />
@@ -121,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp" />
     <ClCompile Include="..\..\hosts\openfx\openfx-main.cpp" />
+    <ClCompile Include="..\..\hosts\openfx\openfx-parameter-helper.cpp" />
     <ClCompile Include="..\..\hosts\openfx\openfx-render.cpp" />
     <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp" />
   </ItemGroup>

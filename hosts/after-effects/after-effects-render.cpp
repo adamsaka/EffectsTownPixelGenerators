@@ -34,7 +34,7 @@ Description:
 
 //General Includes
 #include "after-effects-render.h"
-#include "after-effect-parameter-helper.h"
+#include "after-effects-parameter-helper.h"
 #include "..\..\common\util.h"
 
 

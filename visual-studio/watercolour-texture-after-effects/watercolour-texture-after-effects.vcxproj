@@ -112,7 +112,7 @@
     <ClInclude Include="..\..\common\parameter-list.h" />
     <ClInclude Include="..\..\common\util.h" />
     <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h" />
-    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-parameter-helper.h" />
     <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\parameters.h" />

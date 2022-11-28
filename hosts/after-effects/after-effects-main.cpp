@@ -35,7 +35,7 @@ Description:
 
 //After Effects SDK 'meta-header'
 #include "after-effects-sdk.h"
-#include "after-effect-parameter-helper.h"
+#include "after-effects-parameter-helper.h"
 #include "after-effects-render.h"
 
 #include <string>

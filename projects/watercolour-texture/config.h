@@ -40,6 +40,9 @@ Description:
 #define	PluginBugVersion			0
 #define	PluginBuildVersion			1
 
+constexpr bool project_is_generator = true;
+constexpr bool project_uses_input = false;
+
 //Indicates that a project will not return any transparent pixels.
 constexpr bool project_is_solid_render = true;
 

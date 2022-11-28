@@ -26,7 +26,7 @@ Description:
 	A helper class for managing After Effects Parameters.
 
 *******************************************************************************************************/
-#include "after-effect-parameter-helper.h"
+#include "after-effects-parameter-helper.h"
 
 
 

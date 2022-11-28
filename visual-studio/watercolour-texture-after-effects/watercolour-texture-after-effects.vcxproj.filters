@@ -43,7 +43,7 @@
     <ClInclude Include="..\..\projects\watercolour-texture\config.h">
       <Filter>Source Files\Project</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\hosts\after-effects\after-effect-parameter-helper.h">
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-parameter-helper.h">
       <Filter>Source Files\host-after-effects</Filter>
     </ClInclude>
     <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h">

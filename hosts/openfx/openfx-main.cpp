@@ -26,12 +26,15 @@ Description:
 	This is a .dll (renamed .ofx)
 ********************************************************************************************************/
 
+
 #include "config.h"
+#include "parameters.h"
+#include "parameter-id.h"
 #include "../../common/util.h"
 
 #include "openfx-render.h"
 #include "openfx-helper.h"
-
+#include "openfx-parameter-helper.h"
 
 #include <exception>
 #include <string.h>
@@ -42,7 +45,11 @@ Globals
 OfxHost* global_OFXHost{ nullptr };
 const OfxImageEffectSuiteV1* global_EffectSuite{ nullptr };
 const OfxPropertySuiteV1* global_PropertySuite{ nullptr };
+const OfxParameterSuiteV1* global_ParameterSuite{ nullptr };
 HostData global_hostData{};
+
+
+ParameterHelper parameter_helper{};
 
 /*******************************************************************************************************
 Forward Declarations
@@ -52,6 +59,9 @@ static void openfx_set_host_function(OfxHost* hostStruct) noexcept;
 static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect);
 static OfxStatus openfx_on_load_action(void);
 static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs);
+static OfxStatus openfx_image_effect_action_get_clip_preferences(const OfxImageEffectHandle effect, OfxPropertySetHandle out_args);
+static OfxStatus openfx_create_instance_action(OfxImageEffectHandle instance);
+
 
 /*******************************************************************************************************
 A struct that provides the host with information about this OFX plugin.
@@ -105,19 +115,21 @@ static void openfx_set_host_function(OfxHost* hostStruct) noexcept {
 Main entry point for calls to the plug-in.
 Dispatches to another function based on the requested action.
 *******************************************************************************************************/
-static OfxStatus openfx_plugin_main(const char* action, const void* handle,  OfxPropertySetHandle inArgs, OfxPropertySetHandle) noexcept {
+static OfxStatus openfx_plugin_main(const char* action, const void* handle,  OfxPropertySetHandle inArgs, OfxPropertySetHandle out_args) noexcept {
 
     try {
         dev_log(std::string("Action : ") + action);
         #pragma warning(suppress:26462 26493) 
         const OfxImageEffectHandle effect = (const OfxImageEffectHandle)handle;  //Effect Handle (A blind struct*)
 
-        if (strcmp(action, kOfxImageEffectActionRender) == 0) return openfx_render(effect, inArgs);
-        if (strcmp(action, kOfxActionCreateInstance) == 0) return kOfxStatOK;
+        if (strcmp(action, kOfxImageEffectActionRender) == 0) return openfx_render(effect, inArgs, parameter_helper);
+        if (strcmp(action, kOfxActionCreateInstance) == 0) return openfx_create_instance_action(effect);
         if (strcmp(action, kOfxActionDestroyInstance) == 0) return kOfxStatOK;
         if (strcmp(action, kOfxActionLoad) == 0) return openfx_on_load_action();
         if (strcmp(action, kOfxActionDescribe) == 0) return openfx_describe_action(effect);
         if (strcmp(action, kOfxImageEffectActionDescribeInContext) == 0) return openfx_describe_in_context_action(effect, inArgs);
+        if (strcmp(action, kOfxImageEffectActionGetClipPreferences) == 0) return openfx_image_effect_action_get_clip_preferences(effect, out_args);
+
         return kOfxStatReplyDefault;
     }
     catch (const OfxStatus) {
@@ -157,6 +169,14 @@ static OfxStatus openfx_on_load_action(void) {
 
     global_PropertySuite = static_cast<const OfxPropertySuiteV1*>(global_OFXHost->fetchSuite(global_OFXHost->host, kOfxPropertySuite, 1));
     if (!global_PropertySuite) return kOfxStatErrMissingHostFeature;
+
+    global_ParameterSuite = static_cast<const OfxParameterSuiteV1*>(global_OFXHost->fetchSuite(global_OFXHost->host, kOfxParameterSuite, 1));
+    if (!global_ParameterSuite)return kOfxStatErrMissingHostFeature;
+
+
+    
+
+
 
     char* cstr;
     int count;
@@ -274,7 +294,7 @@ static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect) {
     //Indicate which bit depths we can support.
     //Note: Resolve seems to always send Floats as images, regarless of what we ask for.
     check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultipleClipDepths, 0, false));                //Multiple Bit Depths
-    //check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat));       //32 Bit Float Colour
 
     // define the contexts we can be used in
@@ -284,11 +304,43 @@ static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect) {
     return kOfxStatOK;
 }
 
+
+/*******************************************************************************************************
+Add the parameters to the project
+*******************************************************************************************************/
+void add_parameters(const OfxImageEffectHandle effect) {
+    //Get the effect's parameter set and store it in our helper class.
+    OfxParamSetHandle paramset;
+    global_EffectSuite->getParamSet(effect, &paramset);
+    parameter_helper.set_paramset(paramset);
+
+    //Get parameters from project
+    auto params = build_project_parameters();
+
+    //Build After Effect Parameters
+    for (auto p : params.entries) {
+        switch (p.type) {
+        case ParameterType::seed:
+            parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
+            break;
+        case ParameterType::number:
+            parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
 /*******************************************************************************************************
 "describeInContext" Action.
 
 Describe what each specific context can support. (Input & Output format specifications.)
-Resolve calls this when effect is applied.
+
+Specify parameters in this action.
+
+Usually called when effect is actually applied.
 
 From: https://openfx.readthedocs.io/en/master/Reference/ofxImageEffectActions.html
 "This action is unique to OFX Image Effect plug-ins. Because a plugin is able to exhibit different behaviour depending on the context of use,
@@ -318,16 +370,66 @@ static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle ef
     if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB));   //RGB format 
 
 
-    /*
+    
     //We only have an input clip for general and filter contexts.
-    if (context == OFXContext::filter || context == OFXContext::general) {
-        dev_log("Adding Input Clip");
-        check_openfx(global_EffectSuite->clipDefine(effect, "Source", &properties));
-        if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA)); //RGBA format
-        if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
+    if constexpr (project_uses_input) {
+        if (context == OFXContext::filter || context == OFXContext::general) {
+            dev_log("Adding Input Clip");
+            check_openfx(global_EffectSuite->clipDefine(effect, "Source", &properties));
+            if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA)); //RGBA format
+            if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
+        }
     }
-    */
+    
+
+    add_parameters(effect);
+    
+
+
+    
 
     //dev_log("DescribeInContext Action Complete");
+    return kOfxStatOK;
+}
+
+
+/*******************************************************************************************************
+"ImageEffectActionGetClipPreferences" Action.
+
+Tell the host our preferred formats.
+
+From: https://openfx.readthedocs.io/en/master/Reference/ofxImageEffectActions.html#group__ImageEffectActions_1gae66560a2d269b17e160613adf22fd7d0
+"This action allows a plugin to dynamically specify its preferences for input and output clips. 
+Please see Image Effect Clip Preferences for more details on the behaviour. Clip preferences are 
+constant for the duration of an effect, so this action need only be called once per clip, not once per frame.
+This should be called once after creation of an instance, each time an input clip is changed, and 
+whenever a parameter named in the kOfxImageEffectPropClipPreferencesSlaveParam has its value changed."
+
+*******************************************************************************************************/
+static OfxStatus openfx_image_effect_action_get_clip_preferences([[maybe_unused]] const OfxImageEffectHandle effect, OfxPropertySetHandle out_args) {
+    
+    //Set preferred pre-multiplication state
+    if constexpr (project_is_solid_render) {
+        check_openfx(global_PropertySuite->propSetString(out_args, kOfxImageEffectPropPreMultiplication, 0, kOfxImageOpaque));
+    }
+    else {
+        check_openfx(global_PropertySuite->propSetString(out_args, kOfxImageEffectPropPreMultiplication, 0, kOfxImageUnPreMultiplied));
+    }
+
+    //Continuous sampling (can generate frames between frames).
+    check_openfx(global_PropertySuite->propSetInt(out_args, kOfxImageClipPropContinuousSamples, 0, 1 /*true*/));
+
+    //Has yime varying effect even in parameters constant?
+    check_openfx(global_PropertySuite->propSetInt(out_args, kOfxImageEffectFrameVarying, 0, 0 /*false*/));   
+
+
+    return kOfxStatOK;
+}
+
+/*******************************************************************************************************
+"CreateInstance" Action.
+*******************************************************************************************************/
+static OfxStatus openfx_create_instance_action([[maybe_unused]] OfxImageEffectHandle effect) {
+
     return kOfxStatOK;
 }

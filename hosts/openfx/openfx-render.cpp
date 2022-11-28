@@ -27,22 +27,31 @@ Description:
 ********************************************************************************************************/
 #pragma once
 #include "openfx-render.h"
+#include "openfx-parameter-helper.h"
 
 //Project Specific Includes
 #include "renderer.h"
 #include "parameters.h"
 #include "config.h"
+#include "..\..\common\linear-algebra.h"
 
 static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept;
-static void setup_render(Renderer<Precision>& renderer, int width, int height);
-static ParameterList read_parameters();
+static void setup_render(Renderer<Precision>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time);
+static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
 static void do_pixel_render(Renderer<Precision>& renderer, int width, int height, ClipHolder& output);
 
 /*******************************************************************************************************
 Render
 *******************************************************************************************************/
-OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args) {
+OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args, ParameterHelper& parameter_helper) {
     dev_log(std::string("Render Action"));
+    
+    //Load the parameter handels for the helper
+    OfxParamSetHandle paramset;
+    global_EffectSuite->getParamSet(instance, &paramset);
+    parameter_helper.set_paramset(paramset);
+    parameter_helper.load_handles();
+    
     //Get the context;
     char* cstr;
     OfxPropertySetHandle instanceProperties;
@@ -68,24 +77,26 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
 
     //Setup platform independant Renderer
     Renderer<Precision> renderer{};
-    setup_render(renderer, width, height);
+    setup_render(renderer, width, height, parameter_helper, time);
 
     //Perform the actual render
     do_pixel_render(renderer, width, height, output_clip);
 
 
     //Get & Mix Souce image.
-    /*
-    if (context == OFXContext::general || context == OFXContext::filter) {
-        //There should be an input image. 
-        ClipHolder inputClip(instance, "Source", time);
-        ReplaceTransparentWithSource(renderWindow, inputClip, output_clip);
+    if constexpr (project_uses_input) {
+        if (context == OFXContext::general || context == OFXContext::filter) {
+            //There should be an input image. 
+            ClipHolder inputClip(instance, "Source", time);
+            ReplaceTransparentWithSource(renderWindow, inputClip, output_clip);
+        }
     }
-    */
 
-    if (output_clip.preMultiplied && output_clip.componentsPerPixel == 4) {
-        //TODO
-        dev_log("***TODO: Multiply Alpha");
+    if constexpr (!project_is_solid_render) {
+        if (output_clip.preMultiplied && output_clip.componentsPerPixel == 4) {
+            //TODO
+            dev_log("***TODO: Multiply Alpha");
+        }
     }
 
     return kOfxStatOK;
@@ -94,33 +105,65 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-static void setup_render(Renderer<Precision>& renderer, int width, int height) {
-    auto params = read_parameters();
+static void setup_render(Renderer<Precision>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time) {
+        
+    auto params = read_parameters(parameter_helper, time);
 
     renderer.set_size(width, height);
     renderer.set_seed("OpenFX");
+    if (params.contains(ParameterID::seed)) {
+        renderer.set_seed_int(static_cast<uint64_t>(params.get_value(ParameterID::seed)));
+    }
+
+
     renderer.set_parameters(std::move(params));
 }
 
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-static ParameterList read_parameters() {
+static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time) {
     auto params = build_project_parameters();
+    
+    for (auto& p : params.entries) {
+        switch (p.type) {
+        case ParameterType::seed:
+            p.value = parameter_helper.read_slider(p.id, time);
+            break;
+        case ParameterType::number:
+            p.value = parameter_helper.read_slider(p.id, time);
+            break;
 
+        default:
+            break;
+        }
+    }
     return params;
 }
 
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, const ColourSRGB<Precision>& c) {
+inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, ColourSRGB<Precision> c) {
     const bool hasAlpha = output.componentsPerPixel == 4;
+
+    if constexpr (!project_is_solid_render) {
+        if (output.preMultiplied) c = c.premultiply_alpha();
+    }
 
     switch (output.bitDepth) {
     case 8:
-        dev_log("**8 bit copy");
-        break;
+         {
+            const auto ptrDest = output.pixelAddress8(x, y);
+            if (ptrDest) {
+                ptrDest[0] = static_cast<uint8_t>(clamp(c.red* static_cast<Precision>(white8), static_cast<Precision>(0.0),static_cast<Precision>(white8))); //red
+                ptrDest[1] = static_cast<uint8_t>(clamp(c.green * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //green
+                ptrDest[2] = static_cast<uint8_t>(clamp(c.blue * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //blue            
+                
+                if (hasAlpha) ptrDest[3] = static_cast<uint8_t>(clamp(c.blue * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //alpha
+            }
+            break;
+         }
     case 32:
         {
             const auto ptrDest = output.pixelAddressFloat(x, y);
@@ -128,8 +171,8 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
                 ptrDest[0] = static_cast<float>(c.red); //red
                 ptrDest[1] = static_cast<float>(c.green); //green
                 ptrDest[2] = static_cast<float>(c.blue); //blue            
-                //TODO: (MANAGE PREMULTIPLIED ALPHA)
-                if (hasAlpha) ptrDest[3] = static_cast<float>(c.alpha) / 255.0f; //alpha
+                
+                if (hasAlpha) ptrDest[3] = static_cast<float>(c.alpha); //alpha
             }
             break;
         }

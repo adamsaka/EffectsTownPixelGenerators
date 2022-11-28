@@ -30,10 +30,13 @@ Description:
 
 #include "../../common/util.h"
 
+
 //OpenFX C API Headers
 #include "ofxCore.h"
 #include "ofxProperty.h"
 #include "ofxImageEffect.h"
+#include "ofxParam.h"
+
 
 #include <cstring>
 #include <cstdint>
@@ -47,6 +50,7 @@ struct HostData;
 extern OfxHost* global_OFXHost;								//Holds the global host information for an OpenFX plugin (in OpenFX-Main.cpp)
 extern const OfxImageEffectSuiteV1* global_EffectSuite;
 extern const OfxPropertySuiteV1* global_PropertySuite;
+extern const OfxParameterSuiteV1* global_ParameterSuite;
 extern HostData global_hostData;
 
 
@@ -150,6 +154,7 @@ struct ClipHolder {
     size_t componentsPerPixel;     //Pixel Format (4=RGBA, 3=RGB, 1=Alpha, 0=None/Unknown);
     int bitDepth;                   //8=Byte, 16=Short 32=Float
     bool preMultiplied{ true };
+    
 
     /*******************************************************************************************************
     Contructor.  Will throw an OFXStatus (int) if we fail to initialise.
@@ -166,7 +171,9 @@ struct ClipHolder {
 
         //Get Pre-Multiplication Status
         check_openfx(global_PropertySuite->propGetString(clipInstanceProperties, kOfxImageEffectPropPreMultiplication, 0, &cstr));
-        if (strcmp(cstr, kOfxImageUnPreMultiplied) == 0)  preMultiplied = false;
+        preMultiplied = true;
+        if (strcmp(cstr, kOfxImageUnPreMultiplied) == 0) preMultiplied = false;
+        else if (strcmp(cstr, kOfxImageOpaque) == 0) preMultiplied = false; 
         dev_log(cstr);
 
         //Get clip image
