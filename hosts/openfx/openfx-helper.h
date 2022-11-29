@@ -51,6 +51,7 @@ extern OfxHost* global_OFXHost;								//Holds the global host information for a
 extern const OfxImageEffectSuiteV1* global_EffectSuite;
 extern const OfxPropertySuiteV1* global_PropertySuite;
 extern const OfxParameterSuiteV1* global_ParameterSuite;
+extern const OfxMultiThreadSuiteV1* global_MultiThreadSuite;
 extern HostData global_hostData;
 
 

@@ -44,10 +44,11 @@ Description:
 Globals
 *******************************************************************************************************/
 OfxHost* global_OFXHost{ nullptr };
+HostData global_hostData{};
 const OfxImageEffectSuiteV1* global_EffectSuite{ nullptr };
 const OfxPropertySuiteV1* global_PropertySuite{ nullptr };
 const OfxParameterSuiteV1* global_ParameterSuite{ nullptr };
-HostData global_hostData{};
+const OfxMultiThreadSuiteV1* global_MultiThreadSuite{ nullptr };
 
 //TODO:  To be safe we should copy this for each instance.  It should be done on the create instance action.
 ParameterHelper master_parameter_helper{};
@@ -120,7 +121,7 @@ Dispatches to another function based on the requested action.
 static OfxStatus openfx_plugin_main(const char* action, const void* handle,  OfxPropertySetHandle inArgs, OfxPropertySetHandle out_args) noexcept {
 
     try {
-        dev_log(std::string("Action : ") + action);
+        //dev_log(std::string("Action : ") + action);
         #pragma warning(suppress:26462 26493) 
         const OfxImageEffectHandle effect = (const OfxImageEffectHandle)handle;  //Effect Handle (A blind struct*)
 
@@ -175,6 +176,9 @@ static OfxStatus openfx_on_load_action(void) {
 
     global_ParameterSuite = static_cast<const OfxParameterSuiteV1*>(global_OFXHost->fetchSuite(global_OFXHost->host, kOfxParameterSuite, 1));
     if (!global_ParameterSuite)return kOfxStatErrMissingHostFeature;
+
+    global_MultiThreadSuite = static_cast<const OfxMultiThreadSuiteV1*>(global_OFXHost->fetchSuite(global_OFXHost->host, kOfxMultiThreadSuite, 1));
+    if (!global_ParameterSuite) return kOfxStatErrMissingHostFeature;
 
     char* cstr;
     int count;
@@ -286,18 +290,23 @@ static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect) {
     //Set the effects properties.
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxPropLabel, 0, PluginName));                                        //Plug-in name
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPluginPropGrouping, 0, PluginMenu));                    //Plug-in menu location
-    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsTiles, 0, false));                             //Disable tiling (we want whole frames)
+    
+    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPluginRenderThreadSafety, 0, kOfxImageEffectRenderFullySafe)); //We are going fully thread-safe
+    
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsTiles, 0, true));                             
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPluginPropHostFrameThreading, 0, true));
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPluginPropFieldRenderTwiceAlways, 0, false));
+    check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultiResolution, 0, false));
 
 
     //Indicate which bit depths we can support.
-    //Note: Resolve seems to always send Floats as images, regarless of what we ask for.
     check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultipleClipDepths, 0, false));                //Multiple Bit Depths
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat));       //32 Bit Float Colour
 
     // define the contexts we can be used in
-    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGenerator));  //Support Generator context
-    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 1, kOfxImageEffectContextFilter));     //Support Effect Context
+    if constexpr (project_is_generator) check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextGenerator));  //Support Generator context
+    if constexpr (project_uses_input) check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 1, kOfxImageEffectContextFilter));     //Support Effect Context
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedContexts, 2, kOfxImageEffectContextGeneral));    //General Effect Context
     return kOfxStatOK;
 }
@@ -319,7 +328,8 @@ void add_parameters(const OfxImageEffectHandle effect) {
     for (auto p : params.entries) {
         switch (p.type) {
         case ParameterType::seed:
-            master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
+            //master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
+            master_parameter_helper.add_integer(p.id, p.name);
             break;
         case ParameterType::number:
             master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);

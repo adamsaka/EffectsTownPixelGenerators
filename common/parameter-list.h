@@ -65,6 +65,7 @@ struct ParameterEntry {
 	double slider_max{};
 	short precision{};
 	double value{};
+	int value_integer{};
 	std::string value_string {};
 
 	static ParameterEntry make_seed(ParameterID parameter_id, std::string parameter_name) {
@@ -125,6 +126,13 @@ struct ParameterList {
 			if (id == e.id) return e.value;
 		}
 		return 0.0;
+	}
+	//Get a value (as an integer)
+	int get_value_integer(ParameterID id) const {
+		for (const auto& e : entries) {
+			if (id == e.id) return e.value_integer;
+		}
+		return 0;
 	}
 
 	//Get a value (as a string)

@@ -36,10 +36,12 @@ Description:
 #include "config.h"
 #include "..\..\common\linear-algebra.h"
 
+#include <bit>
+
 static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept;
 static void setup_render(Renderer<Precision>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time);
 static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
-static void do_pixel_render(Renderer<Precision>& renderer, int width, int height, ClipHolder& output);
+static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<Precision>& renderer, int width, int height, ClipHolder& output);
 
 /*******************************************************************************************************
 Render
@@ -76,13 +78,15 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //Get Dimensions
     const int width = output_clip.bounds.x2 - output_clip.bounds.x1;
     const int height = output_clip.bounds.y2 - output_clip.bounds.y1;
+    dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
+
 
     //Setup platform independant Renderer
     Renderer<Precision> renderer{};
     setup_render(renderer, width, height, instance_data->parameter_helper, time);
 
     //Perform the actual render
-    do_pixel_render(renderer, width, height, output_clip);
+    do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
 
 
     //Get & Mix Souce image.
@@ -114,7 +118,7 @@ static void setup_render(Renderer<Precision>& renderer, int width, int height, P
     renderer.set_size(width, height);
     renderer.set_seed("OpenFX");
     if (params.contains(ParameterID::seed)) {
-        renderer.set_seed_int(static_cast<uint64_t>(params.get_value(ParameterID::seed)));
+        renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
     }
 
 
@@ -130,7 +134,7 @@ static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime 
     for (auto& p : params.entries) {
         switch (p.type) {
         case ParameterType::seed:
-            p.value = parameter_helper.read_slider(p.id, time);
+            p.value_integer = parameter_helper.read_integer(p.id, time);
             break;
         case ParameterType::number:
             p.value = parameter_helper.read_slider(p.id, time);
@@ -183,15 +187,56 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
     }
 }
 
+struct RenderThreadData {
+    Renderer<Precision>* renderer;
+    ClipHolder * output;
+    OfxRectI* render_window;
+};
+
+
+ void render_line(RenderThreadData* rd, int y) {
+    for (int x = rd->render_window->x1; x < rd->render_window->x2; x++) {
+        const auto c = rd->renderer->render_pixel(x, y);
+        copy_pixel_to_output_buffer(*rd->output, x, y, c);
+    }
+}
+
+
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-static void do_pixel_render(Renderer<Precision>& renderer, int width, int height, ClipHolder& output) {
-    //Single threaded for now.
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            const auto c = renderer.render_pixel(x, y);
-            copy_pixel_to_output_buffer(output, x, y, c);
+void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
+    RenderThreadData * rd = static_cast<RenderThreadData*>(customArg);
+
+    for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
+        if (y % threadMax == threadIndex) {
+            render_line(rd, y);
+        }
+    }
+}
+
+
+/*******************************************************************************************************
+
+*******************************************************************************************************/
+static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI & render_window, Renderer<Precision>& renderer,[[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
+    RenderThreadData rd{};
+    rd.renderer = &renderer;
+    rd.output = &output;
+    rd.render_window = &render_window;
+    
+
+
+    unsigned int num_threads;
+    global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
+    dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
+   
+    if (num_threads > 1) {
+        global_MultiThreadSuite->multiThread(thread_entry_pixel_render, num_threads, &rd);
+    }else {
+        for (int y = render_window.y1; y < render_window.y2; y++) {
+            if (global_EffectSuite->abort(instance)) return;
+            render_line(&rd, y);
         }
     }
 }

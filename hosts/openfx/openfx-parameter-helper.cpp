@@ -82,10 +82,48 @@ void ParameterHelper::add_slider(ParameterID id, const std::string& name, double
 
 /********************************************************************************************************
 * Reads a value from a slider
-* Assumes load_handles() has been called ealier.
+* Assumes load_handles() has been called ealier. (should be called in create instance action)
 *******************************************************************************************************/
 double ParameterHelper::read_slider(ParameterID id, OfxTime time) {
 	double value{};
+	global_ParameterSuite->paramGetValueAtTime(param_handle.at(parameter_id_to_int(id)), time, &value);
+	return value;
+}
+
+
+/********************************************************************************************************
+* Add an integer parmater.
+* Should be called in "Describe in Context" action.
+* Ensure set_paramset() is called first.
+*******************************************************************************************************/
+void ParameterHelper::add_integer(ParameterID id, const std::string& name, int min, int max , int slider_min , int slider_max , int value) {
+	check_null(paramset);
+
+	//Add the parameter
+	OfxPropertySetHandle param_properties{};
+	global_ParameterSuite->paramDefine(paramset, kOfxParamTypeInteger, name.c_str(), &param_properties);
+
+	//Set the properties of this parameter
+	global_PropertySuite->propSetString(param_properties, kOfxParamPropDoubleType, 0, kOfxParamDoubleTypeScale);
+	global_PropertySuite->propSetInt(param_properties, kOfxParamPropDefault, 0, value);
+	global_PropertySuite->propSetInt(param_properties, kOfxParamPropMin, 0, min);
+	global_PropertySuite->propSetInt(param_properties, kOfxParamPropMax, 0, max);
+	global_PropertySuite->propSetInt(param_properties, kOfxParamPropDisplayMin, 0, slider_min);
+	global_PropertySuite->propSetInt(param_properties, kOfxParamPropDisplayMax, 0, slider_max);
+	
+	
+
+
+	//Add to lookup
+	param_is_added.at(parameter_id_to_int(id)) = true;
+	param_name.at(parameter_id_to_int(id)) = name;
+
+}
+/********************************************************************************************************
+* Read an integer parmater.
+*******************************************************************************************************/
+int ParameterHelper::read_integer(ParameterID id, OfxTime time) {
+	int value{};
 	global_ParameterSuite->paramGetValueAtTime(param_handle.at(parameter_id_to_int(id)), time, &value);
 	return value;
 }
