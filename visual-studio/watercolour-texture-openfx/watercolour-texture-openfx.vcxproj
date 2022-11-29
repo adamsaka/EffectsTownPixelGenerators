@@ -112,6 +112,7 @@
     <ClInclude Include="..\..\common\parameter-list.h" />
     <ClInclude Include="..\..\common\util.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-helper.h" />
+    <ClInclude Include="..\..\hosts\openfx\openfx-instance-data.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-render.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-parameter-helper.h" />
     <ClInclude Include="..\..\projects\watercolour-texture\config.h" />

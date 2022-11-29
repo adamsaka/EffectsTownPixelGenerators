@@ -22,11 +22,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 Description:
 
-	Render functions for the openFX host.
-	
+A struct for the instance data.
+
 ********************************************************************************************************/
-#pragma once
+
 #include "openfx-helper.h"
 #include "openfx-parameter-helper.h"
 
-OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args);
+struct InstanceData {
+	ParameterHelper parameter_helper;
+
+
+};

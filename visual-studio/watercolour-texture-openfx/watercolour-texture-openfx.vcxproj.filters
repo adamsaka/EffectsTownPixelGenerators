@@ -52,6 +52,9 @@
     <ClInclude Include="..\..\hosts\openfx\openfx-parameter-helper.h">
       <Filter>Source Files\host-openfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\hosts\openfx\openfx-instance-data.h">
+      <Filter>Source Files\host-openfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp">

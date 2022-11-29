@@ -28,6 +28,7 @@ Description:
 #pragma once
 #include "openfx-render.h"
 #include "openfx-parameter-helper.h"
+#include "openfx-instance-data.h"
 
 //Project Specific Includes
 #include "renderer.h"
@@ -43,14 +44,15 @@ static void do_pixel_render(Renderer<Precision>& renderer, int width, int height
 /*******************************************************************************************************
 Render
 *******************************************************************************************************/
-OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args, ParameterHelper& parameter_helper) {
+OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args) {
     dev_log(std::string("Render Action"));
     
-    //Load the parameter handels for the helper
-    OfxParamSetHandle paramset;
-    global_EffectSuite->getParamSet(instance, &paramset);
-    parameter_helper.set_paramset(paramset);
-    parameter_helper.load_handles();
+    //Get the instance data
+    InstanceData* instance_data{ nullptr };
+    OfxPropertySetHandle effectProps;
+    global_EffectSuite->getPropertySet(instance, &effectProps);
+    global_PropertySuite->propGetPointer(effectProps, kOfxPropInstanceData, 0, (void**)&instance_data);
+
     
     //Get the context;
     char* cstr;
@@ -77,7 +79,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
 
     //Setup platform independant Renderer
     Renderer<Precision> renderer{};
-    setup_render(renderer, width, height, parameter_helper, time);
+    setup_render(renderer, width, height, instance_data->parameter_helper, time);
 
     //Perform the actual render
     do_pixel_render(renderer, width, height, output_clip);

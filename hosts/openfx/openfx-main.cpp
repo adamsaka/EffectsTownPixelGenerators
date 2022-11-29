@@ -35,6 +35,7 @@ Description:
 #include "openfx-render.h"
 #include "openfx-helper.h"
 #include "openfx-parameter-helper.h"
+#include "openfx-instance-data.h"
 
 #include <exception>
 #include <string.h>
@@ -48,8 +49,8 @@ const OfxPropertySuiteV1* global_PropertySuite{ nullptr };
 const OfxParameterSuiteV1* global_ParameterSuite{ nullptr };
 HostData global_hostData{};
 
-
-ParameterHelper parameter_helper{};
+//TODO:  To be safe we should copy this for each instance.  It should be done on the create instance action.
+ParameterHelper master_parameter_helper{};
 
 /*******************************************************************************************************
 Forward Declarations
@@ -61,6 +62,7 @@ static OfxStatus openfx_on_load_action(void);
 static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle effect, OfxPropertySetHandle inArgs);
 static OfxStatus openfx_image_effect_action_get_clip_preferences(const OfxImageEffectHandle effect, OfxPropertySetHandle out_args);
 static OfxStatus openfx_create_instance_action(OfxImageEffectHandle instance);
+static OfxStatus openfx_destroy_instance_action([[maybe_unused]] OfxImageEffectHandle effect);
 
 
 /*******************************************************************************************************
@@ -122,13 +124,14 @@ static OfxStatus openfx_plugin_main(const char* action, const void* handle,  Ofx
         #pragma warning(suppress:26462 26493) 
         const OfxImageEffectHandle effect = (const OfxImageEffectHandle)handle;  //Effect Handle (A blind struct*)
 
-        if (strcmp(action, kOfxImageEffectActionRender) == 0) return openfx_render(effect, inArgs, parameter_helper);
+        if (strcmp(action, kOfxImageEffectActionRender) == 0) return openfx_render(effect, inArgs);
         if (strcmp(action, kOfxActionCreateInstance) == 0) return openfx_create_instance_action(effect);
-        if (strcmp(action, kOfxActionDestroyInstance) == 0) return kOfxStatOK;
+        if (strcmp(action, kOfxActionDestroyInstance) == 0) return openfx_destroy_instance_action(effect);;
         if (strcmp(action, kOfxActionLoad) == 0) return openfx_on_load_action();
         if (strcmp(action, kOfxActionDescribe) == 0) return openfx_describe_action(effect);
         if (strcmp(action, kOfxImageEffectActionDescribeInContext) == 0) return openfx_describe_in_context_action(effect, inArgs);
         if (strcmp(action, kOfxImageEffectActionGetClipPreferences) == 0) return openfx_image_effect_action_get_clip_preferences(effect, out_args);
+
 
         return kOfxStatReplyDefault;
     }
@@ -172,11 +175,6 @@ static OfxStatus openfx_on_load_action(void) {
 
     global_ParameterSuite = static_cast<const OfxParameterSuiteV1*>(global_OFXHost->fetchSuite(global_OFXHost->host, kOfxParameterSuite, 1));
     if (!global_ParameterSuite)return kOfxStatErrMissingHostFeature;
-
-
-    
-
-
 
     char* cstr;
     int count;
@@ -312,7 +310,7 @@ void add_parameters(const OfxImageEffectHandle effect) {
     //Get the effect's parameter set and store it in our helper class.
     OfxParamSetHandle paramset;
     global_EffectSuite->getParamSet(effect, &paramset);
-    parameter_helper.set_paramset(paramset);
+    master_parameter_helper.set_paramset(paramset);
 
     //Get parameters from project
     auto params = build_project_parameters();
@@ -321,10 +319,10 @@ void add_parameters(const OfxImageEffectHandle effect) {
     for (auto p : params.entries) {
         switch (p.type) {
         case ParameterType::seed:
-            parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
+            master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), 0);
             break;
         case ParameterType::number:
-            parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
+            master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
             break;
 
         default:
@@ -429,7 +427,42 @@ static OfxStatus openfx_image_effect_action_get_clip_preferences([[maybe_unused]
 /*******************************************************************************************************
 "CreateInstance" Action.
 *******************************************************************************************************/
-static OfxStatus openfx_create_instance_action([[maybe_unused]] OfxImageEffectHandle effect) {
+static OfxStatus openfx_create_instance_action(OfxImageEffectHandle instance) {
+    
+    //Create new instance data object on heap
+    InstanceData* instance_data = new InstanceData();
+    
+    //Copy parameter information into instance. 
+    //Each instance will have its own handels and data, so we need a separate copy for each instance.
+    instance_data->parameter_helper = master_parameter_helper;
+
+    //Load all the handels for the parameters
+    OfxParamSetHandle paramset;
+    global_EffectSuite->getParamSet(instance, &paramset);
+    instance_data->parameter_helper.set_paramset(paramset);
+    instance_data->parameter_helper.load_handles();
+
+    //Send a point to the host.
+    OfxPropertySetHandle effectProps;
+    global_EffectSuite->getPropertySet(instance, &effectProps);
+    global_PropertySuite->propSetPointer(effectProps, kOfxPropInstanceData, 0, (void*)instance_data);
+
+    return kOfxStatOK;
+}
+
+/*******************************************************************************************************
+"DestroyInstance" Action.
+*******************************************************************************************************/
+static OfxStatus openfx_destroy_instance_action( OfxImageEffectHandle instance) {
+    InstanceData* instance_data {nullptr};
+
+    //Get the pointer to the instance data from the host.
+    OfxPropertySetHandle effectProps;
+    global_EffectSuite->getPropertySet(instance, &effectProps);
+    global_PropertySuite->propGetPointer(effectProps, kOfxPropInstanceData, 0, (void**) &instance_data);
+
+    //Release the instance data
+    delete instance_data;
 
     return kOfxStatOK;
 }
