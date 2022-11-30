@@ -43,6 +43,8 @@ enum class ParameterID {
 	seed_int,	   //Reserved
 	scale,
 	directional_bias,
+	evolve1,
+	evolve2,
 
 
 	__last  //Must be last (used for array memory allocation)

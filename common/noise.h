@@ -134,7 +134,83 @@ static F value_noise(vec2<F> p , uint64_t seed=0){
     vec2<F> i = floor(p);
     vec2<F> f = fract_negative_adjust(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
     vec2<F> u = f*f*(static_cast<F>(3.0)- static_cast<F>(2.0)*f);
-    return mix( mix( hash( i + vec2<F>(0.0,0.0), seed ), hash( i + vec2<F>(1.0,0.0),seed ), u.x),mix( hash( i + vec2<F>(0.0,1.0),seed ),hash( i + vec2<F>(1.0,1.0),seed ), u.x), u.y);
+    
+    const F x1 = hash(i + vec2<F>(0.0, 0.0), seed);
+    const F x2 = hash(i + vec2<F>(1.0, 0.0), seed);
+    const F x3 = hash(i + vec2<F>(0.0, 1.0), seed);
+    const F x4 = hash(i + vec2<F>(1.0, 1.0), seed);
+    
+    return mix(mix(x1 , x2 , u.x),mix(x3 , x4, u.y), u.x);
+}
+
+
+template <std::floating_point F>
+static F value_noise(vec3<F> p, uint64_t seed = 0) {
+    vec3<F> i = floor(p);
+    vec3<F> f = fract_negative_adjust(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+    vec3<F> u = f * f * (static_cast<F>(3.0) - static_cast<F>(2.0) * f);
+
+    const F x1 = hash(i + vec3<F>(0.0, 0.0, 0.0), seed);
+    const F x2 = hash(i + vec3<F>(1.0, 0.0, 0.0), seed);
+    const F x3 = hash(i + vec3<F>(0.0, 1.0, 0.0), seed);
+    const F x4 = hash(i + vec3<F>(1.0, 1.0, 0.0), seed);    
+    const F x5 = hash(i + vec3<F>(0.0, 0.0, 1.0), seed);
+    const F x6 = hash(i + vec3<F>(1.0, 0.0, 1.0), seed);
+    const F x7 = hash(i + vec3<F>(0.0, 1.0, 1.0), seed);
+    const F x8 = hash(i + vec3<F>(1.0, 1.0, 1.0), seed);
+    
+    const F y1 = mix(x1, x2, u.x);
+    const F y2 = mix(x3, x4, u.x);
+    const F y3 = mix(x5, x6, u.x);
+    const F y4 = mix(x7, x8, u.x);
+
+    const F z1 = mix(y1, y2, u.y);
+    const F z2 = mix(y3, y4, u.y);
+
+    return mix(z1, z2, u.z);
+}
+
+template <std::floating_point F>
+static F value_noise(vec4<F> p, uint64_t seed = 0) {
+    vec4<F> i = floor(p);
+    vec4<F> f = fract_negative_adjust(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+    vec4<F> u = f * f * (static_cast<F>(3.0) - static_cast<F>(2.0) * f);
+
+    const F x1 = hash(i + vec4<F>(0.0, 0.0, 0.0, 0.0), seed);
+    const F x2 = hash(i + vec4<F>(1.0, 0.0, 0.0, 0.0), seed);
+    const F x3 = hash(i + vec4<F>(0.0, 1.0, 0.0, 0.0), seed);
+    const F x4 = hash(i + vec4<F>(1.0, 1.0, 0.0, 0.0), seed);
+    const F x5 = hash(i + vec4<F>(0.0, 0.0, 1.0, 0.0), seed);
+    const F x6 = hash(i + vec4<F>(1.0, 0.0, 1.0, 0.0), seed);
+    const F x7 = hash(i + vec4<F>(0.0, 1.0, 1.0, 0.0), seed);
+    const F x8 = hash(i + vec4<F>(1.0, 1.0, 1.0, 0.0), seed);
+    const F x9 = hash(i + vec4<F>(0.0, 0.0, 0.0, 1.0), seed);
+    const F x10 = hash(i + vec4<F>(1.0, 0.0, 0.0, 1.0), seed);
+    const F x11 = hash(i + vec4<F>(0.0, 1.0, 0.0, 1.0), seed);
+    const F x12 = hash(i + vec4<F>(1.0, 1.0, 0.0, 1.0), seed);
+    const F x13 = hash(i + vec4<F>(0.0, 0.0, 1.0, 1.0), seed);
+    const F x14 = hash(i + vec4<F>(1.0, 0.0, 1.0, 1.0), seed);
+    const F x15 = hash(i + vec4<F>(0.0, 1.0, 1.0, 1.0), seed);
+    const F x16 = hash(i + vec4<F>(1.0, 1.0, 1.0, 1.0), seed);
+
+    const F y1 = mix(x1, x2, u.x);
+    const F y2 = mix(x3, x4, u.x);
+    const F y3 = mix(x5, x6, u.x);
+    const F y4 = mix(x7, x8, u.x);
+    const F y5 = mix(x9, x10, u.x);
+    const F y6 = mix(x11, x12, u.x);
+    const F y7 = mix(x13, x14, u.x);
+    const F y8 = mix(x15, x16, u.x);
+
+    const F z1 = mix(y1, y2, u.y);
+    const F z2 = mix(y3, y4, u.y);
+    const F z3 = mix(y5, y6, u.y);
+    const F z4 = mix(y7, y8, u.y);
+
+    const F w1 = mix(z1, z2, u.z);
+    const F w2 = mix(z3, z4, u.z);
+
+    return mix(w1, w2, u.w);
 }
 
 
@@ -156,4 +232,32 @@ static F fbm(vec2<F> x, int number_octaves = 8, uint64_t seed=0){
     }
     return t;
 }	
-	
+template <std::floating_point F>
+static F fbm(vec3<F> x, int number_octaves = 8, uint64_t seed = 0) {
+    const F H = 1.0;
+    F G = exp2(-H);
+    F f = 1.0;
+    F a = 1.0;
+    F t = 0.0;
+    for (int i = 0; i < number_octaves; i++) {
+        t += a * value_noise(f * x, seed);
+        f *= 2.0;
+        a *= G;
+    }
+    return t;
+}
+template <std::floating_point F>
+static F fbm(vec4<F> x, int number_octaves = 8, uint64_t seed = 0) {
+    const F H = 1.0;
+    F G = exp2(-H);
+    F f = 1.0;
+    F a = 1.0;
+    F t = 0.0;
+    for (int i = 0; i < number_octaves; i++) {
+        t += a * value_noise(f * x, seed);
+        f *= 2.0;
+        a *= G;
+    }
+    return t;
+}
+

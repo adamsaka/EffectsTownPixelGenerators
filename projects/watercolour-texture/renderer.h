@@ -119,16 +119,17 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     
     F parameter_scale = static_cast<F>(params.get_value(ParameterID::scale));
     F parameter_directional_bias = static_cast<F>(params.get_value(ParameterID::directional_bias));
+    F parameter_evolve1 = 0.1f * static_cast<F>(params.get_value(ParameterID::evolve1));
+    F parameter_evolve2 = static_cast<F>(2.0* std::numbers::pi) * static_cast<F>(params.get_value(ParameterID::evolve2));
     
     if (parameter_scale <= 0.0f) parameter_scale = 0.000001f;
 
     F xf = static_cast<F>(x) ;
     F yf = static_cast<F>(y) ;
-    
 
 
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
-    vec2<F> p(aspect* (static_cast<F>(2.0)*xf/ width_f- static_cast<F>(1.0)) , static_cast<F>(2.0) * yf/height_f - static_cast<F>(1.0));
+    vec2<F> p(aspect * (static_cast<F>(2.0) * xf / width_f - static_cast<F>(1.0)), static_cast<F>(2.0) * yf / height_f - static_cast<F>(1.0));
  
     
     vec2<F> d{ 1.0,1.0 };
@@ -136,20 +137,60 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
     
     p = p* normalize(d) * static_cast<F>(sqrt(2)) * parameter_scale;
     
+    F evolve_x = parameter_evolve1 * cos(parameter_evolve2);
+    F evolve_y = parameter_evolve1 * sin(parameter_evolve2);
+
+
+    auto p3 = vec4(p, evolve_x, evolve_y);
+    auto nVec2 = p + vec2(fbm(p3, 5, seed), fbm(p3 + 1.0, 5, seed)) - 0.5;
+
+    p3 = vec4(nVec2, evolve_x+5.5f, evolve_y-5.5f);
+    auto nVec3 = nVec2 + vec2(fbm(p3 + 5.0, 8, seed), fbm(p3 + 9.0, 8, seed)) - 0.5;
+    
+    
+    
+    auto nVec4 = nVec3 + vec2(fbm(nVec3 + 25.0, 8, seed), fbm(nVec3 + 19.0, 8, seed)) - 0.5;
+   
+
+    auto nVec5 = nVec4 + vec2(fbm(nVec4 - 2.0, 5, seed), fbm(nVec4 - 19.0, 5, seed)) - 0.5;
+    
+
+    auto nVec6 = nVec5 + vec2(fbm(nVec5 - 5.0, 5, seed), fbm(nVec5 - 9.0, 5, seed)) - 0.5;
+    auto nVec7 = nVec6 + vec2(fbm(nVec6 - 8.0, 8, seed), fbm(nVec6 - 1.0, 8, seed)) - 0.5;
+
+    auto r = fbm(vec4(nVec5, evolve_x*0.3f, evolve_y * 0.3f), 2,seed) * 0.68;
+    auto g = fbm(vec4(nVec6, evolve_x*0.25f, evolve_y * 0.3f), 2, seed) * 0.68;
+    auto b = fbm(vec4(nVec7, evolve_x*0.19f, evolve_y * 0.3f), 2, seed) * 0.68;
+
+    
+    return ColourSRGB{r,g,b}; 
+
+
+
+
+
+  
+
+}    
+
+
+
+/*
     auto nVec2 = p +     vec2(fbm(p,10,seed),fbm(p+ 1.0,8,seed))- 0.5;
     auto nVec3 = nVec2 + vec2(fbm(nVec2 + 5.0,  8, seed), fbm(nVec2+ 9.0,  8, seed))- 0.5;
     auto nVec4 = nVec3 + vec2(fbm(nVec3 + 25.0, 8, seed), fbm(nVec3+ 19.0, 8, seed))- 0.5;
     auto nVec5 = nVec4 + vec2(fbm(nVec4 - 2.0,  5, seed), fbm(nVec4- 19.0, 5, seed))- 0.5;
     auto nVec6 = nVec5 + vec2(fbm(nVec5 - 5.0,  5, seed), fbm(nVec5- 9.0,  5, seed))- 0.5;
     auto nVec7 = nVec6 + vec2(fbm(nVec6 - 8.0,  5, seed), fbm(nVec6- 1.0,  5, seed))- 0.5;
-    
-    auto r = fbm(nVec5,5,seed)*0.68;
+
+    auto r = fbm(nVec5, 5, seed) * 0.68;
     auto g = fbm(nVec6,5,seed)*0.68;
-    auto b = fbm(nVec7,5,seed)*0.68;
-	return ColourSRGB{r,g,b};  
+    auto b = fbm(nVec7,5,seed)*0.68;*/
 
-}    
-
+    /*auto r = value_noise(vec3(nVec5, parameter_evolve1), seed);
+    auto g = value_noise(vec3(nVec6, parameter_evolve1), seed);
+    auto b = value_noise(vec3(nVec7, parameter_evolve1), seed);
+    */
 
 
 

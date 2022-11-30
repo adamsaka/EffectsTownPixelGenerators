@@ -42,5 +42,8 @@ ParameterList build_project_parameters() {
 	params.add_entry(ParameterEntry::make_number(ParameterID::scale, "Scale",0.0000001,10000.0,1.0,0.000001,100.0,2));
 	params.add_entry(ParameterEntry::make_number(ParameterID::directional_bias, "Directional Bias", -10000, 10000.0, 0.0, -100.0, 100.0, 2));
 
+	params.add_entry(ParameterEntry::make_number(ParameterID::evolve1, "Evolve (Linear/Speed)", -10000.0, 10000.0, 1.0, 0, 100.0, 2));
+	params.add_entry(ParameterEntry::make_number(ParameterID::evolve2, "Evolve (Loop)", -10000.0, 10000.0, 0.0, 0, 1, 4));
+
 	return params;
 }

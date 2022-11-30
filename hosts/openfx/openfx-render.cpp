@@ -47,7 +47,7 @@ static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_wind
 Render
 *******************************************************************************************************/
 OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandle in_args) {
-    dev_log(std::string("Render Action"));
+    //dev_log(std::string("Render Action"));
     
     //Get the instance data
     InstanceData* instance_data{ nullptr };
@@ -61,7 +61,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     OfxPropertySetHandle instanceProperties;
     check_openfx(global_EffectSuite->getPropertySet(instance, &instanceProperties));
     global_PropertySuite->propGetString(instanceProperties, kOfxImageEffectPropContext, 0, &cstr);
-    dev_log(std::string("Render Action - Context is: ") + cstr);
+    //dev_log(std::string("Render Action - Context is: ") + cstr);
     [[maybe_unused]] auto context = GetContextFromString(cstr);
 
     //Get the current project time (we need it to checkout clips)
@@ -78,7 +78,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //Get Dimensions
     const int width = output_clip.bounds.x2 - output_clip.bounds.x1;
     const int height = output_clip.bounds.y2 - output_clip.bounds.y1;
-    dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
+    //dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
 
 
     //Setup platform independant Renderer
@@ -229,7 +229,7 @@ static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI & render_win
 
     unsigned int num_threads;
     global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
-    dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
+    //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
    
     if (num_threads > 1) {
         global_MultiThreadSuite->multiThread(thread_entry_pixel_render, num_threads, &rd);

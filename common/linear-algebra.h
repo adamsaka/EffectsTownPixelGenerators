@@ -180,6 +180,8 @@ struct vec4{
 	vec4<F>(const vec3<F>& xyz, F w1) noexcept : x(xyz.x), y(xyz.y), z(xyz.z),w(w1) {}
 	vec4<F>(F x1, const vec3<F>& yzw) noexcept : x(x1), y(yzw.x), z(yzw.y), w(yzw.z) {}
 	vec4<F>(const vec2<F>& xy, const vec2<F>& zw) noexcept : x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
+	vec4<F>(const vec2<F>& xy, F z1, F w1) noexcept : x(xy.x), y(xy.y), z(z1), w(w1) {}
+	vec4<F>(F x1, F y1, const vec2<F>& zw) noexcept : x(x1), y(y1), z(zw.x), w(zw.y) {}
 
 	bool operator==(const vec4<F>& rhs) const noexcept { return (x == rhs.x) && (y == rhs.y) && (z == rhs.z) && (w==rhs.w); }
 
