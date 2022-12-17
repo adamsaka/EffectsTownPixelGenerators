@@ -36,12 +36,80 @@ Description:
 #include "config.h"
 #include "..\..\common\linear-algebra.h"
 
+#include "..\..\common\simd-cpuid.h"
+#include "..\..\common\simd-f32.h"
+#include "..\..\common\simd-uint32.h"
+
+
 #include <bit>
 
 static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept;
-static void setup_render(Renderer<Precision>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time);
+
 static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
-static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<Precision>& renderer, int width, int height, ClipHolder& output);
+
+template <typename S>
+struct RenderThreadData {
+    Renderer<S>* renderer;
+    ClipHolder* output;
+    OfxRectI* render_window;
+};
+
+template <typename S>
+void render_line(RenderThreadData<S>* rd, int y) {
+    //dev_log("Render Line " + std::to_string(y));
+    
+    for (int x = rd->render_window->x1; x < rd->render_window->x2; x += S::number_of_elements() ) {
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S::make_set1(static_cast<S::F>(y)));
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+    }
+}
+
+
+
+/*******************************************************************************************************
+
+*******************************************************************************************************/
+template <typename S>
+static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
+    RenderThreadData<S> rd{};
+    rd.renderer = &renderer;
+    rd.output = &output;
+    rd.render_window = &render_window;
+
+
+
+    unsigned int num_threads;
+    global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
+    //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
+
+    if (num_threads > 1) {
+        global_MultiThreadSuite->multiThread(thread_entry_pixel_render<S>, num_threads, &rd);
+    }
+    else {
+        for (int y = render_window.y1; y < render_window.y2; y++) {
+            if (global_EffectSuite->abort(instance)) return;
+            render_line(&rd, y);
+        }
+    }
+}
+
+/*******************************************************************************************************
+
+*******************************************************************************************************/
+template <typename S>
+static void setup_render(Renderer<S>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time) {
+
+    auto params = read_parameters(parameter_helper, time);
+
+    renderer.set_size(width, height);
+    renderer.set_seed("OpenFX");
+    if (params.contains(ParameterID::seed)) {
+        renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
+    }
+
+
+    renderer.set_parameters(std::move(params));
+}
 
 /*******************************************************************************************************
 Render
@@ -81,12 +149,29 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
 
 
-    //Setup platform independant Renderer
-    Renderer<Precision> renderer{};
-    setup_render(renderer, width, height, instance_data->parameter_helper, time);
+    //Runtime CPU Dispatch
+    CpuInformation cpu_info{};
+    if (Simd512UInt64::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info) && Simd512UInt32::cpu_supported(cpu_info) ) {
+        //AVX-512 & AVX-512DQ 
+        Renderer<Simd512Float32> renderer{};
+        setup_render(renderer, width, height, instance_data->parameter_helper, time);
+        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
 
-    //Perform the actual render
-    do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+    }else if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info) && Simd256UInt32::cpu_supported(cpu_info)){
+        //AVX & AVX2
+        Renderer<Simd256Float32> renderer{};       
+        setup_render(renderer, width, height, instance_data->parameter_helper, time);       
+        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+    }
+    else {
+        //Fallback
+        Renderer<FallbackFloat32> renderer{};
+        setup_render(renderer, width, height, instance_data->parameter_helper, time);
+        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+    }
+
+
+
 
 
     //Get & Mix Souce image.
@@ -108,22 +193,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     return kOfxStatOK;
 }
 
-/*******************************************************************************************************
 
-*******************************************************************************************************/
-static void setup_render(Renderer<Precision>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time) {
-        
-    auto params = read_parameters(parameter_helper, time);
-
-    renderer.set_size(width, height);
-    renderer.set_seed("OpenFX");
-    if (params.contains(ParameterID::seed)) {
-        renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
-    }
-
-
-    renderer.set_parameters(std::move(params));
-}
 
 /*******************************************************************************************************
 
@@ -150,16 +220,19 @@ static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime 
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, ColourSRGB<Precision> c) {
+template <typename S>
+inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, int max_x, ColourSRGB<S> c) {
     const bool hasAlpha = output.componentsPerPixel == 4;
 
     if constexpr (!project_is_solid_render) {
         if (output.preMultiplied) c = c.premultiply_alpha();
     }
 
+   
     switch (output.bitDepth) {
     case 8:
          {
+            /*
             const auto ptrDest = output.pixelAddress8(x, y);
             if (ptrDest) {
                 ptrDest[0] = static_cast<uint8_t>(clamp(c.red* static_cast<Precision>(white8), static_cast<Precision>(0.0),static_cast<Precision>(white8))); //red
@@ -169,44 +242,37 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
                 if (hasAlpha) ptrDest[3] = static_cast<uint8_t>(clamp(c.blue * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //alpha
             }
             break;
+            */
          }
     case 32:
         {
-            const auto ptrDest = output.pixelAddressFloat(x, y);
-            if (ptrDest) {
-                ptrDest[0] = static_cast<float>(c.red); //red
-                ptrDest[1] = static_cast<float>(c.green); //green
-                ptrDest[2] = static_cast<float>(c.blue); //blue            
-                
-                if (hasAlpha) ptrDest[3] = static_cast<float>(c.alpha); //alpha
+            
+            
+            for (int i = 0; i < S::number_of_elements(); i++) {
+                if (x + i >= max_x) break;
+                const auto ptrDest = output.pixelAddressFloat(x+i, y);
+                ptrDest[0] = static_cast<float>(c.red.element(i)); 
+                ptrDest[1] = static_cast<float>(c.green.element(i)); 
+                ptrDest[2] = static_cast<float>(c.blue.element(i)); 
+                if (hasAlpha) ptrDest[3] = static_cast<float>(c.alpha.element(i)); 
+
             }
             break;
         }
     default:
         dev_log("Unexpected Pixel Format");
     }
+    
 }
 
-struct RenderThreadData {
-    Renderer<Precision>* renderer;
-    ClipHolder * output;
-    OfxRectI* render_window;
-};
-
-
- void render_line(RenderThreadData* rd, int y) {
-    for (int x = rd->render_window->x1; x < rd->render_window->x2; x++) {
-        const auto c = rd->renderer->render_pixel(x, y);
-        copy_pixel_to_output_buffer(*rd->output, x, y, c);
-    }
-}
 
 
 /*******************************************************************************************************
 
 *******************************************************************************************************/
+template <typename S>
 void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
-    RenderThreadData * rd = static_cast<RenderThreadData*>(customArg);
+    RenderThreadData<S> * rd = static_cast<RenderThreadData<S>*>(customArg);
 
     for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
         if (y % threadMax == threadIndex) {
@@ -216,30 +282,7 @@ void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsign
 }
 
 
-/*******************************************************************************************************
 
-*******************************************************************************************************/
-static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI & render_window, Renderer<Precision>& renderer,[[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
-    RenderThreadData rd{};
-    rd.renderer = &renderer;
-    rd.output = &output;
-    rd.render_window = &render_window;
-    
-
-
-    unsigned int num_threads;
-    global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
-    //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
-   
-    if (num_threads > 1) {
-        global_MultiThreadSuite->multiThread(thread_entry_pixel_render, num_threads, &rd);
-    }else {
-        for (int y = render_window.y1; y < render_window.y2; y++) {
-            if (global_EffectSuite->abort(instance)) return;
-            render_line(&rd, y);
-        }
-    }
-}
 
 
 

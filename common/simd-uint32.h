@@ -48,7 +48,10 @@ Operators (rhs int)
 #include <immintrin.h>
 #include <stdint.h>
 
+
+
 #include "simd-cpuid.h"
+
 
 
 /**************************************************************************************************
@@ -57,8 +60,10 @@ Operators (rhs int)
  * ************************************************************************************************/
 struct Simd512UInt32 {
 	__m512i v;
+	typedef uint32_t F;
 
 	Simd512UInt32(__m512i a) : v(a) {};
+	Simd512UInt32(F a) : v(_mm512_set1_epi32(a)) {};
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -66,6 +71,9 @@ struct Simd512UInt32 {
 	}
 	static constexpr int size_of_element() { return sizeof(uint32_t); }
 	static constexpr int number_of_elements() { return 16; }
+
+	//*****Elements*****
+	F element(int i) { return v.m512i_u32[i]; }
 
 	//*****Addition Operators*****
 	Simd512UInt32& operator+=(const Simd512UInt32& rhs) noexcept { v = _mm512_add_epi32(v, rhs.v); return *this; }
@@ -88,6 +96,8 @@ struct Simd512UInt32 {
 	Simd512UInt32& operator|=(const Simd512UInt32& rhs) noexcept { v = _mm512_or_si512(v, rhs.v); return *this; }
 	Simd512UInt32& operator^=(const Simd512UInt32& rhs) noexcept { v = _mm512_xor_si512(v, rhs.v); return *this; }
 
+	//*****Mathematical*****
+	
 };
 
 //*****Addition Operators*****
@@ -133,8 +143,10 @@ inline Simd512UInt32 max(Simd512UInt32 a, Simd512UInt32 b) { return Simd512UInt3
  * ************************************************************************************************/
 struct Simd256UInt32 {
 	__m256i v;
+	typedef uint32_t F;
 
 	Simd256UInt32(__m256i a) : v(a) {};
+	Simd256UInt32(F a) : v(_mm256_set1_epi32(a)) {};
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -143,6 +155,8 @@ struct Simd256UInt32 {
 	static constexpr int size_of_element() { return sizeof(uint32_t); }
 	static constexpr int number_of_elements() { return 8; }
 
+	//*****Elements*****
+	F element(int i) { return v.m256i_u32[i]; }
 
 	//*****Addition Operators*****
 	Simd256UInt32& operator+=(const Simd256UInt32& rhs) noexcept { v = _mm256_add_epi32(v, rhs.v); return *this; }
@@ -166,6 +180,14 @@ struct Simd256UInt32 {
 	Simd256UInt32& operator|=(const Simd256UInt32& rhs) noexcept { v = _mm256_or_si256(v, rhs.v); return *this; }
 	Simd256UInt32& operator^=(const Simd256UInt32& rhs) noexcept { v = _mm256_xor_si256(v, rhs.v); return *this; }
 
+	//*****Make Functions****
+	static Simd256UInt32 make_sequential(uint32_t first) { return Simd256UInt32(_mm256_set_epi32(first, first + 1, first + 2, first + 3, first + 4, first + 5, first + 6, first + 7)); }
+	static Simd256UInt32 make_set1(uint32_t v) { return _mm256_set1_epi32(v); }
+
+	//*****Mathematical*****
+	
+
+	
 
 };
 
@@ -201,9 +223,11 @@ inline Simd256UInt32 operator~(const Simd256UInt32& lhs) noexcept { return Simd2
 inline Simd256UInt32 operator<<(const Simd256UInt32& lhs, int bits) noexcept { return Simd256UInt32(_mm256_slli_epi32(lhs.v, bits)); }
 inline Simd256UInt32 operator>>(const Simd256UInt32& lhs, int bits) noexcept { return Simd256UInt32(_mm256_srli_epi32(lhs.v, bits)); }
 
+inline Simd256UInt32 rotl(const Simd256UInt32& a, int bits) { return a << bits | a >> (32 - bits); };
+inline Simd256UInt32 rotr(const Simd256UInt32& a, int bits) { return a >> bits | a << (32 - bits); };
 
 //*****Min/Max*****
-inline Simd256UInt32 min(Simd256UInt32 a, Simd256UInt32 b) { return Simd256UInt32(_mm256_min_epu32(a.v, b.v)); }
+inline Simd256UInt32 min(Simd256UInt32 a, Simd256UInt32 b) {  return Simd256UInt32(_mm256_min_epu32(a.v, b.v)); }
 inline Simd256UInt32 max(Simd256UInt32 a, Simd256UInt32 b) { return Simd256UInt32(_mm256_max_epu32(a.v, b.v)); }
 
 
@@ -222,15 +246,19 @@ inline Simd256UInt32 max(Simd256UInt32 a, Simd256UInt32 b) { return Simd256UInt3
 * ************************************************************************************************/
 struct FallbackUInt32 {
 	uint32_t v;
+	typedef uint32_t F;
 
 	FallbackUInt32(uint32_t a) : v(a) {};
 
 	//*****Support Informtion*****
-	static bool cpu_supported(CpuInformation cpuid) {
+	static bool cpu_supported(CpuInformation) {
 		return true;
 	}
 	static constexpr int size_of_element() { return sizeof(uint32_t); }
 	static constexpr int number_of_elements() { return 1; }
+
+	//*****Elements*****
+	F element(int) { return v; }
 
 	//*****Addition Operators*****
 	FallbackUInt32& operator+=(const FallbackUInt32& rhs) noexcept { v += rhs.v; return *this; }
@@ -253,6 +281,8 @@ struct FallbackUInt32 {
 	FallbackUInt32& operator|=(const FallbackUInt32& rhs) noexcept { v |= rhs.v; return *this; }
 	FallbackUInt32& operator^=(const FallbackUInt32& rhs) noexcept { v ^= rhs.v; return *this; }
 
+	//*****Mathematical*****
+	
 };
 
 //*****Addition Operators*****

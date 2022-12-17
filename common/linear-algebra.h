@@ -42,24 +42,18 @@ struct mat4;
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F fract(F value){
-	return fmod(abs(value),1.0); 	
+	
+	return value - floor(value); 	
 }
 
-/**************************************************************************************************
- * Fractional component, but does not mirror around zero.
- * ************************************************************************************************/
-template <std::floating_point F>
-constexpr inline F fract_negative_adjust(F value){
-	const F f = fmod(value, static_cast<F>(1.0)) ;
-	return (signbit(value))? ((f>=static_cast<F>(-0.0)) ? static_cast<F>(0.0) : static_cast<F>(1.0) + f) : f;
-}
+
 
 /**************************************************************************************************
  * A 2-Vector (x,y)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 struct vec2 {
 	F x{};
 	F y{};
@@ -84,32 +78,34 @@ struct vec2 {
 
 };
 
-template <std::floating_point F> inline vec2<F> operator+(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator-(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator*(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec2<F> operator/(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator+(vec2<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator-(vec2<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator*(vec2<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator/(vec2<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator+(F2 lhs, vec2<F> rhs) noexcept {return rhs + static_cast<F>(lhs); }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator-(F2 lhs, vec2<F> rhs) noexcept { return -rhs + static_cast<F>(lhs); }
-template <std::floating_point F, std::floating_point F2> inline vec2<F> operator*(F2 lhs, vec2<F> rhs) noexcept { return rhs * static_cast<F>(lhs); }
+template <typename F> inline vec2<F> operator+(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs += rhs;	return lhs; }
+template <typename F> inline vec2<F> operator-(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs -= rhs;	return lhs; }
+template <typename F> inline vec2<F> operator*(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs *= rhs;	return lhs; }
+template <typename F> inline vec2<F> operator/(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs /= rhs;	return lhs; }
+template <typename F, typename F2> inline vec2<F> operator+(vec2<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec2<F> operator-(vec2<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec2<F> operator*(vec2<F> lhs, F2 rhs) noexcept { 
+	lhs *= static_cast<F>(rhs);	
+	return lhs; 
+}
+template <typename F, typename F2> inline vec2<F> operator/(vec2<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec2<F> operator+(F2 lhs, vec2<F> rhs) noexcept {return rhs + static_cast<F>(lhs); }
+template <typename F, typename F2> inline vec2<F> operator-(F2 lhs, vec2<F> rhs) noexcept { return -rhs + static_cast<F>(lhs); }
+template <typename F, typename F2> inline vec2<F> operator*(F2 lhs, vec2<F> rhs) noexcept { return rhs * static_cast<F>(lhs); }
 
-template <std::floating_point F> inline static F dot(const vec2<F>& a, const vec2<F>& b) noexcept { return a.x * b.x + a.y * b.y; }
-template <std::floating_point F> inline vec2<F> normalize(vec2<F> v) noexcept {v.normalize(); return v;}
-template <std::floating_point F> inline F distance(const vec2<F>& a, const vec2<F> & b) { return std::sqrt((b.x-a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y)); }
-template <std::floating_point F> inline vec2<F> floor(const vec2<F>& a) { return vec2(std::floor(a.x), std::floor(a.y)); }
-template <std::floating_point F> inline vec2<F> fract(const vec2<F>& a) { return vec2(fract(a.x), fract(a.y)); }
-template <std::floating_point F> inline vec2<F> fract_negative_adjust(const vec2<F>& a) { return vec2(fract_negative_adjust(a.x), fract_negative_adjust(a.y)); }
-template <std::floating_point F> inline vec2<F> trunc(const vec2<F>& a) { return vec2(trunc(a.x), trunc(a.y)); }
+template <typename F> inline static F dot(const vec2<F>& a, const vec2<F>& b) noexcept { return a.x * b.x + a.y * b.y; }
+template <typename F> inline vec2<F> normalize(vec2<F> v) noexcept {v.normalize(); return v;}
+template <typename F> inline F distance(const vec2<F>& a, const vec2<F> & b) { return sqrt((b.x-a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y)); }
+template <typename F> inline vec2<F> floor(const vec2<F>& a) { return vec2(floor(a.x), floor(a.y)); }
+template <typename F> inline vec2<F> fract(const vec2<F>& a) { return vec2(fract(a.x), fract(a.y)); }
+template <typename F> inline vec2<F> trunc(const vec2<F>& a) { return vec2(trunc(a.x), trunc(a.y)); }
 
 
 
 /**************************************************************************************************
  * A 3-Vector (x,y,z)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 struct vec3 {
 	F x{};
 	F y{};
@@ -140,26 +136,25 @@ struct vec3 {
 	inline vec2<F> yz() const noexcept { return vec2<F>(y, z); }
 	inline vec2<F> xz() const noexcept { return vec2<F>(x, z); }
 };
-template <std::floating_point F> inline vec3<F> operator+(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator-(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator*(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec3<F> operator/(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec3<F> operator+(vec3<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec3<F> operator-(vec3<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec3<F> operator*(vec3<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec3<F> operator/(vec3<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F> inline vec3<F> operator+(F lhs, vec3<F> rhs) noexcept { return rhs + lhs; }
-template <std::floating_point F> inline vec3<F> operator-(F lhs, vec3<F> rhs) noexcept { return -rhs + lhs; }
-template <std::floating_point F> inline vec3<F> operator*(F lhs, vec3<F> rhs) noexcept { return rhs * lhs; }
+template <typename F> inline vec3<F> operator+(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs += rhs;	return lhs; }
+template <typename F> inline vec3<F> operator-(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
+template <typename F> inline vec3<F> operator*(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
+template <typename F> inline vec3<F> operator/(vec3<F> lhs, const vec3<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
+template <typename F, typename F2> inline vec3<F> operator+(vec3<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec3<F> operator-(vec3<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec3<F> operator*(vec3<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec3<F> operator/(vec3<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
+template <typename F> inline vec3<F> operator+(F lhs, vec3<F> rhs) noexcept { return rhs + lhs; }
+template <typename F> inline vec3<F> operator-(F lhs, vec3<F> rhs) noexcept { return -rhs + lhs; }
+template <typename F> inline vec3<F> operator*(F lhs, vec3<F> rhs) noexcept { return rhs * lhs; }
 
 
-template <std::floating_point F> inline vec3<F> normalize(vec3<F> v) noexcept {v.normalize(); return v;}
-template <std::floating_point F> inline static F dot(const vec3<F>& a, const vec3<F>& b) noexcept {return a.x * b.x + a.y * b.y + a.z + b.z;}
-template <std::floating_point F> inline static vec3<F> cross(const vec3<F>& a, const vec3<F>& b) noexcept {return vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);}
-template <std::floating_point F> inline vec3<F> floor(const vec3<F>& a) { return vec3(std::floor(a.x), std::floor(a.y), std::floor(a.z)); }
-template <std::floating_point F> inline vec3<F> fract(const vec3<F>& a) { return vec3(fract(a.x), fract(a.y), fract(a.z)); }
-template <std::floating_point F> inline vec3<F> fract_negative_adjust(const vec3<F>& a) { return vec3(fract_negative_adjust(a.x), fract_negative_adjust(a.y), fract_negative_adjust(a.z)); }
-template <std::floating_point F> inline vec3<F> trunc(const vec3<F>& a) { return vec3(trunc(a.x), trunc(a.y), trunc(a.z)); }
+template <typename F> inline vec3<F> normalize(vec3<F> v) noexcept {v.normalize(); return v;}
+template <typename F> inline static F dot(const vec3<F>& a, const vec3<F>& b) noexcept {return a.x * b.x + a.y * b.y + a.z + b.z;}
+template <typename F> inline static vec3<F> cross(const vec3<F>& a, const vec3<F>& b) noexcept {return vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);}
+template <typename F> inline vec3<F> floor(const vec3<F>& a) { return vec3(std::floor(a.x), std::floor(a.y), std::floor(a.z)); }
+template <typename F> inline vec3<F> fract(const vec3<F>& a) { return vec3(fract(a.x), fract(a.y), fract(a.z)); }
+template <typename F> inline vec3<F> trunc(const vec3<F>& a) { return vec3(trunc(a.x), trunc(a.y), trunc(a.z)); }
 
 
 
@@ -167,7 +162,7 @@ template <std::floating_point F> inline vec3<F> trunc(const vec3<F>& a) { return
 /**************************************************************************************************
  * A 4-Vector (x,y,z,w)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 struct vec4{
 	F x{};
 	F y{};
@@ -206,24 +201,27 @@ struct vec4{
 	inline F magnitude() const noexcept { return sqrt(x * x + y*y + z*z+ w*w); }
 	inline void normalize() noexcept { const F m = magnitude(); x /= m; y /= m; z /= m; w /= m; }
 };
-template <std::floating_point F> inline vec4<F> operator+(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs += rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator-(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator*(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
-template <std::floating_point F> inline vec4<F> operator/(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec4<F> operator+(vec4<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec4<F> operator-(vec4<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec4<F> operator*(vec4<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F, std::floating_point F2> inline vec4<F> operator/(vec4<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
-template <std::floating_point F> inline vec4<F> operator+(F lhs, vec4<F> rhs) noexcept { return rhs + lhs; }
-template <std::floating_point F> inline vec4<F> operator-(F lhs, vec4<F> rhs) noexcept { return -rhs + lhs; }
-template <std::floating_point F> inline vec4<F> operator*(F lhs, vec4<F> rhs) noexcept { return rhs * lhs; }
+template <typename F> inline vec4<F> operator+(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs += rhs;	return lhs; }
+template <typename F> inline vec4<F> operator-(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs -= rhs;	return lhs; }
+template <typename F> inline vec4<F> operator*(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs *= rhs;	return lhs; }
+template <typename F> inline vec4<F> operator/(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs /= rhs;	return lhs; }
+template <typename F, typename F2> inline vec4<F> operator+(vec4<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec4<F> operator-(vec4<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
+template <typename F, typename F2> inline vec4<F> operator*(vec4<F> lhs, F2 rhs) noexcept { 
+	#pragma warning( suppress : 4244 )
+	lhs *= static_cast<F>(rhs);	
+	return lhs; 
+}
+template <typename F, typename F2> inline vec4<F> operator/(vec4<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
+template <typename F> inline vec4<F> operator+(F lhs, vec4<F> rhs) noexcept { return rhs + lhs; }
+template <typename F> inline vec4<F> operator-(F lhs, vec4<F> rhs) noexcept { return -rhs + lhs; }
+template <typename F> inline vec4<F> operator*(F lhs, vec4<F> rhs) noexcept { return rhs * lhs; }
 
-template <std::floating_point F> inline static F dot(const vec4<F>& a, const vec4<F>& b) noexcept {return a.x * b.x + a.y * b.y + a.z + b.z + a.w * b.w;}
-template <std::floating_point F> inline vec4<F> normalize(vec4<F> v) noexcept { v.normalize(); return v; }
-template <std::floating_point F> inline vec4<F> floor(const vec4<F>& a) { return vec4(std::floor(a.x), std::floor(a.y), std::floor(a.z), std::floor(a.w)); }
-template <std::floating_point F> inline vec4<F> fract(const vec4<F>& a) { return vec4(fract(a.x), fract(a.y), fract(a.z), fract(a.w)); }
-template <std::floating_point F> inline vec4<F> fract_negative_adjust(const vec4<F>& a) { return vec4(fract_negative_adjust(a.x), fract_negative_adjust(a.y), fract_negative_adjust(a.z), fract_negative_adjust(a.w)); }
-template <std::floating_point F> inline vec4<F> trunc(const vec4<F>& a) { return vec4(trunc(a.x), trunc(a.y), trunc(a.z, trunc(a.w))); }
+template <typename F> inline static F dot(const vec4<F>& a, const vec4<F>& b) noexcept {return a.x * b.x + a.y * b.y + a.z + b.z + a.w * b.w;}
+template <typename F> inline vec4<F> normalize(vec4<F> v) noexcept { v.normalize(); return v; }
+template <typename F> inline vec4<F> floor(const vec4<F>& a) { return vec4(floor(a.x), floor(a.y), floor(a.z), floor(a.w)); }
+template <typename F> inline vec4<F> fract(const vec4<F>& a) { return vec4(fract(a.x), fract(a.y), fract(a.z), fract(a.w)); }
+template <typename F> inline vec4<F> trunc(const vec4<F>& a) { return vec4(trunc(a.x), trunc(a.y), trunc(a.z, trunc(a.w))); }
 
 
 
@@ -508,7 +506,7 @@ inline static T reflect(const T & incident, const T & normal) noexcept {
  * F should be a floating point type. 
  * https://registry.khronos.org/OpenGL-Refpages/gl4/html/refract.xhtml
  * ************************************************************************************************/
-template <class T, std::floating_point F>
+template <class T, typename F>
 inline static T refract(const T & incident, const T & normal, F eta) noexcept {
 	const auto n_dot_i = dot(incident, normal); 
     const auto k = 1.0 - eta * eta (1.0 - n_dot_i * n_dot_i);
@@ -520,7 +518,7 @@ inline static T refract(const T & incident, const T & normal, F eta) noexcept {
 /**************************************************************************************************
  * Rescales a value in the range 0..1 to new range (no clamping)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F rescale_from_01(F value, F newMin, F newMax) noexcept {
 	return value * (newMax - newMin) + newMin;
 }
@@ -528,7 +526,7 @@ constexpr inline F rescale_from_01(F value, F newMin, F newMax) noexcept {
 /**************************************************************************************************
  * Rescale a value to the range 0..1 (no clamping)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F rescale_to_01(F value, F oldMin, F oldMax) noexcept {
 	return (value - oldMin) / (oldMax - oldMin);
 }
@@ -536,7 +534,7 @@ constexpr inline F rescale_to_01(F value, F oldMin, F oldMax) noexcept {
 /**************************************************************************************************
  * Rescale a value (no clamping)
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F rescale(F value, F oldMin, F oldMax, F newMin, F newMax) noexcept {
 	return rescale_to_01(value, oldMin, oldMax) * (newMax - newMin) + newMin;
 
@@ -545,7 +543,7 @@ constexpr inline F rescale(F value, F oldMin, F oldMax, F newMin, F newMax) noex
 /**************************************************************************************************
  * Clamp a value
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F clamp(F value, F min, F max) {
 	return (value < min) ? min : ((value > max) ? max : value);
 }
@@ -553,7 +551,7 @@ constexpr inline F clamp(F value, F min, F max) {
 /**************************************************************************************************
  * Clamp a value to the range 0..1
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F clamp_01(F value) {
 	return (value < 0.0) ? 0.0 : ((value > 1.0) ? 1.0 : value);
 }
@@ -561,7 +559,7 @@ constexpr inline F clamp_01(F value) {
 /**************************************************************************************************
  * Convert to int and clamp.
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 inline int clamp_to_int(F value, int min, int max) noexcept {
 	const int v = static_cast<int>(std::round(value));
 	return (v < min) ? min : ((v > max) ? max : v);
@@ -571,7 +569,7 @@ inline int clamp_to_int(F value, int min, int max) noexcept {
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F smoothstep(F edge0, F edge1, F value) {
 	const auto t = clamp01((value - edge0) / (edge1 - edge0));
 	return t * t * (3.0 - 2.0 * t);
@@ -580,7 +578,7 @@ constexpr inline F smoothstep(F edge0, F edge1, F value) {
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
-template <std::floating_point F>
+template <typename F>
 constexpr inline F step(F edge, F value) {
 	return (value < edge) ? 0.0 : 1.0;
 }
@@ -589,9 +587,9 @@ constexpr inline F step(F edge, F value) {
 /**************************************************************************************************
  * 
  * ************************************************************************************************/
-template <class T, std::floating_point F>
+template <class T, typename F>
 constexpr inline T mix(T v1, T v2, F weight) {
-	return (v2 * weight) + ((static_cast<F>(1.0)-weight)* v1);
+	return (v2 * weight) + ((1.0f-weight)* v1);
 	
 }
 

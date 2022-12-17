@@ -32,11 +32,17 @@ Description:
 #include <string>
 #include <vector>
 #include <numbers>
+#include <typeinfo>
 
 #include "../../common/colour.h"
 #include "../../common/linear-algebra.h"
 #include "../../common/noise.h"
 #include "../../common/parameter-list.h"
+
+#include "..\..\common\simd-cpuid.h"
+#include "..\..\common\simd-f32.h"
+#include "..\..\common\simd-uint32.h"
+#include "..\..\common\simd-concepts.h"
 
 
 
@@ -45,16 +51,18 @@ Description:
  * Implements a host independent pixel renderer.
  * Use type parameter to select floating point precision.
  * ************************************************************************************************/
-template <std::floating_point F>
+template <SimdFloat S>
 class Renderer{
+    //static_assert(sizeof(Simd256Float32) == 32 );
+
     private:
         int width {};
         int height {};
-        F width_f {};
-        F height_f {};
-        F aspect {};
+        S::F width_f {};
+        S::F height_f {};
+        S::F aspect {};
         std::string seed_string{};
-        uint64_t seed{};
+        uint32_t seed{};
         ParameterList params{};
 
     public:
@@ -72,11 +80,11 @@ class Renderer{
             this->seed_string = s; 
         }
         //Set an integer seed. (string will be ignored)
-        void set_seed_int(uint64_t s){
+        void set_seed_int(uint32_t s){
             this->seed = s;
         }
         std::string get_seed() const { return seed_string;}
-        uint64_t get_seed_int() const { return seed;}
+        uint32_t get_seed_int() const { return seed;}
         
         //Parameters
         void set_parameters(ParameterList plist){
@@ -84,7 +92,7 @@ class Renderer{
         }
 
         //Render
-        ColourSRGB<F> render_pixel(int x, int y) const;
+        ColourSRGB<S> render_pixel(S x, S y) const;
 
     private:
 
@@ -95,12 +103,12 @@ class Renderer{
 /**************************************************************************************************
  * Set the size of the image to render in pixels.
  * ************************************************************************************************/
-template <std::floating_point F>
-void Renderer<F>::set_size(int w, int h) noexcept {
+template <SimdFloat S>
+void Renderer<S>::set_size(int w, int h) noexcept {
     this->width = w;
     this->height = h;
-    this->width_f = static_cast<F>(w);
-    this->height_f = static_cast<F>(h);
+    this->width_f = static_cast<S::F>(w);
+    this->height_f = static_cast<S::F>(h);
     if (height==0) return;
     this->aspect = width_f/height_f;
 }
@@ -110,57 +118,61 @@ void Renderer<F>::set_size(int w, int h) noexcept {
 
 
 /**************************************************************************************************
- * Render a pixel
+ * Render a pixel (or batch of pixels if using SIMD)
+ * 
  * ************************************************************************************************/
-template <std::floating_point F>
-ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
-    if (width <=0 || height <=0) return ColourSRGB<F>{};
-    next_random<F>(seed); //Reset random seed so it is the same for each pixel
+template <SimdFloat S>
+ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
+    if (width <=0 || height <=0) return ColourSRGB<S>{};
+    next_random<S::F>(seed); //Reset random seed so it is the same for each pixel
     
-    F parameter_scale = static_cast<F>(params.get_value(ParameterID::scale));
-    F parameter_directional_bias = static_cast<F>(params.get_value(ParameterID::directional_bias));
-    F parameter_evolve1 = 0.1f * static_cast<F>(params.get_value(ParameterID::evolve1));
-    F parameter_evolve2 = static_cast<F>(2.0* std::numbers::pi) * static_cast<F>(params.get_value(ParameterID::evolve2));
+    auto parameter_scale = static_cast<S::F>(params.get_value(ParameterID::scale));
+    const auto parameter_directional_bias = static_cast<S::F>(params.get_value(ParameterID::directional_bias));
+    const auto parameter_evolve1 = 0.1f * static_cast<S::F>(params.get_value(ParameterID::evolve1));
+    const auto parameter_evolve2 = static_cast<S::F>(2.0* std::numbers::pi) * static_cast<S::F>(params.get_value(ParameterID::evolve2));
     
     if (parameter_scale <= 0.0f) parameter_scale = 0.000001f;
 
-    F xf = static_cast<F>(x) ;
-    F yf = static_cast<F>(y) ;
+    S xf = x ;
+    S yf = y ;
 
 
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
-    vec2<F> p(aspect * (static_cast<F>(2.0) * xf / width_f - static_cast<F>(1.0)), static_cast<F>(2.0) * yf / height_f - static_cast<F>(1.0));
+    vec2<S> p(aspect * (static_cast<S::F>(2.0) * xf / width_f - static_cast<S::F>(1.0)), static_cast<S::F>(2.0) * yf / height_f - static_cast<S::F>(1.0));
  
-    
-    vec2<F> d{ 1.0,1.0 };
+    //Apply Directional Bias
+    vec2<S> d{1.0,1.0};
     if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;
+    p = p * normalize(d) * static_cast<S::F>(sqrt(2)) * parameter_scale;
     
-    p = p* normalize(d) * static_cast<F>(sqrt(2)) * parameter_scale;
+    auto evolve_x = S(parameter_evolve1 * cos(parameter_evolve2));
+    auto evolve_y = S(parameter_evolve1 * sin(parameter_evolve2));
     
-    F evolve_x = parameter_evolve1 * cos(parameter_evolve2);
-    F evolve_y = parameter_evolve1 * sin(parameter_evolve2);
-
-
+    
     auto p3 = vec4(p, evolve_x, evolve_y);
-    auto nVec2 = p + vec2(fbm(p3, 5, seed), fbm(p3 + 1.0, 5, seed)) - 0.5;
-
-    p3 = vec4(nVec2, evolve_x+5.5f, evolve_y-5.5f);
-    auto nVec3 = nVec2 + vec2(fbm(p3 + 5.0, 8, seed), fbm(p3 + 9.0, 8, seed)) - 0.5;
-    
-    
-    
-    auto nVec4 = nVec3 + vec2(fbm(nVec3 + 25.0, 8, seed), fbm(nVec3 + 19.0, 8, seed)) - 0.5;
-   
-
-    auto nVec5 = nVec4 + vec2(fbm(nVec4 - 2.0, 5, seed), fbm(nVec4 - 19.0, 5, seed)) - 0.5;
     
 
-    auto nVec6 = nVec5 + vec2(fbm(nVec5 - 5.0, 5, seed), fbm(nVec5 - 9.0, 5, seed)) - 0.5;
-    auto nVec7 = nVec6 + vec2(fbm(nVec6 - 8.0, 8, seed), fbm(nVec6 - 1.0, 8, seed)) - 0.5;
 
-    auto r = fbm(vec4(nVec5, evolve_x*0.3f, evolve_y * 0.3f), 2,seed) * 0.68;
-    auto g = fbm(vec4(nVec6, evolve_x*0.25f, evolve_y * 0.3f), 2, seed) * 0.68;
-    auto b = fbm(vec4(nVec7, evolve_x*0.19f, evolve_y * 0.3f), 2, seed) * 0.68;
+    auto nVec2 = p + (vec2(fbm(p3*0.05, 8, seed), fbm(p3*0.05 + 10.0f, 8, seed)) - 0.5f)*5.0f;
+    
+
+
+
+    p3 = vec4(nVec2, evolve_x + 99.2 , evolve_y-99.2);    
+    auto nVec3 = nVec2 + vec2(fbm(p3 + 55.0f, 4, seed), fbm(p3 + 79.0f, 4, seed)) - 0.5f;
+
+    p3 = vec4(nVec3, nVec3.x+ evolve_x - 44.2, nVec3.y+evolve_y + 44.2);
+    auto nVec4 = nVec3 + vec2(fbm(p3 + 25.0f, 4, seed), fbm(p3 + 19.0f, 4, seed)) - 0.5f;
+
+
+    auto nVec5 = nVec4 + vec2(fbm(nVec4 - 12.0f, 4, seed), fbm(nVec4 - 19.0f, 4, seed)) - 0.5f;
+    auto nVec6 = nVec5 + vec2(fbm(nVec5 - 35.0f, 4, seed), fbm(nVec5 + 99.0f, 4, seed)) - 0.5f;
+    auto nVec7 = nVec6 + vec2(fbm(nVec6 - 88.0f, 4, seed), fbm(nVec6 - 1.0f, 4, seed)) - 0.5f;
+    
+    auto r = fbm(vec4(nVec5, evolve_x*0.3f, evolve_y * 0.3f), 8,seed) * 0.65f;
+    auto g = fbm(vec4(nVec6, evolve_x*0.25f, evolve_y * 0.3f), 8, seed) * 0.65f;
+    auto b = fbm(vec4(nVec7, evolve_x*0.19f, evolve_y * 0.3f), 8, seed) * 0.65f;
+    
 
     
     return ColourSRGB{r,g,b}; 
@@ -175,22 +187,6 @@ ColourSRGB<F> Renderer<F>::render_pixel(int x, int y) const {
 
 
 
-/*
-    auto nVec2 = p +     vec2(fbm(p,10,seed),fbm(p+ 1.0,8,seed))- 0.5;
-    auto nVec3 = nVec2 + vec2(fbm(nVec2 + 5.0,  8, seed), fbm(nVec2+ 9.0,  8, seed))- 0.5;
-    auto nVec4 = nVec3 + vec2(fbm(nVec3 + 25.0, 8, seed), fbm(nVec3+ 19.0, 8, seed))- 0.5;
-    auto nVec5 = nVec4 + vec2(fbm(nVec4 - 2.0,  5, seed), fbm(nVec4- 19.0, 5, seed))- 0.5;
-    auto nVec6 = nVec5 + vec2(fbm(nVec5 - 5.0,  5, seed), fbm(nVec5- 9.0,  5, seed))- 0.5;
-    auto nVec7 = nVec6 + vec2(fbm(nVec6 - 8.0,  5, seed), fbm(nVec6- 1.0,  5, seed))- 0.5;
-
-    auto r = fbm(nVec5, 5, seed) * 0.68;
-    auto g = fbm(nVec6,5,seed)*0.68;
-    auto b = fbm(nVec7,5,seed)*0.68;*/
-
-    /*auto r = value_noise(vec3(nVec5, parameter_evolve1), seed);
-    auto g = value_noise(vec3(nVec6, parameter_evolve1), seed);
-    auto b = value_noise(vec3(nVec7, parameter_evolve1), seed);
-    */
 
 
 

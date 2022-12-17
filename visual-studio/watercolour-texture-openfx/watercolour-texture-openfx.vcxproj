@@ -65,7 +65,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
-      <SDLCheck>false</SDLCheck>
+      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MSWindows;WIN32;_WINDOWS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -77,7 +77,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -88,10 +88,10 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>MSWindows;WIN32;_WINDOWS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;..\..\3rd-party\OpenFX\OpenFX-1.4\include</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -110,6 +110,12 @@
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\common\parameter-list.h" />
+    <ClInclude Include="..\..\common\simd-concepts.h" />
+    <ClInclude Include="..\..\common\simd-cpuid.h" />
+    <ClInclude Include="..\..\common\simd-f32.h" />
+    <ClInclude Include="..\..\common\simd-f64.h" />
+    <ClInclude Include="..\..\common\simd-uint32.h" />
+    <ClInclude Include="..\..\common\simd-uint64.h" />
     <ClInclude Include="..\..\common\util.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-helper.h" />
     <ClInclude Include="..\..\hosts\openfx\openfx-instance-data.h" />

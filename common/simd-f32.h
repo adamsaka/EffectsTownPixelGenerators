@@ -43,6 +43,8 @@ Operators (rhs int)
 #include <immintrin.h>
 
 #include "simd-cpuid.h"
+#include "simd-uint32.h"
+#include "simd-uint64.h"
 #include <cmath>
 
 /**************************************************************************************************
@@ -52,7 +54,13 @@ Operators (rhs int)
 struct Simd512Float32 {
 	__m512 v;
 
+	typedef float F;
+	typedef Simd512UInt32 U;
+	typedef Simd512UInt64 U64;
+
+	Simd512Float32() = default;
 	Simd512Float32(__m512 a) : v(a) {};
+	Simd512Float32(F a) : v(_mm512_set1_ps(a)) {};
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -60,6 +68,10 @@ struct Simd512Float32 {
 	}
 	static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 16; }
+
+	//*****Access Elements*****
+	F element(int i)  const { return v.m512_f32[i]; }
+	void set_element(int i, F value) { v.m512_f32[i] = value; }
 
 	//*****Addition Operators*****
 	Simd512Float32& operator+=(const Simd512Float32& rhs) noexcept { v = _mm512_add_ps(v, rhs.v); return *this; }
@@ -76,6 +88,19 @@ struct Simd512Float32 {
 	//*****Division Operators*****
 	Simd512Float32& operator/=(const Simd512Float32& rhs) noexcept { v = _mm512_div_ps(v, rhs.v); return *this; }
 	Simd512Float32& operator/=(float rhs) noexcept { v = _mm512_div_ps(v, _mm512_set1_ps(rhs));	return *this; }
+
+	//*****Negate Operators*****
+	Simd512Float32 operator-() const noexcept { return Simd512Float32(_mm512_sub_ps(_mm512_set1_ps(0.0), v)); }
+
+	//*****Make Functions****
+	static Simd512Float32 make_sequential(F first) { return Simd512Float32(_mm512_set_ps(first+15.0f, first + 14.0f, first + 13.0f, first + 12.0f, first + 11.0f, first + 10.0f, first + 9.0f, first + 8.0f, first + 7.0f, first + 6.0f, first + 5.0f, first + 4.0f, first + 3.0f, first + 2.0f, first + 1.0f, first)); }
+	static Simd512Float32 make_set1(F v) { return _mm512_set1_ps(v); }
+
+	static Simd512Float32 make_from_int32(Simd512UInt32 i) { return Simd512Float32(_mm512_cvtepu32_ps(i.v)); }
+
+	//*****Cast Functions****
+	Simd512UInt32 bitcast_to_uint32() const { return Simd512UInt32(_mm512_castps_si512(this->v)); }
+
 
 };
 
@@ -114,6 +139,8 @@ inline Simd512Float32 max(Simd512Float32 a, Simd512Float32 b) { return Simd512Fl
 //*****Approximate Functions*****
 inline Simd512Float32 reciprocal_approx(Simd512Float32 a) { return Simd512Float32(_mm512_rcp14_ps(a.v)); }
 
+//*****Mathematical Functions*****
+inline Simd512Float32 sqrt(Simd512Float32 a) { return Simd512Float32(_mm512_sqrt_ps(a.v)); }
 
 /**************************************************************************************************
  * SIMD 256 type.  Contains 8 x 32bit Floats
@@ -121,8 +148,15 @@ inline Simd512Float32 reciprocal_approx(Simd512Float32 a) { return Simd512Float3
  * ************************************************************************************************/
 struct Simd256Float32 {
 	__m256 v;
+	typedef float F;
+	typedef Simd256UInt32 U;
+	typedef Simd256UInt64 U64;
 
+
+	//*****Constructors*****
+	Simd256Float32() = default;
 	Simd256Float32(__m256 a) : v(a) {};
+	Simd256Float32(F a) :  v(_mm256_set1_ps(a)) {};
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -131,6 +165,10 @@ struct Simd256Float32 {
 	static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 8; }
 
+	//*****Access Elements*****
+	F element(int i)  const {return v.m256_f32[i];}
+	void set_element(int i, F value) {v.m256_f32[i] = value; }
+
 	//*****Addition Operators*****
 	Simd256Float32& operator+=(const Simd256Float32& rhs) noexcept { v = _mm256_add_ps(v, rhs.v); return *this; }
 	Simd256Float32& operator+=(float rhs) noexcept { v = _mm256_add_ps(v, _mm256_set1_ps(rhs));	return *this; }
@@ -138,7 +176,7 @@ struct Simd256Float32 {
 	//*****Subtraction Operators*****
 	Simd256Float32& operator-=(const Simd256Float32& rhs) noexcept { v = _mm256_sub_ps(v, rhs.v); return *this; }
 	Simd256Float32& operator-=(float rhs) noexcept { v = _mm256_sub_ps(v, _mm256_set1_ps(rhs));	return *this; }
-
+	
 	//*****Multiplication Operators*****
 	Simd256Float32& operator*=(const Simd256Float32& rhs) noexcept { v = _mm256_mul_ps(v, rhs.v); return *this; }
 	Simd256Float32& operator*=(float rhs) noexcept { v = _mm256_mul_ps(v, _mm256_set1_ps(rhs)); return *this; }
@@ -146,6 +184,26 @@ struct Simd256Float32 {
 	//*****Division Operators*****
 	Simd256Float32& operator/=(const Simd256Float32& rhs) noexcept { v = _mm256_div_ps(v, rhs.v); return *this; }
 	Simd256Float32& operator/=(float rhs) noexcept { v = _mm256_div_ps(v, _mm256_set1_ps(rhs));	return *this; }
+
+	//*****Negate Operators*****
+	Simd256Float32 operator-() const noexcept { return Simd256Float32(_mm256_sub_ps(_mm256_set1_ps(0.0), v)); }
+
+
+	//*****Make Functions****
+	static Simd256Float32 make_sequential(F first) { return Simd256Float32(_mm256_set_ps(first+7.0f, first + 6.0f, first + 5.0f, first + 4.0f, first + 3.0f, first + 2.0f, first + 1.0f, first)); }
+	static Simd256Float32 make_set1(F v) {return _mm256_set1_ps(v)	;}
+
+	static Simd256Float32 make_from_int32(Simd256UInt32 i) {return Simd256Float32(_mm256_cvtepi32_ps(i.v));}
+
+	//*****Cast Functions****
+	
+	//Warning: Requires additional CPU features (AVX2)
+	Simd256UInt32 bitcast_to_uint32() const { return Simd256UInt32(_mm256_castps_si256(this->v)); }  
+
+
+
+
+	
 
 };
 
@@ -183,6 +241,11 @@ inline Simd256Float32 max(Simd256Float32 a, Simd256Float32 b) { return Simd256Fl
 //*****Approximate Functions*****
 inline Simd256Float32 reciprocal_approx(Simd256Float32 a) { return Simd256Float32(_mm256_rcp_ps(a.v)); }
 
+//*****Mathematical Functions*****
+inline Simd256Float32 sqrt(Simd256Float32 a) { return Simd256Float32(_mm256_sqrt_ps(a.v)); }
+
+
+
 
 
 /**************************************************************************************************
@@ -192,14 +255,23 @@ inline Simd256Float32 reciprocal_approx(Simd256Float32 a) { return Simd256Float3
 struct FallbackFloat32 {
 	float v;
 
+	typedef float F;
+	typedef FallbackUInt32 U;
+	typedef FallbackUInt64 U64;
+
+	FallbackFloat32() = default;
 	FallbackFloat32(float a) : v(a) {};
 
 	//*****Support Informtion*****
-	static bool cpu_supported(CpuInformation cpuid) {
+	static bool cpu_supported(CpuInformation) {
 		return true;
 	}
 	static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 1; }
+
+	//*****Access Elements*****
+	F element(int)  const { return v; }
+	void set_element(int, F value) { v = value; }
 
 	//*****Addition Operators*****
 	FallbackFloat32& operator+=(const FallbackFloat32& rhs) noexcept { v += rhs.v; return *this; }
@@ -216,6 +288,18 @@ struct FallbackFloat32 {
 	//*****Division Operators*****
 	FallbackFloat32& operator/=(const FallbackFloat32& rhs) noexcept { v /= rhs.v; return *this; }
 	FallbackFloat32& operator/=(float rhs) noexcept { v /= rhs;	return *this; }
+
+	//*****Negate Operators*****
+	FallbackFloat32 operator-() const noexcept {return FallbackFloat32(-v); }
+
+	//*****Make Functions****
+	static FallbackFloat32 make_sequential(F first) { return FallbackFloat32(first); }
+	static FallbackFloat32 make_set1(F v) { return FallbackFloat32(v); }
+
+	static FallbackFloat32 make_from_int32(FallbackUInt32 i) { return FallbackFloat32(static_cast<float>(i.v)); }
+
+	//*****Cast Functions****
+	FallbackUInt32 bitcast_to_uint32() const { return FallbackUInt32(std::bit_cast<uint32_t>(this->v)); }
 
 };
 
@@ -254,3 +338,6 @@ inline FallbackFloat32 max(FallbackFloat32 a, FallbackFloat32 b) { return Fallba
 
 //*****Approximate Functions*****
 inline FallbackFloat32 reciprocal_approx(FallbackFloat32 a) { return FallbackFloat32(1.0f/a.v); }
+
+//*****Mathematical Functions*****
+inline FallbackFloat32 sqrt(FallbackFloat32 a) { return FallbackFloat32(std::sqrt(a.v)); }

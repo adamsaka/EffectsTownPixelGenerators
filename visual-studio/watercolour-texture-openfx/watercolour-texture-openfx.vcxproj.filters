@@ -55,6 +55,24 @@
     <ClInclude Include="..\..\hosts\openfx\openfx-instance-data.h">
       <Filter>Source Files\host-openfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\simd-cpuid.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\simd-f32.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\simd-f64.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\simd-uint32.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\simd-uint64.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\simd-concepts.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp">

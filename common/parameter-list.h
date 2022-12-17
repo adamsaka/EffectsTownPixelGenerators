@@ -75,7 +75,7 @@ struct ParameterEntry {
 		p.type = ParameterType::seed;
 		p.initial_value = 0.0;
 		p.min = 0.0;
-		p.max = static_cast<double>(std::numeric_limits<uint64_t>::max());
+		p.max = static_cast<double>(std::numeric_limits<uint32_t>::max());
 		p.slider_min = p.min;
 		p.slider_max = p.max;
 		p.value = p.initial_value;

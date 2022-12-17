@@ -37,6 +37,8 @@ Description:
 #include "openfx-parameter-helper.h"
 #include "openfx-instance-data.h"
 
+#include "../../common/simd-cpuid.h"
+
 #include <exception>
 #include <string.h>
 
@@ -88,6 +90,8 @@ The first call from the OpenFX host. It will ask for the number of plugins in th
 *******************************************************************************************************/
 OfxExport int OfxGetNumberOfPlugins(void)
 {
+    CpuInformation cpuinfo{};
+    dev_log("\n\n===============================" + cpuinfo.to_string());
     return 1;
 }
 
@@ -99,7 +103,9 @@ The host will call this once for each plug-in.
 The plug-in struct contains function pointers for those plug-ins.
 *******************************************************************************************************/
 OfxExport OfxPlugin* OfxGetPlugin(int nth)
-{    
+{   
+
+
     if (nth == 0) return &pluginStruct;
     return 0;
 }

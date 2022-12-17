@@ -111,10 +111,10 @@ public:
 		s += "Has AVX2                : " + yes_no(has_avx2()) + "\n";
 		s += "Has AVX512 F            : " + yes_no(has_avx512_f()) + "\n";
 		s += "Has AVX512 CD           : " + yes_no(has_avx512_cd()) + "\n";
-		//s += "Has AVX512 ER           : " + yes_no(has_avx512_er()) + "\n";
-		//s += "Has AVX512 PF           : " + yes_no(has_avx512_pf()) + "\n";
-		//s += "Has AVX512 4FMAPS       : " + yes_no(has_avx512_4fmaps()) + "\n";
-		//s += "Has AVX512 4VNNIW       : " + yes_no(has_avx512_4vnniw()) + "\n";
+		s += "Has AVX512 ER           : " + yes_no(has_avx512_er()) + "\n";
+		s += "Has AVX512 PF           : " + yes_no(has_avx512_pf()) + "\n";
+		s += "Has AVX512 4FMAPS       : " + yes_no(has_avx512_4fmaps()) + "\n";
+		s += "Has AVX512 4VNNIW       : " + yes_no(has_avx512_4vnniw()) + "\n";
 		s += "Has AVX512 VPOPCNTDQ    : " + yes_no(has_avx512_vpopcntdq()) + "\n";
 		s += "Has AVX512 VL           : " + yes_no(has_avx512_vl()) + "\n";
 		s += "Has AVX512 DQ           : " + yes_no(has_avx512_dq()) + "\n";

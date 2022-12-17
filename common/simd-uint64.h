@@ -47,6 +47,7 @@ Operators (rhs int)
 
 #include <immintrin.h>
 #include <stdint.h>
+#include <bit>
 
 #include "simd-cpuid.h"
 
@@ -57,8 +58,13 @@ Operators (rhs int)
  * ************************************************************************************************/
 struct Simd512UInt64 {
 	__m512i v;
+	typedef uint64_t F;
 
 	Simd512UInt64(__m512i a) : v(a) {};
+	Simd512UInt64(F a) : v(_mm512_set1_epi64(a)) {}
+
+	//*****Elements*****
+	F element(int i) { return v.m512i_u64[i]; }
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -87,6 +93,8 @@ struct Simd512UInt64 {
 	Simd512UInt64& operator&=(const Simd512UInt64& rhs) noexcept {v= _mm512_and_si512(v, rhs.v); return *this; }
 	Simd512UInt64& operator|=(const Simd512UInt64& rhs) noexcept {v= _mm512_or_si512(v, rhs.v); return *this; }
 	Simd512UInt64& operator^=(const Simd512UInt64& rhs) noexcept {v= _mm512_xor_si512(v, rhs.v); return *this; }
+
+
 
 };
 
@@ -122,6 +130,9 @@ inline Simd512UInt64 operator~(const Simd512UInt64& lhs) noexcept { return Simd5
 inline Simd512UInt64 operator<<(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_slli_epi64(lhs.v, bits)); }
 inline Simd512UInt64 operator>>(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_srli_epi64(lhs.v, bits)); }
 
+inline Simd512UInt64 rotl(const Simd512UInt64& a, int bits) { return a << bits | a >> (64 - bits); };
+inline Simd512UInt64 rotr(const Simd512UInt64& a, int bits) { return a >> bits | a << (64 - bits); };
+
 //*****Min/Max*****
 inline Simd512UInt64 min(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_min_epu64(a.v, b.v)); }
 inline Simd512UInt64 max(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_max_epu64(a.v, b.v)); }
@@ -135,7 +146,10 @@ inline Simd512UInt64 max(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt6
 struct Simd256UInt64 {
 	__m256i v;
 
+	typedef uint64_t F;
+
 	Simd256UInt64(__m256i a) : v(a) {};
+	Simd256UInt64(F a) : v(_mm256_set1_epi64x(a)) {}
 
 	//*****Support Informtion*****
 	static bool cpu_supported(CpuInformation cpuid) {
@@ -144,6 +158,9 @@ struct Simd256UInt64 {
 	static constexpr int size_of_element() { return sizeof(uint64_t); }
 	static constexpr int number_of_elements() { return 4; }
 	
+	//*****Elements*****
+	F element(int i) { return v.m256i_u64[i]; }
+
 
 	//*****Addition Operators*****
 	Simd256UInt64& operator+=(const Simd256UInt64& rhs) noexcept {v = _mm256_add_epi64(v, rhs.v); return *this;}
@@ -184,6 +201,10 @@ struct Simd256UInt64 {
 	Simd256UInt64& operator|=(const Simd256UInt64& rhs) noexcept {v=_mm256_or_si256(v, rhs.v); return *this;}
 	Simd256UInt64& operator^=(const Simd256UInt64&rhs) noexcept {v=_mm256_xor_si256(v, rhs.v);return *this;}
 
+	//*****Make Functions****
+	static Simd256UInt64 make_sequential(uint64_t first) { return Simd256UInt64(_mm256_set_epi64x(first, first + 1, first + 2, first + 3)); }
+	static Simd256UInt64 make_set1(uint64_t v) { return _mm256_set1_epi64x(v); }
+
 
 };
 
@@ -219,6 +240,9 @@ inline Simd256UInt64 operator~(const Simd256UInt64& lhs) noexcept { return Simd2
 inline Simd256UInt64 operator<<(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_slli_epi64(lhs.v, bits)); }
 inline Simd256UInt64 operator>>(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_srli_epi64(lhs.v, bits)); }
 
+inline Simd256UInt64 rotl(const Simd256UInt64& a, int bits) { return a << bits | a >> (64 - bits); };
+inline Simd256UInt64 rotr(const Simd256UInt64& a, int bits) { return a >> bits | a << (64 - bits); };
+
 //*****Min/Max*****
 inline Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) { return Simd256UInt64(_mm256_min_epu64(a.v, b.v)); }
 inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) { return Simd256UInt64(_mm256_max_epu64(a.v, b.v)); }
@@ -238,15 +262,20 @@ inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) { return Simd256UInt6
 * ************************************************************************************************/
 struct FallbackUInt64 {
 	uint64_t v;
+	typedef uint64_t F;
 
 	FallbackUInt64(uint64_t a) : v(a) {};
-
+	
 	//*****Support Informtion*****
-	static bool cpu_supported(CpuInformation cpuid) {
+	static bool cpu_supported(CpuInformation) {
 		return true;
 	}
 	static constexpr int size_of_element() { return sizeof(uint64_t); }
 	static constexpr int number_of_elements() { return 1; }
+
+	//*****Elements*****
+	F element(int) { return v; }
+
 
 	//*****Addition Operators*****
 	FallbackUInt64& operator+=(const FallbackUInt64& rhs) noexcept { v += rhs.v; return *this; }
@@ -305,6 +334,8 @@ inline FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept {return FallbackUIn
 inline FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
 inline FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
 
+inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return std::rotl(a.v,bits); };
+inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return std::rotr(a.v, bits); };
 
 //*****Min/Max*****
 inline FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }

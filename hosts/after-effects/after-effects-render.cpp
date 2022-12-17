@@ -37,6 +37,24 @@ Description:
 #include "after-effects-parameter-helper.h"
 #include "..\..\common\util.h"
 
+#include "..\..\common\simd-cpuid.h"
+#include "..\..\common\simd-f32.h"
+#include "..\..\common\simd-uint32.h"
+
+
+template <SimdFloat S>
+struct RenderData {
+	int width{};
+	int height{};
+	Renderer<S> renderer;
+	PF_Rect area;
+	PF_EffectWorld* inputLayer{};
+	PF_EffectWorld* output{};
+	A_u_long rowbytes{};
+
+
+};
+
 
 /*******************************************************************************************************
 Converts a colour component from the renderer to an 8-bit component
@@ -55,18 +73,29 @@ inline static uint16_t to_adobe_16bit(Precision c) {
 	return static_cast<uint16_t>(clamp(c * adobe_white16, static_cast<Precision>(0.0), static_cast<Precision>(adobe_white16)));
 }
 
+
+
+
+
 /*******************************************************************************************************
 Callback for After Effects Iteration Suite.  Renders an 8-bit pixel.
 *******************************************************************************************************/
-static PF_Err render_8bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]]  PF_Pixel8* in, PF_Pixel8* out) noexcept {
-	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
+template <SimdFloat S>
+static PF_Err render_8bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i,	A_long itrtL) noexcept {
+	
+
+	
+
+
+
+	/*const auto renderer = static_cast<Renderer<Precision>*>(refcon);
 	const auto c = renderer->render_pixel(x, y);
 	
 	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 	out->alpha = to_adobe_8bit(c.alpha);
 	out->red = to_adobe_8bit(c.red);
 	out->green = to_adobe_8bit(c.green);
-	out->blue = to_adobe_8bit(c.blue);
+	out->blue = to_adobe_8bit(c.blue);*/
 	return PF_Err_NONE;
 
 }
@@ -74,30 +103,65 @@ static PF_Err render_8bit_pixel_callback(void* refcon, A_long x, A_long y, [[may
 /*******************************************************************************************************
 Callback for After Effects Iteration Suite.  Renders an 16-bit pixel.
 *******************************************************************************************************/
-static PF_Err render_16bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]] PF_Pixel16* in, PF_Pixel16* out) noexcept {
-	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
+template <SimdFloat S>
+static PF_Err render_16bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
+	/*const auto renderer = static_cast<Renderer<Precision>*>(refcon);
 	const auto c = renderer->render_pixel(x, y);
 
 	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 	out->alpha = to_adobe_16bit(c.alpha);
 	out->red = to_adobe_16bit(c.red);
 	out->green = to_adobe_16bit(c.green);
-	out->blue = to_adobe_16bit(c.blue);
+	out->blue = to_adobe_16bit(c.blue);*/
 	return PF_Err_NONE;
+}
+
+template <SimdFloat S>
+void copy_to_output_32(PF_EffectWorld* output,int x, int y, int max_x, const ColourSRGB<S>& c) {
+	auto ptrY = (uint8_t*)output->data;
+	ptrY += y * output->rowbytes;
+	
+	for (int i = 0; i < S::number_of_elements(); i++) {
+		if (x + i >= max_x) break;
+		auto ptrByte = ptrY + (x + i) * 4 * sizeof(float);
+
+		auto ptrFloat = (float*)ptrByte;
+		
+		ptrFloat[0] = static_cast<float>(c.alpha.element(i));
+		ptrFloat[1] = static_cast<float>(c.red.element(i));
+		ptrFloat[2] = static_cast<float>(c.green.element(i));
+		ptrFloat[3] = static_cast<float>(c.blue.element(i));
+		
+		
+	}
 }
 
 /*******************************************************************************************************
 Callback for After Effects Iteration Suite.  Renders an 32-bit pixel.
 *******************************************************************************************************/
-static PF_Err render_32bit_pixel_callback(void* refcon, A_long x, A_long y, [[maybe_unused]] PF_Pixel32* in, PF_Pixel32* out) noexcept {
-	const auto renderer = static_cast<Renderer<Precision>*>(refcon);
-	const auto c = renderer->render_pixel(x, y);
+template <SimdFloat S>
+static PF_Err render_32bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
+	const auto rd = static_cast<RenderData<S> *>(refcon);
+	const auto y = i;
+
+	if (y < rd->area.top || y>= rd->area.bottom) return PF_Err_NONE;
+	
+	for (int x = rd->area.left  ; x < rd->area.right; x += S::number_of_elements() ) {
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S::make_set1(static_cast<S::F>(y)));
+		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+	}
+
+	
+
+	/*const ColourSRGB c{}; //renderer->render_pixel(x, y);
 
 	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 	out->alpha = static_cast<float>(c.alpha);
 	out->red = static_cast<float>(c.red);
 	out->green = static_cast<float>(c.green);
 	out->blue = static_cast<float>(c.blue);
+	*/
+	
 	return PF_Err_NONE;
 
 }
@@ -145,14 +209,15 @@ ParameterList read_parameters() {
 /*******************************************************************************************************
 Setup Host Independant Renderer
 *******************************************************************************************************/
-void setup_render(Renderer<Precision>& renderer, const PF_InData* in_data, int width, int height) {
+template <typename S>
+void setup_render(Renderer<S>& renderer, const PF_InData* in_data, int width, int height) {
 	check_null(in_data);
 	auto params = read_parameters();
 	
 	renderer.set_size(width, height);
 	renderer.set_seed("After Effects");
 	if (params.contains(ParameterID::seed)) {
-		renderer.set_seed_int(static_cast<uint64_t>(params.get_value(ParameterID::seed)));
+		renderer.set_seed_int(static_cast<uint32_t>(params.get_value(ParameterID::seed)));
 	}
 	
 	renderer.set_parameters(std::move(params));
@@ -175,9 +240,12 @@ void after_effects_smart_pre_render(const PF_InData* in_data, PF_PreRenderExtra*
 
 	//Checkout the input layer
 	PF_CheckoutResult inputLayer{};
-	check_after_effects(preRender->cb->checkout_layer(in_data->effect_ref, 0, 0, &preRender->input->output_request, in_data->current_time, in_data->time_step, in_data->time_scale, &inputLayer));
+	if constexpr (project_uses_input) {
+		check_after_effects(preRender->cb->checkout_layer(in_data->effect_ref, 0, 0, &preRender->input->output_request, in_data->current_time, in_data->time_step, in_data->time_scale, &inputLayer));
+	}
 	const auto r = preRender->input->output_request.rect;
-	const auto in = inputLayer.result_rect;
+	//const auto in = inputLayer.result_rect;
+	
 
 
 	//Max output rectangle.
@@ -197,6 +265,76 @@ void after_effects_smart_pre_render(const PF_InData* in_data, PF_PreRenderExtra*
 }
 
 
+/*******************************************************************************************************
+Template function built based on SIMD type (which is CPU dependant)
+*******************************************************************************************************/
+template <SimdFloat S>
+void after_effect_cpu_dispatch(int width, int height, PF_InData* in_data, const PF_Rect& area, int bit_depth, PF_EffectWorld* inputLayer, PF_EffectWorld* output, RenderData<S>& rd) {
+	setup_render(rd.renderer, in_data, width, height);
+	
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	switch (bit_depth) {
+	case 8:
+	{
+		check_after_effects(suites.Iterate8Suite1()->iterate_generic(rd.height, &rd , render_8bit_pixel_callback<S>));
+		break;
+	}
+	case 16: {
+		check_after_effects(suites.Iterate8Suite1()->iterate_generic(rd.height, &rd, render_16bit_pixel_callback<S>));
+		break;
+	}
+	case 32: {
+		check_after_effects(suites.Iterate8Suite1()->iterate_generic(rd.height, &rd, render_32bit_pixel_callback<S>));
+		break;
+	}
+	default: break;
+	}
+}
+
+
+/*******************************************************************************************************
+Common Render Function to Smart and Non-Smart rendering.
+Sets up the renderer and dispatches based on CPU
+*******************************************************************************************************/
+void after_effects_common_render(int width, int height, PF_InData* in_data, const PF_Rect& area, int bit_depth, PF_EffectWorld* inputLayer, PF_EffectWorld* output) {
+	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	//suites.WorldSuite3()->AEGP_GetBaseAddr32();
+	
+
+	CpuInformation cpu_info{};
+	if (Simd512UInt64::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
+		//AVX-512 & AVX-512DQ 
+		RenderData<Simd512Float32> rd{};
+		rd.width = width;
+		rd.height = height;
+		rd.area = area;
+		rd.output = output;
+		rd.inputLayer = inputLayer;
+		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth,  inputLayer, output, rd);
+
+	}
+	else if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
+		//AVX & AVX2
+		RenderData<Simd256Float32> rd{};
+		rd.width = width;
+		rd.height = height;
+		rd.area = area;
+		rd.output = output;
+		rd.inputLayer = inputLayer;
+		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+	}
+	else {
+		//Fallback
+		RenderData<FallbackFloat32> rd{};
+		rd.width = width;
+		rd.height = height;
+		rd.area = area;
+		rd.output = output;
+		rd.inputLayer = inputLayer;
+		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+	}
+}
+
 
 /*******************************************************************************************************
 After Effects Smart Render Command
@@ -209,47 +347,28 @@ void after_effects_smart_render(PF_InData* in_data, PF_OutData* out_data, PF_Sma
 
 	const auto [width, height] = calculate_size(in_data);
 
-	//Setup Host Independant Renderer
-	Renderer<Precision> renderer{};
-	setup_render(renderer, in_data, width, height);
-
 	//Checkout the input buffer
 	PF_EffectWorld* inputLayer{ nullptr };
-	check_after_effects(smartRender->cb->checkout_layer_pixels(in_data->effect_ref, 0, &inputLayer));
-	if (!inputLayer) throw (std::exception("Unable to checkout input layer."));
+	if constexpr (project_uses_input) {
+		check_after_effects(smartRender->cb->checkout_layer_pixels(in_data->effect_ref, 0, &inputLayer));
+		if (!inputLayer) throw (std::exception("Unable to checkout input layer."));
+	}
 
 	//Checkout Output buffer
 	PF_EffectWorld* output{ nullptr };
 	check_after_effects(smartRender->cb->checkout_output(in_data->effect_ref, &output));
 	if (!output) throw (std::exception("Unable to checkout input layer."));
 
-
-
-
+	//Area of interest
 	PF_Rect area;
 	area.left = 0;
 	area.right = output->width;
 	area.top = 0;
 	area.bottom = output->height;
 	
-	AEGP_SuiteHandler suites(in_data->pica_basicP);
+	
 
-	switch (smartRender->input->bitdepth) {
-	case 8:
-	{
-		check_after_effects(suites.Iterate8Suite1()->iterate(in_data, 0, output->height, inputLayer, &area,  &renderer, render_8bit_pixel_callback, output));
-		break;
-	}
-	case 16: {
-		check_after_effects(suites.Iterate16Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_16bit_pixel_callback, output));
-		break;
-	}
-	case 32: {
-		check_after_effects(suites.IterateFloatSuite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_32bit_pixel_callback, output));
-		break;
-	}
-	default: break;
-	}
+	after_effects_common_render(width, height, in_data, area, smartRender->input->bitdepth, inputLayer, output);	
 }
 
 /*******************************************************************************************************
@@ -264,11 +383,7 @@ void after_effects_non_smart_render(PF_InData* in_data, PF_OutData* out_data, PF
 
 	const auto [width, height] = calculate_size(in_data);
 	
-	//Setup Host Independant Renderer
-	Renderer<Precision> renderer{};
-	setup_render(renderer, in_data, width, height);
-
-
+	//Area of interest
 	PF_Rect area;
 	area.left = 0;
 	area.right = width;
@@ -276,14 +391,8 @@ void after_effects_non_smart_render(PF_InData* in_data, PF_OutData* out_data, PF
 	area.bottom = height;
 
 	auto inputLayer = &params[0]->u.ld;
-	AEGP_SuiteHandler suites(in_data->pica_basicP);
-	if (output->world_flags & PF_WorldFlag_DEEP) {
-		//16-bit
-		check_after_effects(suites.Iterate16Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_16bit_pixel_callback, output));
-	}
-	else {
-		//8-bit
-		check_after_effects(suites.Iterate8Suite1()->iterate(in_data, 0, output->height, inputLayer, &area, &renderer, render_8bit_pixel_callback, output));
-	}
+	
+	int bit_depth = (output->world_flags & PF_WorldFlag_DEEP) ? 16 : 8;
 
+	after_effects_common_render(width, height, in_data, area, bit_depth, inputLayer, output);
 }
