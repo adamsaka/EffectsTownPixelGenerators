@@ -28,8 +28,6 @@ Description:
 
 *******************************************************************************************************/
 
-
-
 #pragma once
 
 #include "linear-algebra.h"
@@ -46,30 +44,48 @@ Description:
 #include <immintrin.h>
 #include <concepts>
 
+/**************************************************************************************************
+ * Constants
+ * ************************************************************************************************/
+inline constexpr uint64_t bits_52 = 0b0000000000001111111111111111111111111111111111111111111111111111; //52 bits
+
+
+/**************************************************************************************************
+ * Simple method to convert a string to a uint32 seed
+ * ************************************************************************************************/
+inline constexpr uint32_t string_to_seed(const std::string& str) {
+    uint32_t seed{ 0 };
+    for (size_t i = 0; i < str.length(); i++) {
+        seed ^= static_cast<uint32_t>(str[i]) >> ((i & 4) * 4);
+    }
+    return seed;
+}
 
 /**************************************************************************************************
  * "SplitMix64" random number generator
+ * A 64-bit random number generator / hash function.
+ * This is pretty fast for normal ops, but when using SIMD instructions CPUs without AVX-512DQ support don't have 64bit multiply.
  * (Public Domain)
  * https://rosettacode.org/wiki/Pseudo-random_numbers/Splitmix64
  * ************************************************************************************************/
 template <typename U64> requires std::same_as<U64, uint64_t> || SimdUInt64<U64>
-static inline constexpr U64 split_mix_64(U64 state) {
+inline constexpr U64 split_mix_64(U64 state) {
     U64 z = state + 0x9e3779b97f4a7c15;
     z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
     z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
     return z ^ (z >> 31);
 }
 
-/****************************************************************************std::same_as<F, double>**********************
- * Gets a random float,
- * Use state variable on first call only to set seed.
+/*************************************************************************************************
+ * Gets a random float in range 0..1
+  * Use state variable on first call only to set seed.
  * ************************************************************************************************/
 template <std::floating_point F>
-static F next_random(uint64_t state = 0) {
+F next_random(uint64_t state = 0) {
     static uint64_t random_state;
     if (state != 0) random_state = state;
-    random_state = split_mix_64(random_state);
-    return static_cast<F>(random_state) / static_cast<F>(std::numeric_limits<uint64_t>::max());
+    random_state = split_mix_64(random_state) & bits_52; 
+    return static_cast<F>(random_state) / static_cast<F>(bits_52); 
 }
 
 
@@ -78,10 +94,10 @@ static F next_random(uint64_t state = 0) {
 * 32-bit hashing function 
 * (derived from murmer3, public domain)
 * https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp
+* Because we only need hashing good enough for graphics, we don't do the full murmer3.
 **************************************************************************************************/
-
 template <typename U32, typename S32> requires (std::same_as<U32, uint32_t> || SimdUInt32<U32>) && (std::same_as<S32, uint32_t> || SimdUInt32<S32>)
-static inline U32 hash_32(U32 data, S32 seed) {
+inline constexpr U32 hash_32(U32 data, S32 seed) {
     data *= 0xcc9e2d51;
     data = (data << 15) | (data >> 17);
     data *= 0x1b873593;
@@ -90,9 +106,8 @@ static inline U32 hash_32(U32 data, S32 seed) {
     //data = data * 5 + 0xe6546b64;
     return data;
 }
-
 template <typename U32> requires std::same_as<U32, uint32_t> || SimdUInt32<U32>
-static inline U32 hash_32_final(U32 data) {
+inline constexpr U32 hash_32_final(U32 data) {
     //data *= 0xcc9e2d51;
     //data = (data << 15) | (data >> 17);
     //data *= 0x1b873593;
@@ -105,34 +120,30 @@ static inline U32 hash_32_final(U32 data) {
 }
 
 
-
-
-
-
 /**************************************************************************************************
- * Bitcasting of floats to ints
+ * Bitcasting of floats to 64-bit ints
  * ************************************************************************************************/
-static inline constexpr uint64_t cast_to_int64(float f) {
+inline constexpr uint64_t cast_to_int64(float f) {
     return static_cast<uint64_t>(std::bit_cast<uint32_t>(f));
 }
-static inline constexpr uint64_t cast_to_int64(double f){
+inline constexpr uint64_t cast_to_int64(double f){
     return std::bit_cast<uint64_t>(f);
 }
 
+
 /**************************************************************************************************
  * Hash based on coordinates and a seed value
+ * 32-bit and 64-bit versions will return different results as the algorithms is different.
  * ************************************************************************************************/
 template <SimdFloat32 S>
-static inline  S hash(const S& coordinate, uint32_t seed ){
+inline S hash(const S& coordinate, uint32_t seed ){
     auto r = hash_32(coordinate.bitcast_to_uint32(), seed);
     r = hash_32_final(r);
     auto result = S::make_from_int32(r >> 9) / S(0xffffffff >> 9);
     return result;
 }
-
 template<SimdFloat32 S>
-static inline S hash(const vec2<S>& coordinate, uint32_t seed ) {    
-    //auto r = hash_32(coordinate.x.bitcast_to_uint32(), coordinate.y.bitcast_to_uint32(), seed);
+inline constexpr S hash(const vec2<S>& coordinate, uint32_t seed ) {    
     auto r = hash_32(coordinate.x.bitcast_to_uint32(), seed);
     r = hash_32(coordinate.y.bitcast_to_uint32(), r);
     r = hash_32_final(r);
@@ -141,7 +152,7 @@ static inline S hash(const vec2<S>& coordinate, uint32_t seed ) {
 }
 
 template<SimdFloat32 S>
-static inline S hash(const vec3<S>& coordinate, uint32_t seed ) {
+inline S hash(const vec3<S>& coordinate, uint32_t seed ) {
     auto r = hash_32(coordinate.x.bitcast_to_uint32(), seed);
     r = hash_32(coordinate.y.bitcast_to_uint32(), r);
     r = hash_32(coordinate.z.bitcast_to_uint32(), r);
@@ -151,7 +162,7 @@ static inline S hash(const vec3<S>& coordinate, uint32_t seed ) {
 }
 
 template<SimdFloat32 S>
-static inline S hash(const vec4<S>& coordinate, uint32_t seed ) {
+inline S hash(const vec4<S>& coordinate, uint32_t seed ) {
     auto r = hash_32(coordinate.x.bitcast_to_uint32(), seed);
     r = hash_32(coordinate.y.bitcast_to_uint32(), r);
     r = hash_32(coordinate.z.bitcast_to_uint32(), r);
@@ -162,123 +173,117 @@ static inline S hash(const vec4<S>& coordinate, uint32_t seed ) {
 }
 
 template <SimdFloat64 S>
-static inline S hash(const vec4<S> & coordinate, uint64_t seed = 1){
+inline S hash(const S& coordinate, uint64_t seed = 1) {
     auto seed64 = S::U64(seed);
     seed64 ^= coordinate.x.bitcast_to_uint64();
-    seed64 ^= rotr(coordinate.y.bitcast_to_uint64(), 16);
-    seed64 ^= rotr(coordinate.z.bitcast_to_uint64(), 32);
-    seed64 ^= rotr(coordinate.w.bitcast_to_uint64(), 48);
-        
-    auto r = split_mix_64(seed64);
-    auto f = S::make_from_uints_52bits(r); 
-
-    return f / S(static_cast<double>(0b0000000000001111111111111111111111111111111111111111111111111111 ));
-}
-
-//AVX-512 Specialization. It is worth using intrinsics on AVX-512 as it has integer multiply
-static inline Simd512Float64 hash(const vec4<Simd512Float64>& coordinate, uint64_t seed = 1) {
-    typedef Simd512Float64 S;
-
-    auto seed64 = S::U64(seed);
-    seed64 ^= coordinate.x.bitcast_to_uint64();
-    seed64 ^= rotr(coordinate.y.bitcast_to_uint64(), 16);
-    seed64 ^= rotr(coordinate.z.bitcast_to_uint64(), 32);
-    seed64 ^= rotr(coordinate.w.bitcast_to_uint64(), 48);
-
     auto r = split_mix_64(seed64);
     auto f = S::make_from_uints_52bits(r);
-
-    return f / S(static_cast<double>(0b0000000000001111111111111111111111111111111111111111111111111111));
+    return f / S(static_cast<double>(bits_52));
 }
 
-
-
-
-
-
-
-
-
-
-
-/**************************************************************************************************
- * Simple method to convert a string to a uint64 seed
- * ************************************************************************************************/
-static inline constexpr uint32_t string_to_seed(const std::string& str){
-    uint32_t seed {0};
-    for (size_t i=0;i<str.length();i++){
-        seed ^= static_cast<uint32_t>(str[i]) >> ((i & 4)*4); 
-    }
-    return seed;
+template <SimdFloat64 S>
+inline S hash(const vec2<S>& coordinate, uint64_t seed = 1) {
+    auto seed64 = S::U64(seed);
+    seed64 ^= coordinate.x.bitcast_to_uint64();
+    seed64 ^= rotr(coordinate.y.bitcast_to_uint64(), 32);
+    auto r = split_mix_64(seed64);
+    auto f = S::make_from_uints_52bits(r);
+    return f / S(static_cast<double>(bits_52));
 }
 
+template <SimdFloat64 S>
+inline S hash(const vec3<S>& coordinate, uint64_t seed = 1) {
+    auto seed64 = S::U64(seed);
+    seed64 ^= coordinate.x.bitcast_to_uint64();
+    seed64 ^= rotr(coordinate.y.bitcast_to_uint64(), 21);
+    seed64 ^= rotr(coordinate.z.bitcast_to_uint64(), 42);
+    auto r = split_mix_64(seed64);
+    auto f = S::make_from_uints_52bits(r);
+    return f / S(static_cast<double>(bits_52));
+}
 
+template <SimdFloat64 S>
+inline S hash(const vec4<S> & coordinate, uint64_t seed = 1){
+    auto seed64 = S::U64(seed);
+    seed64 ^= coordinate.x.bitcast_to_uint64();
+    seed64 ^= rotr(coordinate.y.bitcast_to_uint64(), 16);
+    seed64 ^= rotr(coordinate.z.bitcast_to_uint64(), 32);
+    seed64 ^= rotr(coordinate.w.bitcast_to_uint64(), 48);        
+    auto r = split_mix_64(seed64);
+    auto f = S::make_from_uints_52bits(r); 
+    return f / S(static_cast<double>(bits_52));
+}
 
 
 /**************************************************************************************************
 Value Noise
+
+Parameter 1
+    p: scaler, vec2, vec3, vec4. 
+       (can be simple or SIMD type)
+
+    seed: 32-bit seed value for the hash function.
 *************************************************************************************************/
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F value_noise(F p, uint32_t seed = 1) {
-    F i = floor(p);
-    F f = fract(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+inline F value_noise(const F & p, uint32_t seed = 1) {
+    const F i = floor(p);
+    const F f = fract(p);
     F u = f * f * (static_cast<F>(3.0) - (f + f));
 
     const F x1 = hash(i, seed);
-    const F x2 = hash(i + 1.0, seed);
-    
+    const F x2 = hash(i + 1.0, seed);  
 
     return mix(x1,x2, u);
-
-    
 }
 
 
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F value_noise(vec2<F> p , uint32_t seed=1){
+inline F value_noise(const vec2<F>& p , uint32_t seed=1){
     vec2<F> i = floor(p);
-    vec2<F> f = fract(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+    vec2<F> f = fract(p);  
     vec2<F> u = f*f*(static_cast<F>(3.0)- (f + f));
     
     const F x1 = hash(i + vec2<F>(0.0, 0.0), seed);
     const F x2 = hash(i + vec2<F>(1.0, 0.0), seed);
+    const F y1 = mix(x1, x2, u.x);
+    
     const F x3 = hash(i + vec2<F>(0.0, 1.0), seed);
     const F x4 = hash(i + vec2<F>(1.0, 1.0), seed);
-    
-    return mix(mix(x1, x2, u.x), mix(x3, x4, u.x), u.y);
-
-    //return mix(mix(x1 , x2 , u.x),mix(x3 , x4, u.y), u.x); -- keep for later cool effect
+    const F y2 = mix(x3, x4, u.x);
+   
+    return mix(y1, y2 , u.y);
 }
 
 
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F value_noise(vec3<F> p, uint32_t seed = 0) {
+inline F value_noise(const vec3<F>& p, uint32_t seed = 0) {
     vec3<F> i = floor(p);
-    vec3<F> f = fract(p);  //Adjusting the negative values of fract makes smooth noise for negative inputs
+    vec3<F> f = fract(p);  
     vec3<F> u = f * f * (static_cast<F>(3.0) - (f + f));
 
     const F x1 = hash(i + vec3<F>(0.0, 0.0, 0.0), seed);
     const F x2 = hash(i + vec3<F>(1.0, 0.0, 0.0), seed);
+    const F y1 = mix(x1, x2, u.x);
+
     const F x3 = hash(i + vec3<F>(0.0, 1.0, 0.0), seed);
-    const F x4 = hash(i + vec3<F>(1.0, 1.0, 0.0), seed);    
+    const F x4 = hash(i + vec3<F>(1.0, 1.0, 0.0), seed); 
+    const F y2 = mix(x3, x4, u.x);
+    const F z1 = mix(y1, y2, u.y);
+
     const F x5 = hash(i + vec3<F>(0.0, 0.0, 1.0), seed);
     const F x6 = hash(i + vec3<F>(1.0, 0.0, 1.0), seed);
+    const F y3 = mix(x5, x6, u.x);
+
     const F x7 = hash(i + vec3<F>(0.0, 1.0, 1.0), seed);
     const F x8 = hash(i + vec3<F>(1.0, 1.0, 1.0), seed);
-    
-    const F y1 = mix(x1, x2, u.x);
-    const F y2 = mix(x3, x4, u.x);
-    const F y3 = mix(x5, x6, u.x);
     const F y4 = mix(x7, x8, u.x);
-
-    const F z1 = mix(y1, y2, u.y);
     const F z2 = mix(y3, y4, u.y);
 
     return mix(z1, z2, u.z);
 }
 
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F value_noise(vec4<F> p, uint32_t seed = 0) {
+inline F value_noise(const vec4<F>& p, uint32_t seed = 0) {
     vec4<F> i = floor(p);
     vec4<F> f = fract(p);  
     vec4<F> u = f * f * (static_cast<F>(3.0) - (f + f));
@@ -319,8 +324,7 @@ static F value_noise(vec4<F> p, uint32_t seed = 0) {
     const F x16 = hash<F>(i + vec4<F>(1.0, 1.0, 1.0, 1.0), seed);
     const F y8 = mix(x15, x16, u.x);
     const F z4 = mix(y7, y8, u.y);
-    const F w2 = mix(z3, z4, u.z);    
-    
+    const F w2 = mix(z3, z4, u.z);  
 
     return mix(w1, w2, u.w);
 }
@@ -331,7 +335,7 @@ Based on article by Inigo Quilez https://www.iquilezles.org/www/articles/fbm/fbm
 The original code snippet was released under the MIT license: https://opensource.org/licenses/MIT
 *************************************************************************************************/
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F fbm(F x, int number_octaves = 8, uint32_t seed = 1) {
+inline F fbm(const F & x, int number_octaves = 8, uint32_t seed = 1) {
     const F G = exp2(-1.0f);
 
     F f = 1.0;
@@ -346,7 +350,7 @@ static F fbm(F x, int number_octaves = 8, uint32_t seed = 1) {
 }
 
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F fbm(vec2<F> x, int number_octaves = 8, uint32_t seed=1){
+inline F fbm(const vec2<F>& x, int number_octaves = 8, uint32_t seed=1){
     const F G = exp2(-1.0f);
     
     F f = 1.0;
@@ -360,7 +364,7 @@ static F fbm(vec2<F> x, int number_octaves = 8, uint32_t seed=1){
     return t;
 }	
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F fbm(vec3<F> x, int number_octaves = 8, uint32_t seed = 0) {
+inline F fbm(const vec3<F>& x, int number_octaves = 8, uint32_t seed = 0) {
     const F::F H{ exp2(-1.0f) };
     F G = H;
     F f = 1.0;
@@ -374,7 +378,7 @@ static F fbm(vec3<F> x, int number_octaves = 8, uint32_t seed = 0) {
     return t;
 }
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-static F fbm(vec4<F> x, int number_octaves = 8, uint32_t seed = 0) {
+inline F fbm(const vec4<F>& x, int number_octaves = 8, uint32_t seed = 0) {
     const F::F H{ exp2( -1.0f)};
     F G = H;
     F f = 1.0;

@@ -23,6 +23,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Basic SIMD Types for 64-bit floats.
 
+Note: Generally CPUs have more support SIMD for floats than ints.  
+Always check cpu_supported() for both types when using converting/casting functions.
+
 Each type provides the following operations so they can be used in templated functions.
 
 Support information.
@@ -55,7 +58,7 @@ struct Simd512Float64 {
 
 	typedef double F;	
 	typedef Simd512UInt64 U;
-	typedef Simd512UInt64 U64;
+	
 
 	Simd512Float64() = default;
 	Simd512Float64(__m512d a) : v(a) {};

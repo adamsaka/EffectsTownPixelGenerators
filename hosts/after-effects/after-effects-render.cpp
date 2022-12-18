@@ -302,7 +302,7 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 	
 
 	CpuInformation cpu_info{};
-	if (Simd512UInt64::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
+	if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
 		//AVX-512 & AVX-512DQ 
 		RenderData<Simd512Float32> rd{};
 		rd.width = width;
@@ -313,7 +313,7 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth,  inputLayer, output, rd);
 
 	}
-	else if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
+	else if (Simd256UInt32::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
 		//AVX & AVX2
 		RenderData<Simd256Float32> rd{};
 		rd.width = width;

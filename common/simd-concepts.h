@@ -60,23 +60,10 @@ concept Simd = requires (T t) {
 
 
 /**************************************************************************************************
-* Concept for types that are based on floating point (any precision).
-*************************************************************************************************/
-template <typename T>
-concept SimdFloat = (SimdFloat32<T> || SimdFloat64<T>) && requires (T t) {
-	T::U;						//Indicates the unsined int size of the same size.
-	T::U64;						//Indicates the unsigned int of 64-bit size.
-
-	//Operators
-	-t;
-
-};
-
-/**************************************************************************************************
 * Concept for types that are based on unsigned ints (any size).
 *************************************************************************************************/
 template <typename T>
-concept SimdUint = (SimdUint32<T> || SimdUint64<T>) && requires (T t) {
+concept SimdUInt = (SimdUInt32<T> || SimdUInt64<T>) && requires (T t) {
 
 	//Operators
 	t << 2;
@@ -92,25 +79,6 @@ concept SimdUint = (SimdUint32<T> || SimdUint64<T>) && requires (T t) {
 };
 
 
-/**************************************************************************************************
-* Concept for types that are based on 64-bit floating point.
-*************************************************************************************************/
-template <typename T>
-concept SimdFloat64 = Simd<T> && requires (T t) {
-	{t.element(0)} -> std::same_as<double>;
-		requires sizeof(t.element(0)) == 8;
-};
-
-
-
-/**************************************************************************************************
-* Concept for types that are based on 32-bit floating point.
-*************************************************************************************************/
-template <typename T>
-concept SimdFloat32 = Simd<T> && requires (T t) {
-	{t.element(0)} -> std::same_as<float>;
-		requires sizeof(t.element(0)) == 4;
-};
 
 /**************************************************************************************************
 * Concept for types that are based on 64-bit unsigned ints
@@ -127,5 +95,49 @@ concept SimdUInt64 = Simd<T> && requires (T t) {
 template <typename T>
 concept SimdUInt32 = Simd<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<uint32_t>;
-	requires sizeof(t.element(0)) == 4;
+		requires sizeof(t.element(0)) == 4;
 };
+
+
+/**************************************************************************************************
+* Concept for types that are based on 64-bit floating point.
+*************************************************************************************************/
+template <typename T>
+concept SimdFloat64 = Simd<T> && requires (T t) {
+	{t.element(0)} -> std::same_as<double>;
+		requires sizeof(t.element(0)) == 8;
+
+	//Casting operations.
+	t.bitcast_to_uint64();
+};
+
+
+
+/**************************************************************************************************
+* Concept for types that are based on 32-bit floating point.
+*************************************************************************************************/
+template <typename T>
+concept SimdFloat32 = Simd<T> && requires (T t) {
+	{t.element(0)} -> std::same_as<float>;
+		requires sizeof(t.element(0)) == 4;
+
+	//Casting operations.
+	t.bitcast_to_uint32();
+};
+
+
+/**************************************************************************************************
+* Concept for types that are based on floating point (any precision).
+*************************************************************************************************/
+template <typename T>
+concept SimdFloat = (SimdFloat32<T> || SimdFloat64<T>) && requires (T t) {
+	T::U;						//Indicates the unsined int size of the same size.
+	
+
+	//Operators
+	-t;
+
+};
+
+
+
