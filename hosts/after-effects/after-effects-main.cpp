@@ -168,6 +168,10 @@ static void after_effects_about(const PF_InData* in_data, PF_OutData* out_data) 
 /*******************************************************************************************************
 ParameterSetup event.
 Inform AE of our parameter list.
+
+We call build_project_parameters() which builds a host independant list of parameters.
+Then this function translates that list into After Effects calls and parameters.
+
 *******************************************************************************************************/
 static void after_effects_parameter_setup(PF_OutData* out_data) {
 	//Get parameters from project
@@ -182,6 +186,27 @@ static void after_effects_parameter_setup(PF_OutData* out_data) {
 		case ParameterType::number:
 			ParameterHelper::AddSlider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
 			break;
+		case ParameterType::percent:
+
+			break;
+		case ParameterType::group_start:
+			ParameterHelper::AddGroupStart(p.id, p.name);
+			break;
+		case ParameterType::group_end:
+			ParameterHelper::AddGroupEnd(p.id);
+			break;
+		case ParameterType::angle:
+			break;
+		case ParameterType::check:
+			break;
+		case ParameterType::list:
+		{
+			std::string list_string{};
+			for (const auto& item : p.list) list_string += item + "|";
+			list_string.pop_back();
+			ParameterHelper::AddList(p.id, p.name, list_string, 1);
+			break;
+		}
 
 		default:
 			break;

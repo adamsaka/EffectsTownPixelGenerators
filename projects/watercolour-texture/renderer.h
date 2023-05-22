@@ -38,6 +38,7 @@ Description:
 #include "../../common/linear-algebra.h"
 #include "../../common/noise.h"
 #include "../../common/parameter-list.h"
+#include "..\..\common\input-transforms.h"
 
 #include "..\..\common\simd-cpuid.h"
 #include "..\..\common\simd-f32.h"
@@ -124,7 +125,7 @@ void Renderer<S>::set_size(int w, int h) noexcept {
 template <SimdFloat S>
 ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
     if (width <=0 || height <=0) return ColourSRGB<S>{};
-    next_random<S::F>(seed); //Reset random seed so it is the same for each pixel
+    next_random<typename S::F>(seed); //Reset random seed so it is the same for each pixel
     
     auto parameter_scale = static_cast<S::F>(params.get_value(ParameterID::scale));
     const auto parameter_directional_bias = static_cast<S::F>(params.get_value(ParameterID::directional_bias));
@@ -140,6 +141,10 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
     vec2<S> p(aspect * (static_cast<S::F>(2.0) * xf / width_f - static_cast<S::F>(1.0)), static_cast<S::F>(2.0) * yf / height_f - static_cast<S::F>(1.0));
  
+    //Apply Input Transforms
+    p = perform_input_transform(params.get_string(ParameterID::input_transform_type),p, params);
+
+    
     //Apply Directional Bias
     vec2<S> d{1.0,1.0};
     if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;

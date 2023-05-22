@@ -24,7 +24,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 CPUID functions. 
 
+This is x86_64 only.  
+(We don't bother supporting x86_32 for SIMD code, those machines will use the fallback interfaces)
+
 *********************************************************************************************************/
+
+//This is x86_64 only. 
+#if defined(_M_X64) || defined(__x86_64)
+
+
 #include <stdint.h>
 #include <intrin.h>
 #include <bitset>
@@ -71,6 +79,7 @@ public:
 	bool has_ssse3() { return ecx1[9]; }
 	bool has_sse41() { return ecx1[19]; }
 	bool has_sse42() { return ecx1[20]; }
+	bool has_fma() { return ecx1[12]; }
 	bool has_avx() { return ecx1[28]; }
 	bool has_f16c() { return ecx1[29]; }
 	bool has_avx2() { return ebx7[5]; }
@@ -107,6 +116,7 @@ public:
 		s += "Has SSE3                : " + yes_no(has_sse3()) + "\n";
 		s += "Has SSE4.1              : " + yes_no(has_sse41()) + "\n";
 		s += "Has SSE4.2              : " + yes_no(has_sse42()) + "\n";
+		s += "Has FMA                 : " + yes_no(has_fma()) + "\n";
 		s += "Has AVX                 : " + yes_no(has_avx()) + "\n";
 		s += "Has AVX2                : " + yes_no(has_avx2()) + "\n";
 		s += "Has AVX512 F            : " + yes_no(has_avx512_f()) + "\n";
@@ -138,3 +148,5 @@ public:
 		}
 
 };
+
+#endif

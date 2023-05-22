@@ -25,14 +25,16 @@ all: watercolour-texture
 builddir := ..\build
 htmldir := ..\public_html
 
+
 #headers used by renderer
-common_depend = common\colour.h common\linear-algebra.h common\noise.h
+common_depend = common\colour.h common\linear-algebra.h common\noise.h common\simd-f32.h common\simd-f64.h common\simd-concepts.h common\simd-uint32.h common\simd-uint64.h 
 
 #===========================
 #Watercolour texture project
 #===========================
 builddir_fxhash := $(builddir)\watercolour-texture\fxhash
 htmldir_fxhash := $(htmldir)\effects\watercolour-texture\fxhash
+project_dir := ".\projects\watercolour-texture"
 
 watercolour-texture: watercolour-texture-fxhash
 
@@ -43,31 +45,34 @@ $(htmldir_fxhash)\index.html: hosts\fxhash\index.html
 
 #Main Thread
 $(builddir_fxhash)\main.o: hosts\fxhash\main.cpp 
-	emcc hosts\fxhash\main.cpp -c -std=c++20  -o $@ -Oz -Wall -Wpedantic -Wextra
+	emcc hosts\fxhash\main.cpp -c -std=c++20  -o $@ -Oz -Wall -Wno-unknown-pragmas -Wpedantic -Wextra
 
 $(builddir_fxhash)\ui.o: hosts\fxhash\ui.cpp 
-	emcc hosts\fxhash\ui.cpp -c -std=c++20  -o $@ -Oz -Wall -Wpedantic -Wextra
+	emcc hosts\fxhash\ui.cpp -c -std=c++20  -o $@ -Oz -Wall -Wno-unknown-pragmas -Wpedantic -Wextra
 
 $(htmldir_fxhash)\main-cpp.js : $(builddir_fxhash)\ui.o $(builddir_fxhash)\main.o $(builddir_fxhash)\jsutil.o
 	emcc $^ -o  $@ -lembind -O2 -std=c++20  -sENVIRONMENT=web --closure 1 
 
 #Background Thread
 $(builddir_fxhash)\main-background.o:
-	emcc hosts\fxhash\main-background.cpp -std=c++20 -c -o $@ -Oz -Wall -Wpedantic -Wextra
+	emcc hosts\fxhash\main-background.cpp -std=c++20 -c -o $@ -Oz -Wall -Wno-unknown-pragmas -Wpedantic -Wextra
 
 $(htmldir_fxhash)\main-background-cpp.js : $(builddir_fxhash)\main-background.o $(builddir_fxhash)\jsutil.o
 	emcc $^ -o  $@ -lembind -O2 -std=c++20  -sENVIRONMENT=web --closure 1 
 
 #Render Worker Thread
-$(htmldir_fxhash)\main-render-worker-cpp.js : $(builddir_fxhash)\main-render-worker.o $(builddir_fxhash)\jsutil.o
+$(htmldir_fxhash)\main-render-worker-cpp.js : $(builddir_fxhash)\main-render-worker.o $(builddir_fxhash)\jsutil.o $(builddir_fxhash)\parameters.o
 	emcc $^ -o  $@ -lembind -O2 -std=c++20  -sENVIRONMENT=worker --closure 1 
 
 $(builddir_fxhash)\main-render-worker.o: hosts\fxhash\main-render-worker.cpp projects\watercolour-texture\renderer.h $(common_depend) 
-	emcc hosts\fxhash\main-render-worker.cpp -std=c++20 -c -o $@ -O2 -Wall -Wpedantic -Wextra
+	emcc hosts\fxhash\main-render-worker.cpp -I$(project_dir)   -std=c++20 -c -o $@ -O2 -Wall -Wno-unknown-pragmas -Wpedantic -Wextra
+
+$(builddir_fxhash)\parameters.o: projects\watercolour-texture\parameters.h projects\watercolour-texture\parameters.cpp 
+	emcc projects\watercolour-texture\parameters.cpp  -I$(project_dir)   -std=c++20 -c -o $@ -O2 -Wall -Wno-unknown-pragmas -Wpedantic -Wextra
 
 #Common
 $(builddir_fxhash)\jsutil.o: hosts\fxhash\jsutil.cpp hosts\fxhash\jsutil.h 
-	emcc hosts\fxhash\jsutil.cpp -c -std=c++20 -o $@  -Oz -Wall  -Wextra
+	emcc hosts\fxhash\jsutil.cpp -c -std=c++20 -o $@  -Oz -Wall -Wno-unknown-pragmas  -Wextra
 
 #Directories
 $(htmldir_fxhash):

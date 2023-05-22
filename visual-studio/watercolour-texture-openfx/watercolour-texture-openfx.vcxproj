@@ -107,6 +107,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\colour.h" />
+    <ClInclude Include="..\..\common\input-transforms.h" />
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\common\parameter-list.h" />

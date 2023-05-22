@@ -259,6 +259,15 @@ long ParameterHelper::ReadList(ParameterID paramID) {
 }
 
 /*******************************************************************************************************
+Reads the value a drop-down paramter, and returns the string indicated by list.
+(Passing in the list may seem silly, but it allows for compatibility with hosts that return the actual string)  
+*******************************************************************************************************/
+std::string ParameterHelper::ReadListAsString(ParameterID paramID, const std::vector<std::string>& list) {
+	long value = ReadList(paramID);
+	return list[value-1];
+}
+
+/*******************************************************************************************************
 Reads the value of a check box parameter.
 Uses check-in/check-out, so this is ok to use during a smart-render call.
 *******************************************************************************************************/

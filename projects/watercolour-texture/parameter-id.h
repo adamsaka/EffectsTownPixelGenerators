@@ -45,7 +45,17 @@ enum class ParameterID {
 	directional_bias,
 	evolve1,
 	evolve2,
-
+	input_transform_group_start,
+	input_transform_group_end,
+	input_transform_type,
+	input_transform_scale,
+	input_transform_rotation,
+	input_transform_translate_x,
+	input_transform_translate_y,
+	input_transform_special1,
+	input_transform_special2,
+	input_transform_special3,
+	input_transform_special4,
 
 	__last  //Must be last (used for array memory allocation)
 };

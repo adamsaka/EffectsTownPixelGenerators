@@ -32,7 +32,8 @@ Description:
 
 #include <concepts>
 #include <cmath>
-
+#include <type_traits>
+		
 
 struct mat3;
 struct mat4;
@@ -59,11 +60,12 @@ struct vec2 {
 	F y{};
 
 	vec2() = default;
-	vec2(F v) noexcept : x(v) , y(v) {}
+	vec2(F v) noexcept : x(v), y(v) {}
 	vec2(F x1, F y1) noexcept : x(x1), y(y1) {}
 
-	bool operator==(const vec2& rhs) const noexcept  { return (x == rhs.x) && (y == rhs.y); }
+	bool operator==(const vec2& rhs) const noexcept { return (x == rhs.x) && (y == rhs.y); }
 	vec2 operator-() const noexcept { return vec2(-x, -y); }
+
 	vec2& operator+=(const vec2& rhs) noexcept { x += rhs.x; y += rhs.y; return *this; }
 	vec2& operator-=(const vec2& rhs) noexcept { x -= rhs.x; y -= rhs.y; return *this; }
 	vec2& operator*=(const vec2& rhs) noexcept { x *= rhs.x; y *= rhs.y; return *this; }
@@ -72,11 +74,35 @@ struct vec2 {
 	vec2& operator-=(const F rhs) noexcept { x -= rhs; y -= rhs; return *this; }
 	vec2& operator*=(const F rhs) noexcept { x *= rhs; y *= rhs; return *this; }
 	vec2& operator/=(const F rhs) noexcept { x /= rhs; y /= rhs; return *this; }
+	
+	//Specilisations for SIMD Types
+	vec2& operator+=(const float rhs) noexcept requires(SimdFloat<F>) { x += F(rhs); y += F(rhs); return *this; }
+	vec2& operator-=(const float rhs) noexcept requires(SimdFloat<F>) { x -= F(rhs); y -= F(rhs); return *this; }
+	vec2& operator*=(const float rhs) noexcept requires(SimdFloat<F>) { x *= F(rhs); y *= F(rhs); return *this; }
+	vec2& operator/=(const float rhs) noexcept requires(SimdFloat<F>) { x /= F(rhs); y /= F(rhs); return *this; }
 
-	inline F magnitude() const noexcept { return sqrt(x * x + y * y); }
-	inline void normalize() noexcept { const F m = magnitude(); x /= m; y /= m;}
+	vec2& operator+=(const vec2<float>& rhs) noexcept requires(SimdFloat32<F>) { x += F(rhs.x); y += F(rhs.y); return *this; }
+	
+	//Calculate the magnitude (length) of the vector.
+	[[nodiscard("Value Calculated and not used(magnitude)")]]
+	inline F magnitude() const noexcept { 
+		if constexpr (SimdFloat<F>) {
+			return sqrt(fma(x,x,y*y));
+		}else {
+			return sqrt(x * x + y * y);
+		};
+	}
+	
+	//Calculate the length of the vector (Note: This is an alias for magnitude()).
+	[[nodiscard("Value Calculated and not used (length)")]]
+	inline F length() const noexcept { return this->magnitude(); }
+	
+	[[nodiscard("Value Calculated and not used (normalize).  Note: This value is not calulated in place")]]
+	inline vec2<F> normalize() const noexcept { const F m = magnitude(); return vec2(x / m, y / m); }
 
 };
+
+
 
 template <typename F> inline vec2<F> operator+(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs += rhs;	return lhs; }
 template <typename F> inline vec2<F> operator-(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs -= rhs;	return lhs; }
@@ -84,21 +110,40 @@ template <typename F> inline vec2<F> operator*(vec2<F> lhs, const vec2<F> & rhs)
 template <typename F> inline vec2<F> operator/(vec2<F> lhs, const vec2<F> & rhs) noexcept { lhs /= rhs;	return lhs; }
 template <typename F, typename F2> inline vec2<F> operator+(vec2<F> lhs, F2 rhs) noexcept { lhs += static_cast<F>(rhs);	return lhs; }
 template <typename F, typename F2> inline vec2<F> operator-(vec2<F> lhs, F2 rhs) noexcept { lhs -= static_cast<F>(rhs);	return lhs; }
-template <typename F, typename F2> inline vec2<F> operator*(vec2<F> lhs, F2 rhs) noexcept { 
-	lhs *= static_cast<F>(rhs);	
-	return lhs; 
-}
+template <typename F, typename F2> inline vec2<F> operator*(vec2<F> lhs, F2 rhs) noexcept { lhs *= static_cast<F>(rhs);	return lhs; }
+
 template <typename F, typename F2> inline vec2<F> operator/(vec2<F> lhs, F2 rhs) noexcept { lhs /= static_cast<F>(rhs);	return lhs; }
 template <typename F, typename F2> inline vec2<F> operator+(F2 lhs, vec2<F> rhs) noexcept {return rhs + static_cast<F>(lhs); }
 template <typename F, typename F2> inline vec2<F> operator-(F2 lhs, vec2<F> rhs) noexcept { return -rhs + static_cast<F>(lhs); }
 template <typename F, typename F2> inline vec2<F> operator*(F2 lhs, vec2<F> rhs) noexcept { return rhs * static_cast<F>(lhs); }
 
-template <typename F> inline static F dot(const vec2<F>& a, const vec2<F>& b) noexcept { return a.x * b.x + a.y * b.y; }
-template <typename F> inline vec2<F> normalize(vec2<F> v) noexcept {v.normalize(); return v;}
+//Dot Product of two vectors (a.x * b.x + a.y * b.y)
+template <typename F> 
+[[nodiscard("Value Calculated and not used (dot)")]]
+inline static F dot(const vec2<F>& a, const vec2<F>& b) noexcept { 
+	if constexpr (SimdFloat<F>) {
+		return fma(a.x, b.x, a.y * b.y);
+	}else{
+		return a.x * b.x + a.y * b.y;
+	}
+}
+
+
+template <typename F> 
+[[nodiscard("Value Calculated and not used (normalize).  Note: This value is not calulated in place")]]
+inline vec2<F> normalize(const vec2<F>& v) noexcept { return v.normalize(); }
+
 template <typename F> inline F distance(const vec2<F>& a, const vec2<F> & b) { return sqrt((b.x-a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y)); }
+
 template <typename F> inline vec2<F> floor(const vec2<F>& a) { return vec2(floor(a.x), floor(a.y)); }
 template <typename F> inline vec2<F> fract(const vec2<F>& a) { return vec2(fract(a.x), fract(a.y)); }
 template <typename F> inline vec2<F> trunc(const vec2<F>& a) { return vec2(trunc(a.x), trunc(a.y)); }
+template <typename F> inline vec2<F> abs(const vec2<F>& a) { return vec2(abs(a.x), abs(a.y)); }
+template <typename F> inline vec2<F> sqrt(const vec2<F>& a) { return vec2(sqrt(a.x), sqrt(a.y)); }
+template <typename F> inline F length(const vec2<F>& a) { return a.magnitude(); }
+template <typename F> inline F magnitude(const vec2<F>& a) { return a.magnitude(); }
+
+
 
 
 
@@ -131,7 +176,12 @@ struct vec3 {
 	vec3<F>& operator/=(const F rhs) noexcept { x /= rhs; y /= rhs; z /= rhs; return *this; }
 
 	inline F magnitude() const noexcept { return sqrt(x * x + y * y + z * z); }
-	inline void normalize() noexcept { const F m = magnitude(); x /= m; y /= m; z /= m; }
+	inline F length() const noexcept { return this->magnitude(); }
+	
+	[[nodiscard("Value Calculated and not used (normalize).  Note: This value is not calulated in place")]]
+	inline vec2<F> normalize() const noexcept { const F m = magnitude(); return vec2(x / m, y / m, z / m); }
+
+
 	inline vec2<F> xy() const noexcept { return vec2<F>(x, y); }
 	inline vec2<F> yz() const noexcept { return vec2<F>(y, z); }
 	inline vec2<F> xz() const noexcept { return vec2<F>(x, z); }
@@ -149,13 +199,16 @@ template <typename F> inline vec3<F> operator-(F lhs, vec3<F> rhs) noexcept { re
 template <typename F> inline vec3<F> operator*(F lhs, vec3<F> rhs) noexcept { return rhs * lhs; }
 
 
-template <typename F> inline vec3<F> normalize(vec3<F> v) noexcept {v.normalize(); return v;}
+template <typename F> 
+[[nodiscard("Value Calculated and not used (normalize).  Note: This value is not calulated in place")]]
+inline vec3<F> normalize(const vec3<F>& v) noexcept {return v.normalize();}
+
 template <typename F> inline static F dot(const vec3<F>& a, const vec3<F>& b) noexcept {return a.x * b.x + a.y * b.y + a.z + b.z;}
 template <typename F> inline static vec3<F> cross(const vec3<F>& a, const vec3<F>& b) noexcept {return vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);}
 template <typename F> inline vec3<F> floor(const vec3<F>& a) { return vec3(std::floor(a.x), std::floor(a.y), std::floor(a.z)); }
 template <typename F> inline vec3<F> fract(const vec3<F>& a) { return vec3(fract(a.x), fract(a.y), fract(a.z)); }
 template <typename F> inline vec3<F> trunc(const vec3<F>& a) { return vec3(trunc(a.x), trunc(a.y), trunc(a.z)); }
-
+template <typename F> inline F length(const vec3<F>& a) { return a.magnitude(); }
 
 
 
@@ -199,6 +252,7 @@ struct vec4{
 	inline vec3<F> yzw() const noexcept { return vec3<F>(y, z, w); }
 
 	inline F magnitude() const noexcept { return sqrt(x * x + y*y + z*z+ w*w); }
+	inline F length() const noexcept { return sqrt(x * x + y * y + z * z + w * w); }
 	inline void normalize() noexcept { const F m = magnitude(); x /= m; y /= m; z /= m; w /= m; }
 };
 template <typename F> inline vec4<F> operator+(vec4<F> lhs, const vec4<F>& rhs) noexcept { lhs += rhs;	return lhs; }
@@ -222,7 +276,7 @@ template <typename F> inline vec4<F> normalize(vec4<F> v) noexcept { v.normalize
 template <typename F> inline vec4<F> floor(const vec4<F>& a) { return vec4(floor(a.x), floor(a.y), floor(a.z), floor(a.w)); }
 template <typename F> inline vec4<F> fract(const vec4<F>& a) { return vec4(fract(a.x), fract(a.y), fract(a.z), fract(a.w)); }
 template <typename F> inline vec4<F> trunc(const vec4<F>& a) { return vec4(trunc(a.x), trunc(a.y), trunc(a.z, trunc(a.w))); }
-
+template <typename F> inline F length(const vec4<F>& a) { return a.magnitude(); }
 
 
 
@@ -544,7 +598,7 @@ constexpr inline F rescale(F value, F oldMin, F oldMax, F newMin, F newMax) noex
  * Clamp a value
  * ************************************************************************************************/
 template <typename F>
-constexpr inline F clamp(F value, F min, F max) {
+constexpr inline F clamp(F value, F min, F max) requires(! Simd<F>) {
 	return (value < min) ? min : ((value > max) ? max : value);
 }
 
@@ -552,7 +606,7 @@ constexpr inline F clamp(F value, F min, F max) {
  * Clamp a value to the range 0..1
  * ************************************************************************************************/
 template <typename F>
-constexpr inline F clamp_01(F value) {
+constexpr inline F clamp_01(F value) requires(!Simd<F>) {
 	return (value < 0.0) ? 0.0 : ((value > 1.0) ? 1.0 : value);
 }
 

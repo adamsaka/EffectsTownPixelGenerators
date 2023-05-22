@@ -41,7 +41,6 @@ Description:
 #include "..\..\common\simd-f32.h"
 #include "..\..\common\simd-uint32.h"
 
-
 template <SimdFloat S>
 struct RenderData {
 	int width{};
@@ -51,26 +50,97 @@ struct RenderData {
 	PF_EffectWorld* inputLayer{};
 	PF_EffectWorld* output{};
 	A_u_long rowbytes{};
-
-
 };
 
 
 /*******************************************************************************************************
-Converts a colour component from the renderer to an 8-bit component
+Copies a value to the output buffer. (32-bit components)
+Note: If we are using SIMD the value may contain multiple pixels.
 *******************************************************************************************************/
-inline static uint8_t to_adobe_8bit(Precision c) { 
-	constexpr unsigned short adobe_white8 = 0xff;
-	return static_cast<uint8_t>(clamp(c * white8, static_cast<Precision>(0.0), static_cast<Precision>(adobe_white8)));
+template <SimdFloat S>
+void copy_to_output_32(PF_EffectWorld* output, int x, int y, int max_x, const ColourSRGB<S>& c) {
+	//Advance pointer to correct line (y).  (We must multiply by rowbytes in case the lines are padded.)  
+	auto ptrY = (uint8_t*)output->data;
+	ptrY += y * output->rowbytes;
+
+	for (int i = 0; i < S::number_of_elements(); i++) {
+		if (x + i >= max_x) break;
+		auto ptrByte = ptrY + (x + i) * 4 * sizeof(float);  //Advance to x location.
+
+		auto ptrFloat = (float*)ptrByte;
+		ptrFloat[0] = static_cast<float>(c.alpha.element(i));
+		ptrFloat[1] = static_cast<float>(c.red.element(i));
+		ptrFloat[2] = static_cast<float>(c.green.element(i));
+		ptrFloat[3] = static_cast<float>(c.blue.element(i));
+	}
 }
 
 /*******************************************************************************************************
-Converts a colour component from the renderer to an 16-bit component
-Note: Adobe 16 bit is not full 16-bit.  White is 0x8000
+Copies a value to the output buffer. (16-bit components)
+Note: If we are using SIMD the value may contain multiple pixels.
+Note: Adobe uses ARGB colour order, with unmultiplied alpha.
+Note: Adobe 16-bit is not full 16-bit.  White is 0x8000
 *******************************************************************************************************/
-inline static uint16_t to_adobe_16bit(Precision c) {
-	constexpr unsigned short adobe_white16 = 0x8000;
-	return static_cast<uint16_t>(clamp(c * adobe_white16, static_cast<Precision>(0.0), static_cast<Precision>(adobe_white16)));
+template <SimdFloat S>
+void copy_to_output_16(PF_EffectWorld* output, int x, int y, int max_x, ColourSRGB<S> c) {
+	constexpr unsigned short adobe_white16 = 0x8000;  
+	
+	auto black = S(0.0);
+	auto white = S(adobe_white16);
+
+	c.red = clamp(c.red * white, black, white);
+	c.green = clamp(c.green * white, black, white);
+	c.blue = clamp(c.blue * white, black, white);
+	c.alpha = clamp(c.alpha * white, black, white);
+
+	//Advance pointer to correct line (y).  (We must multiply by rowbytes in case the lines are padded.)  
+	auto ptrY = (uint8_t*)output->data;
+	ptrY += y * output->rowbytes;
+
+	for (int i = 0; i < S::number_of_elements(); i++) {
+		if (x + i >= max_x) break;
+		auto ptrByte = ptrY + (x + i) * 4 * sizeof(uint16_t);  //Advance to x location.
+
+		auto ptrU16 = (uint16_t*)ptrByte;
+		ptrU16[0] = static_cast<uint16_t>(c.alpha.element(i));
+		ptrU16[1] = static_cast<uint16_t>(c.red.element(i));
+		ptrU16[2] = static_cast<uint16_t>(c.green.element(i));
+		ptrU16[3] = static_cast<uint16_t>(c.blue.element(i));
+	}
+}
+
+
+
+/*******************************************************************************************************
+Copies a value to the output buffer. (8-bit components)
+Note: If we are using SIMD the value may contain multiple pixels.
+Note: Adobe uses ARGB colour order, with unmultiplied alpha.
+*******************************************************************************************************/
+template <SimdFloat S>
+void copy_to_output_8(PF_EffectWorld* output, int x, int y, int max_x, ColourSRGB<S> c) {
+	constexpr unsigned short adobe_white8 = 0xff;
+	
+	auto black = S(0.0);
+	auto white = S(adobe_white8);
+	c.red = clamp(c.red * white, black, white);
+	c.green = clamp(c.green * white, black, white);
+	c.blue = clamp(c.blue * white, black, white);
+	c.alpha = clamp(c.alpha * white, black, white);
+
+
+	//Advance pointer to correct line (y).  (We must multiply by rowbytes in case the lines are padded.)
+	auto ptrY = (uint8_t*)output->data;
+	ptrY += y * output->rowbytes;
+
+	for (int i = 0; i < S::number_of_elements(); i++) {
+		if (x + i >= max_x) break;
+		auto ptrByte = ptrY + (x + i) * 4 * sizeof(uint8_t);  //Advance to x location.
+				
+		ptrByte[0] = static_cast<uint8_t>(c.alpha.element(i));
+		ptrByte[1] = static_cast<uint8_t>(c.red.element(i));
+		ptrByte[2] = static_cast<uint8_t>(c.green.element(i));
+		ptrByte[3] = static_cast<uint8_t>(c.blue.element(i));
+	}
 }
 
 
@@ -82,86 +152,76 @@ Callback for After Effects Iteration Suite.  Renders an 8-bit pixel.
 *******************************************************************************************************/
 template <SimdFloat S>
 static PF_Err render_8bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i,	A_long itrtL) noexcept {
+	const auto rd = static_cast<RenderData<S> *>(refcon);
+	const auto y = i;
+	if (y < rd->area.top || y >= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
+
+	int x = rd->area.left;
+	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+	}
 	
+	//Handle the case where the width is not a multiple of S::number_of_elements
+	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {		
+		x -= S::number_of_elements() - (rd->area.right - x);
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+	}
 
-	
-
-
-
-	/*const auto renderer = static_cast<Renderer<Precision>*>(refcon);
-	const auto c = renderer->render_pixel(x, y);
-	
-	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
-	out->alpha = to_adobe_8bit(c.alpha);
-	out->red = to_adobe_8bit(c.red);
-	out->green = to_adobe_8bit(c.green);
-	out->blue = to_adobe_8bit(c.blue);*/
 	return PF_Err_NONE;
 
 }
 
 /*******************************************************************************************************
 Callback for After Effects Iteration Suite.  Renders an 16-bit pixel.
+Note: Adobe 16 bit is not full 16-bit.  White is 0x8000
+Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 *******************************************************************************************************/
 template <SimdFloat S>
 static PF_Err render_16bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
-	/*const auto renderer = static_cast<Renderer<Precision>*>(refcon);
-	const auto c = renderer->render_pixel(x, y);
+	const auto rd = static_cast<RenderData<S> *>(refcon);
+	const auto y = i;
+	if (y < rd->area.top || y >= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
 
-	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
-	out->alpha = to_adobe_16bit(c.alpha);
-	out->red = to_adobe_16bit(c.red);
-	out->green = to_adobe_16bit(c.green);
-	out->blue = to_adobe_16bit(c.blue);*/
-	return PF_Err_NONE;
-}
-
-template <SimdFloat S>
-void copy_to_output_32(PF_EffectWorld* output,int x, int y, int max_x, const ColourSRGB<S>& c) {
-	auto ptrY = (uint8_t*)output->data;
-	ptrY += y * output->rowbytes;
-	
-	for (int i = 0; i < S::number_of_elements(); i++) {
-		if (x + i >= max_x) break;
-		auto ptrByte = ptrY + (x + i) * 4 * sizeof(float);
-
-		auto ptrFloat = (float*)ptrByte;
-		
-		ptrFloat[0] = static_cast<float>(c.alpha.element(i));
-		ptrFloat[1] = static_cast<float>(c.red.element(i));
-		ptrFloat[2] = static_cast<float>(c.green.element(i));
-		ptrFloat[3] = static_cast<float>(c.blue.element(i));
-		
-		
+	int x = rd->area.left;
+	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_16(rd->output, x, y, rd->area.right, c);
 	}
+	//Handle the case where the width is not a multiple of S::number_of_elements
+	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {
+		x -= S::number_of_elements() - (rd->area.right - x);
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_16(rd->output, x, y, rd->area.right, c);
+	}
+	return PF_Err_NONE;	
 }
+
+
 
 /*******************************************************************************************************
 Callback for After Effects Iteration Suite.  Renders an 32-bit pixel.
+This thread callback will give us a line to render.
+Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 *******************************************************************************************************/
 template <SimdFloat S>
 static PF_Err render_32bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
 	const auto rd = static_cast<RenderData<S> *>(refcon);
 	const auto y = i;
-
-	if (y < rd->area.top || y>= rd->area.bottom) return PF_Err_NONE;
+	if (y < rd->area.top || y>= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
 	
-	for (int x = rd->area.left  ; x < rd->area.right; x += S::number_of_elements() ) {
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S::make_set1(static_cast<S::F>(y)));
+	int x = rd->area.left;
+	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+	}	
+	//Handle the case where the width is not a multiple of S::number_of_elements
+	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {
+		x -= S::number_of_elements() - (rd->area.right - x);
+		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
 		copy_to_output_32(rd->output, x, y, rd->area.right, c);
 	}
-
-	
-
-	/*const ColourSRGB c{}; //renderer->render_pixel(x, y);
-
-	//Note: Adobe uses ARGB colour order, with unmultiplied alpha.
-	out->alpha = static_cast<float>(c.alpha);
-	out->red = static_cast<float>(c.red);
-	out->green = static_cast<float>(c.green);
-	out->blue = static_cast<float>(c.blue);
-	*/
-	
 	return PF_Err_NONE;
 
 }
@@ -196,7 +256,8 @@ ParameterList read_parameters() {
 		case ParameterType::number:
 			p.value = ParameterHelper::ReadSlider(p.id);			
 			break;
-
+		case ParameterType::list:			
+			p.value_string = ParameterHelper::ReadListAsString(p.id, p.list);
 		default:
 			break;
 		}
@@ -300,7 +361,8 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	//suites.WorldSuite3()->AEGP_GetBaseAddr32();
 	
-
+	//Setup the RenderData with the appropriate SIMD Type.  Then call the templated function.
+	//This effectivly dispatches based on CPU SIMD support.
 	CpuInformation cpu_info{};
 	if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
 		//AVX-512 & AVX-512DQ 

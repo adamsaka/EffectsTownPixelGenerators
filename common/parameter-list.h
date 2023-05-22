@@ -33,7 +33,8 @@ Description:
 
 #include <string>
 #include <vector>
-#include <exception>
+#include <stdexcept>
+	
 
 /*********************************************************************************************************
 Type of Parameters
@@ -67,6 +68,7 @@ struct ParameterEntry {
 	double value{};
 	int value_integer{};
 	std::string value_string {};
+	std::vector<std::string> list {};
 
 	static ParameterEntry make_seed(ParameterID parameter_id, std::string parameter_name) {
 		ParameterEntry p{};
@@ -97,6 +99,28 @@ struct ParameterEntry {
 		return p;
 	}	
 
+	static ParameterEntry make_group_start(ParameterID parameter_id, std::string parameter_name) {
+		ParameterEntry p{};
+		p.id = parameter_id;
+		p.name = parameter_name;
+		p.type = ParameterType::group_start;
+		return p;
+	}
+	static ParameterEntry make_group_end(ParameterID parameter_id) {
+		ParameterEntry p{};
+		p.id = parameter_id;
+		p.type = ParameterType::group_end;
+		return p;
+	}
+
+	static ParameterEntry make_list(ParameterID parameter_id, std::string parameter_name, std::vector<std::string> list) {
+		ParameterEntry p{};
+		p.id = parameter_id;
+		p.name = parameter_name;
+		p.type = ParameterType::list;
+		p.list = list;
+		return p;
+	}
 };
 
 
@@ -148,7 +172,7 @@ struct ParameterList {
 		for (auto & e : entries) {
 			if (id == e.id) e.value = v;
 		}
-		throw(std::exception("Parameter not found."));
+		throw(std::runtime_error("Parameter not found."));
 	}
 
 	//Set a string value
@@ -156,7 +180,7 @@ struct ParameterList {
 		for (auto & e : entries) {
 			if (id == e.id) e.value_string = v;
 		}
-		throw(std::exception("Parameter not found."));
+		throw(std::runtime_error("Parameter not found."));
 	}
 
 };

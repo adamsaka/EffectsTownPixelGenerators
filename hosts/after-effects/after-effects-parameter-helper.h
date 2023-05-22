@@ -31,6 +31,7 @@ Description:
 #include "parameter-id.h"
 #include <array>
 #include <string>
+#include <vector>
 
 class ParameterHelper {
 private:
@@ -51,6 +52,7 @@ public:
 	static double ReadSlider(ParameterID paramID);
 	static double ReadAngle(ParameterID paramID);
 	static long ReadList(ParameterID paramID);
+	static std::string ReadListAsString(ParameterID paramID, const std::vector<std::string>& list);
 	static bool ReadCheckBox(ParameterID paramID);
 	static PF_Pixel ReadColour(ParameterID paramID);
 	static long ReadLayerLocation(ParameterID paramID);

@@ -55,15 +55,37 @@ struct RenderThreadData {
 };
 
 template <typename S>
-void render_line(RenderThreadData<S>* rd, int y) {
+static void render_line(RenderThreadData<S>* rd, int y) {
     //dev_log("Render Line " + std::to_string(y));
     
-    for (int x = rd->render_window->x1; x < rd->render_window->x2; x += S::number_of_elements() ) {
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S::make_set1(static_cast<S::F>(y)));
+    int x = rd->render_window->x1;
+    for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements() ) {
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
         copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+    }
+    //Handle the case where the width is not a multiple of S::number_of_elements
+    if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
+        x -= S::number_of_elements() - (rd->render_window->x2 - x);
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+
     }
 }
 
+
+/*******************************************************************************************************
+
+*******************************************************************************************************/
+template <typename S>
+void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
+    RenderThreadData<S>* rd = static_cast<RenderThreadData<S>*>(customArg);
+
+    for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
+        if (y % threadMax == threadIndex) {
+            render_line(rd, y);
+        }
+    }
+}
 
 
 /*******************************************************************************************************
@@ -82,7 +104,7 @@ static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_wind
     global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
     //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
 
-    if (num_threads > 1) {
+    if (num_threads > 1) [[likely]] {
         global_MultiThreadSuite->multiThread(thread_entry_pixel_render<S>, num_threads, &rd);
     }
     else {
@@ -92,6 +114,7 @@ static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_wind
         }
     }
 }
+
 
 /*******************************************************************************************************
 
@@ -267,19 +290,7 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
 
 
 
-/*******************************************************************************************************
 
-*******************************************************************************************************/
-template <typename S>
-void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
-    RenderThreadData<S> * rd = static_cast<RenderThreadData<S>*>(customArg);
-
-    for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
-        if (y % threadMax == threadIndex) {
-            render_line(rd, y);
-        }
-    }
-}
 
 
 

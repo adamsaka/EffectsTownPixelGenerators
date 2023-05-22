@@ -89,7 +89,7 @@
       <PreprocessorDefinitions>MSWindows;WIN32;_WINDOWS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -107,6 +107,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\colour.h" />
+    <ClInclude Include="..\..\common\environment.h" />
     <ClInclude Include="..\..\common\linear-algebra.h" />
     <ClInclude Include="..\..\common\noise.h" />
     <ClInclude Include="..\..\common\parameter-list.h" />
@@ -128,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp" />
     <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp" />
+    <ClCompile Include="..\..\common\input-transforms.h" />
     <ClCompile Include="..\..\common\util.cpp" />
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp" />
     <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp" />

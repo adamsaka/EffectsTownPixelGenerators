@@ -50,8 +50,11 @@ template <typename F> requires SimdFloat<F> || std::floating_point<F> struct Col
 
 /****Forward Declaration of Functions***/
 template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr F srgb_to_linear(F c) noexcept;
-template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr uint8_t float_to_8bit(F c) noexcept;
-template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr uint32_t float_to_uint(F c) noexcept;
+
+static constexpr uint8_t float_to_8bit(std::floating_point auto c) noexcept;
+static constexpr uint8_t float_to_8bit(FallbackFloat32 c) noexcept;
+
+//template <typename F> std::floating_point<F> static constexpr uint32_t float_to_uint(F c) noexcept;
 template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr ColourSRGB<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept;
 
 
@@ -422,25 +425,32 @@ static constexpr F srgb_to_linear(F c) noexcept{
 /**************************************************************************************************
 Converts a single colour component from float to 8-bit (returns as a 8 bit unsigned char)
 *************************************************************************************************/
-template <typename F> 
-static constexpr uint8_t float_to_8bit(F c) noexcept {
-    const F a = c * white8;
+
+inline static constexpr uint8_t float_to_8bit(std::floating_point auto c) noexcept {
+    const decltype(c) a = c * white8;
     if (a <= 0.0) return 0;
     if (a >= white8) return white8;
     return static_cast<uint8_t>(a);
 }
 
+inline static constexpr uint8_t float_to_8bit(FallbackFloat32 c) noexcept {
+    const decltype(c) a = clamp(c * white8, 0.0, white8);
+    return static_cast<uint8_t>(a.v);
+}
+
+
+
 
 /**************************************************************************************************
 Converts a single colour component from float to 8-bit (returns as a 32 bit unsigned int)
 *************************************************************************************************/
-template <typename F> 
+/*template <typename F> 
 static constexpr uint32_t float_to_uint(F c) noexcept {
     const F a = c * white8;
     if (a <= 0.0) return 0;
     if (a >= white8) return white8;
     return static_cast<uint32_t>(a);
-}
+}*/
 
 
 

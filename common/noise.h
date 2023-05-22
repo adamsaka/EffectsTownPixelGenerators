@@ -365,7 +365,7 @@ inline F fbm(const vec2<F>& x, int number_octaves = 8, uint32_t seed=1){
 }	
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
 inline F fbm(const vec3<F>& x, int number_octaves = 8, uint32_t seed = 0) {
-    const F::F H{ exp2(-1.0f) };
+    const typename F::F H{ exp2(-1.0f) };
     F G = H;
     F f = 1.0;
     F a = 1.0;
@@ -379,7 +379,7 @@ inline F fbm(const vec3<F>& x, int number_octaves = 8, uint32_t seed = 0) {
 }
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
 inline F fbm(const vec4<F>& x, int number_octaves = 8, uint32_t seed = 0) {
-    const F::F H{ exp2( -1.0f)};
+    const typename F::F H{ exp2( -1.0f)};
     F G = H;
     F f = 1.0;
     F a = 1.0;

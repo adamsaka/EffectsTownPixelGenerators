@@ -76,6 +76,9 @@
     <ClInclude Include="..\..\common\simd-concepts.h">
       <Filter>Source Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\environment.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp">
@@ -98,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="..\..\projects\watercolour-texture\parameters.cpp">
       <Filter>Source Files\Project</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\input-transforms.h">
+      <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

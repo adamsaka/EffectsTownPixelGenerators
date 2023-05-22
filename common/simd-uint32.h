@@ -45,12 +45,118 @@ Operators (rhs int)
 *********************************************************************************************************/
 #pragma once
 
-#include <immintrin.h>
+
 #include <stdint.h>
-
-
-
 #include "simd-cpuid.h"
+
+/**************************************************************************************************
+* Fallback I32 type.
+* Contains 1 x 32bit Unsigned Integers
+*
+* This is a fallback for cpus that are not yet supported.
+*
+* It may be useful to evaluate a single value from the same code base, as it offers the same interface
+* as the SIMD types.
+*
+* ************************************************************************************************/
+struct FallbackUInt32 {
+	uint32_t v;
+	typedef uint32_t F;
+	FallbackUInt32() = default;
+	FallbackUInt32(uint32_t a) : v(a) {};
+
+	//*****Support Informtion*****
+#if defined(_M_X64) || defined(__x86_64)
+	static bool cpu_supported(CpuInformation) {
+		return true;
+	}
+#endif
+	static bool cpu_supported() { return true; }
+
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 1; }
+
+	//*****Elements*****
+	F element(int) { return v; }
+
+	//*****Make Functions****
+	static FallbackUInt32 make_sequential(uint32_t first) { return FallbackUInt32(first); }
+
+
+	//*****Addition Operators*****
+	FallbackUInt32& operator+=(const FallbackUInt32& rhs) noexcept { v += rhs.v; return *this; }
+	FallbackUInt32& operator+=(uint32_t rhs) noexcept { v += rhs; return *this; }
+
+	//*****Subtraction Operators*****
+	FallbackUInt32& operator-=(const FallbackUInt32& rhs) noexcept { v -= rhs.v; return *this; }
+	FallbackUInt32& operator-=(uint32_t rhs) noexcept { v -= rhs; return *this; }
+
+	//*****Multiplication Operators*****
+	FallbackUInt32& operator*=(const FallbackUInt32& rhs) noexcept { v *= rhs.v; return *this; }
+	FallbackUInt32& operator*=(uint32_t rhs) noexcept { v *= rhs; return *this; }
+
+	//*****Division Operators*****
+	FallbackUInt32& operator/=(const FallbackUInt32& rhs) noexcept { v /= rhs.v; return *this; }
+	FallbackUInt32& operator/=(uint32_t rhs) noexcept { v /= rhs;	return *this; }
+
+	//*****Bitwise Logic Operators*****
+	FallbackUInt32& operator&=(const FallbackUInt32& rhs) noexcept { v &= rhs.v; return *this; }
+	FallbackUInt32& operator|=(const FallbackUInt32& rhs) noexcept { v |= rhs.v; return *this; }
+	FallbackUInt32& operator^=(const FallbackUInt32& rhs) noexcept { v ^= rhs.v; return *this; }
+
+	//*****Mathematical*****
+
+};
+
+//*****Addition Operators*****
+inline FallbackUInt32 operator+(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs += rhs; return lhs; }
+
+
+inline FallbackUInt32 operator+(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs += rhs; return lhs; }
+inline FallbackUInt32 operator+(uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs += lhs; return rhs; }
+
+//*****Subtraction Operators*****
+inline FallbackUInt32 operator-(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs -= rhs; return lhs; }
+inline FallbackUInt32 operator-(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline FallbackUInt32 operator-(const uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
+
+//*****Multiplication Operators*****
+inline FallbackUInt32 operator*(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs *= rhs; return lhs; }
+inline FallbackUInt32 operator*(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline FallbackUInt32 operator*(uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs *= lhs; return rhs; }
+
+//*****Division Operators*****
+inline FallbackUInt32 operator/(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline FallbackUInt32 operator/(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline FallbackUInt32 operator/(const uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
+
+
+//*****Bitwise Logic Operators*****
+inline FallbackUInt32 operator&(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v & rhs.v); }
+inline FallbackUInt32 operator|(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v | rhs.v); }
+inline FallbackUInt32 operator^(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v ^ rhs.v); }
+inline FallbackUInt32 operator~(FallbackUInt32 lhs) noexcept { return FallbackUInt32(~lhs.v); }
+
+
+//*****Shifting Operators*****
+inline FallbackUInt32 operator<<(FallbackUInt32 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
+inline FallbackUInt32 operator>>(FallbackUInt32 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
+
+//*****Min/Max*****
+inline FallbackUInt32 min(FallbackUInt32 a, FallbackUInt32 b) { return FallbackUInt32(std::min(a.v, b.v)); }
+inline FallbackUInt32 max(FallbackUInt32 a, FallbackUInt32 b) { return FallbackUInt32(std::max(a.v, b.v)); }
+
+
+
+
+
+
+
+
+
+//***************** x86_64 only code ******************
+#if defined(_M_X64) || defined(__x86_64)
+#include <immintrin.h>
 
 
 
@@ -62,6 +168,7 @@ struct Simd512UInt32 {
 	__m512i v;
 	typedef uint32_t F;
 
+	Simd512UInt32() = default;
 	Simd512UInt32(__m512i a) : v(a) {};
 	Simd512UInt32(F a) : v(_mm512_set1_epi32(a)) {};
 
@@ -74,6 +181,10 @@ struct Simd512UInt32 {
 
 	//*****Elements*****
 	F element(int i) { return v.m512i_u32[i]; }
+
+	//*****Make Functions****
+	static Simd512UInt32 make_sequential(uint32_t first) { return Simd512UInt32(_mm512_set_epi32(first + 15, first + 14, first + 13, first + 12, first + 11, first + 10, first + 9, first + 8, first + 7, first + 6, first + 5, first + 4, first + 3, first + 2, first + 1, first)); }
+
 
 	//*****Addition Operators*****
 	Simd512UInt32& operator+=(const Simd512UInt32& rhs) noexcept { v = _mm512_add_epi32(v, rhs.v); return *this; }
@@ -97,6 +208,8 @@ struct Simd512UInt32 {
 	Simd512UInt32& operator^=(const Simd512UInt32& rhs) noexcept { v = _mm512_xor_si512(v, rhs.v); return *this; }
 
 	//*****Mathematical*****
+
+	
 	
 };
 
@@ -145,6 +258,7 @@ struct Simd256UInt32 {
 	__m256i v;
 	typedef uint32_t F;
 
+	Simd256UInt32() = default;
 	Simd256UInt32(__m256i a) : v(a) {};
 	Simd256UInt32(F a) : v(_mm256_set1_epi32(a)) {};
 
@@ -181,8 +295,8 @@ struct Simd256UInt32 {
 	Simd256UInt32& operator^=(const Simd256UInt32& rhs) noexcept { v = _mm256_xor_si256(v, rhs.v); return *this; }
 
 	//*****Make Functions****
-	static Simd256UInt32 make_sequential(uint32_t first) { return Simd256UInt32(_mm256_set_epi32(first, first + 1, first + 2, first + 3, first + 4, first + 5, first + 6, first + 7)); }
-	static Simd256UInt32 make_set1(uint32_t v) { return _mm256_set1_epi32(v); }
+	static Simd256UInt32 make_sequential(uint32_t first) { return Simd256UInt32(_mm256_set_epi32(first + 7, first + 6, first + 5, first + 4, first + 3, first + 2, first + 1, first)); }
+	
 
 	//*****Mathematical*****
 	
@@ -231,94 +345,25 @@ inline Simd256UInt32 min(Simd256UInt32 a, Simd256UInt32 b) {  return Simd256UInt
 inline Simd256UInt32 max(Simd256UInt32 a, Simd256UInt32 b) { return Simd256UInt32(_mm256_max_epu32(a.v, b.v)); }
 
 
+#endif
+
+
 
 
 
 /**************************************************************************************************
-* Fallback I32 type.
-* Contains 1 x 32bit Unsigned Integers
-*
-* This is a fallback for cpus that are not yet supported.
-*
-* It may be useful to evaluate a single value from the same code base, as it offers the same interface
-* as the SIMD types.
-*
-* ************************************************************************************************/
-struct FallbackUInt32 {
-	uint32_t v;
-	typedef uint32_t F;
+ * Check that each type implements the desired types from simd-concepts.h
+ * (Not sure why this fails on intelisense, but compliles ok.)
+ * ************************************************************************************************/
+static_assert(Simd<FallbackUInt32>, "FallbackUInt32 does not implement the concept Simd");
+static_assert(SimdUInt<FallbackUInt32>, "FallbackUInt32 does not implement the concept SimdUint");
+static_assert(SimdUInt32<FallbackUInt32>, "FallbackUInt32 does not implement the concept SimdUInt32");
 
-	FallbackUInt32(uint32_t a) : v(a) {};
-
-	//*****Support Informtion*****
-	static bool cpu_supported(CpuInformation) {
-		return true;
-	}
-	static constexpr int size_of_element() { return sizeof(uint32_t); }
-	static constexpr int number_of_elements() { return 1; }
-
-	//*****Elements*****
-	F element(int) { return v; }
-
-	//*****Addition Operators*****
-	FallbackUInt32& operator+=(const FallbackUInt32& rhs) noexcept { v += rhs.v; return *this; }
-	FallbackUInt32& operator+=(uint32_t rhs) noexcept { v += rhs; return *this; }
-
-	//*****Subtraction Operators*****
-	FallbackUInt32& operator-=(const FallbackUInt32& rhs) noexcept { v -= rhs.v; return *this; }
-	FallbackUInt32& operator-=(uint32_t rhs) noexcept { v -= rhs; return *this; }
-
-	//*****Multiplication Operators*****
-	FallbackUInt32& operator*=(const FallbackUInt32& rhs) noexcept { v *= rhs.v; return *this; }
-	FallbackUInt32& operator*=(uint32_t rhs) noexcept { v *= rhs; return *this; }
-
-	//*****Division Operators*****
-	FallbackUInt32& operator/=(const FallbackUInt32& rhs) noexcept { v /= rhs.v; return *this; }
-	FallbackUInt32& operator/=(uint32_t rhs) noexcept { v /= rhs;	return *this; }
-
-	//*****Bitwise Logic Operators*****
-	FallbackUInt32& operator&=(const FallbackUInt32& rhs) noexcept { v &= rhs.v; return *this; }
-	FallbackUInt32& operator|=(const FallbackUInt32& rhs) noexcept { v |= rhs.v; return *this; }
-	FallbackUInt32& operator^=(const FallbackUInt32& rhs) noexcept { v ^= rhs.v; return *this; }
-
-	//*****Mathematical*****
-	
-};
-
-//*****Addition Operators*****
-inline FallbackUInt32 operator+(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs += rhs; return lhs; }
-
-
-inline FallbackUInt32 operator+(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs += rhs; return lhs; }
-inline FallbackUInt32 operator+(uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs += lhs; return rhs; }
-
-//*****Subtraction Operators*****
-inline FallbackUInt32 operator-(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt32 operator-(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt32 operator-(const uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
-
-//*****Multiplication Operators*****
-inline FallbackUInt32 operator*(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt32 operator*(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt32 operator*(uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs *= lhs; return rhs; }
-
-//*****Division Operators*****
-inline FallbackUInt32 operator/(FallbackUInt32  lhs, const FallbackUInt32& rhs) noexcept { lhs /= rhs;	return lhs; }
-inline FallbackUInt32 operator/(FallbackUInt32  lhs, uint32_t rhs) noexcept { lhs /= rhs; return lhs; }
-inline FallbackUInt32 operator/(const uint32_t lhs, FallbackUInt32 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
-
-
-//*****Bitwise Logic Operators*****
-inline FallbackUInt32 operator&(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v & rhs.v); }
-inline FallbackUInt32 operator|(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v | rhs.v); }
-inline FallbackUInt32 operator^(const FallbackUInt32& lhs, const FallbackUInt32& rhs) noexcept { return FallbackUInt32(lhs.v ^ rhs.v); }
-inline FallbackUInt32 operator~(FallbackUInt32 lhs) noexcept { return FallbackUInt32(~lhs.v); }
-
-
-//*****Shifting Operators*****
-inline FallbackUInt32 operator<<(FallbackUInt32 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
-inline FallbackUInt32 operator>>(FallbackUInt32 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
-
-//*****Min/Max*****
-inline FallbackUInt32 min(FallbackUInt32 a, FallbackUInt32 b) { return FallbackUInt32(std::min(a.v, b.v)); }
-inline FallbackUInt32 max(FallbackUInt32 a, FallbackUInt32 b) { return FallbackUInt32(std::max(a.v, b.v)); }
+#if defined(_M_X64) || defined(__x86_64)
+static_assert(SimdUInt<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUint");
+static_assert(SimdUInt<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUint");
+static_assert(Simd<Simd256UInt32>, "Simd256UInt32 does not implement the concept Simd");
+static_assert(Simd<Simd512UInt32>, "Simd512UInt32 does not implement the concept Simd");
+static_assert(SimdUInt32<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUInt32");
+static_assert(SimdUInt32<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUInt32");
+#endif

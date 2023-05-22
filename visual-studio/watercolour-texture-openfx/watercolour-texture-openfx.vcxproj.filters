@@ -73,6 +73,9 @@
     <ClInclude Include="..\..\common\simd-concepts.h">
       <Filter>Source Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\input-transforms.h">
+      <Filter>Source Files\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\util.cpp">

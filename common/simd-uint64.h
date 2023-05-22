@@ -45,11 +45,115 @@ Operators (rhs int)
 *********************************************************************************************************/
 #pragma once
 
-#include <immintrin.h>
 #include <stdint.h>
 #include <bit>
 
 #include "simd-cpuid.h"
+
+
+/**************************************************************************************************
+* Fallback I64 type.
+* Contains 1 x 64bit Unsigned Integers
+*
+* This is a fallback for cpus that are not yet supported.
+*
+* It may be useful to evaluate a single value from the same code base, as it offers the same interface
+* as the SIMD types.
+*
+* ************************************************************************************************/
+struct FallbackUInt64 {
+	uint64_t v;
+	typedef uint64_t F;
+
+	FallbackUInt64() = default;
+	FallbackUInt64(uint64_t a) : v(a) {};
+
+	//*****Support Informtion*****
+#if defined(_M_X64) || defined(__x86_64)
+	static bool cpu_supported(CpuInformation) {
+		return true;
+	}
+#endif
+	static bool cpu_supported() { return true; }
+
+	//*****Elements*****
+	static constexpr int size_of_element() { return sizeof(uint64_t); }
+	static constexpr int number_of_elements() { return 1; }	
+	F element(int) { return v; }
+
+	//*****Make Functions****
+	static FallbackUInt64 make_sequential(uint32_t first) { return FallbackUInt64(first); }
+
+
+	//*****Addition Operators*****
+	FallbackUInt64& operator+=(const FallbackUInt64& rhs) noexcept { v += rhs.v; return *this; }
+	FallbackUInt64& operator+=(uint64_t rhs) noexcept { v += rhs; return *this; }
+
+	//*****Subtraction Operators*****
+	FallbackUInt64& operator-=(const FallbackUInt64& rhs) noexcept { v -= rhs.v; return *this; }
+	FallbackUInt64& operator-=(uint64_t rhs) noexcept { v -= rhs; return *this; }
+
+	//*****Multiplication Operators*****
+	FallbackUInt64& operator*=(const FallbackUInt64& rhs) noexcept { v *= rhs.v; return *this; }
+	FallbackUInt64& operator*=(uint64_t rhs) noexcept { v *= rhs; return *this; }
+
+	//*****Division Operators*****
+	FallbackUInt64& operator/=(const FallbackUInt64& rhs) noexcept { v /= rhs.v; return *this; }
+	FallbackUInt64& operator/=(uint64_t rhs) noexcept { v /= rhs;	return *this; }
+
+	//*****Bitwise Logic Operators*****
+	FallbackUInt64& operator&=(const FallbackUInt64& rhs) noexcept { v &= rhs.v; return *this; }
+	FallbackUInt64& operator|=(const FallbackUInt64& rhs) noexcept { v |= rhs.v; return *this; }
+	FallbackUInt64& operator^=(const FallbackUInt64& rhs) noexcept { v ^= rhs.v; return *this; }
+
+};
+
+//*****Addition Operators*****
+inline FallbackUInt64 operator+(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs += rhs; return lhs; }
+
+
+inline FallbackUInt64 operator+(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline FallbackUInt64 operator+(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs += lhs; return rhs; }
+
+//*****Subtraction Operators*****
+inline FallbackUInt64 operator-(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline FallbackUInt64 operator-(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline FallbackUInt64 operator-(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
+
+//*****Multiplication Operators*****
+inline FallbackUInt64 operator*(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline FallbackUInt64 operator*(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline FallbackUInt64 operator*(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+
+//*****Division Operators*****
+inline FallbackUInt64 operator/(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline FallbackUInt64 operator/(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline FallbackUInt64 operator/(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
+
+
+//*****Bitwise Logic Operators*****
+inline FallbackUInt64 operator&(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v & rhs.v); }
+inline FallbackUInt64 operator|(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v | rhs.v); }
+inline FallbackUInt64 operator^(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v ^ rhs.v); }
+inline FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept { return FallbackUInt64(~lhs.v); }
+
+
+//*****Shifting Operators*****
+inline FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
+inline FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
+
+inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return std::rotl(a.v, bits); };
+inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return std::rotr(a.v, bits); };
+
+//*****Min/Max*****
+inline FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }
+inline FallbackUInt64 max(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::max(a.v, b.v)); }
+
+
+
+//***************** x86_64 only code ******************
+#if defined(_M_X64) || defined(__x86_64)
+#include <immintrin.h>
 
 
 /**************************************************************************************************
@@ -60,6 +164,7 @@ struct Simd512UInt64 {
 	__m512i v;
 	typedef uint64_t F;
 
+	Simd512UInt64() = default;
 	Simd512UInt64(__m512i a) : v(a) {};
 	Simd512UInt64(F a) : v(_mm512_set1_epi64(a)) {}
 
@@ -72,6 +177,10 @@ struct Simd512UInt64 {
 	}
 	static constexpr int size_of_element() { return sizeof(uint64_t); }
 	static constexpr int number_of_elements() { return 8; }
+
+	//*****Make Functions****
+	static Simd512UInt64 make_sequential(uint64_t first) { return Simd512UInt64(_mm512_set_epi64(first + 7, first + 6, first + 5, first + 4, first + 3, first + 2, first + 1, first)); }
+
 
 	//*****Addition Operators*****
 	Simd512UInt64& operator+=(const Simd512UInt64& rhs) noexcept { v = _mm512_add_epi64(v, rhs.v); return *this; }
@@ -148,6 +257,7 @@ struct Simd256UInt64 {
 
 	typedef uint64_t F;
 
+	Simd256UInt64() = default;
 	Simd256UInt64(__m256i a) : v(a) {};
 	Simd256UInt64(F a) : v(_mm256_set1_epi64x(a)) {}
 
@@ -202,8 +312,8 @@ struct Simd256UInt64 {
 	Simd256UInt64& operator^=(const Simd256UInt64&rhs) noexcept {v=_mm256_xor_si256(v, rhs.v);return *this;}
 
 	//*****Make Functions****
-	static Simd256UInt64 make_sequential(uint64_t first) { return Simd256UInt64(_mm256_set_epi64x(first, first + 1, first + 2, first + 3)); }
-	static Simd256UInt64 make_set1(uint64_t v) { return _mm256_set1_epi64x(v); }
+	static Simd256UInt64 make_sequential(uint64_t first) { return Simd256UInt64(_mm256_set_epi64x(first + 3, first + 2, first + 1, first)); }
+	
 
 
 };
@@ -248,95 +358,27 @@ inline Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) { return Simd256UInt6
 inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) { return Simd256UInt64(_mm256_max_epu64(a.v, b.v)); }
 
 
+#endif //x86_64
+
+
 
 
 /**************************************************************************************************
-* Fallback I64 type.
-* Contains 1 x 64bit Unsigned Integers
-*
-* This is a fallback for cpus that are not yet supported.  
-* 
-* It may be useful to evaluate a single value from the same code base, as it offers the same interface
-* as the SIMD types.
-* 
-* ************************************************************************************************/
-struct FallbackUInt64 {
-	uint64_t v;
-	typedef uint64_t F;
-
-	FallbackUInt64(uint64_t a) : v(a) {};
-	
-	//*****Support Informtion*****
-	static bool cpu_supported(CpuInformation) {
-		return true;
-	}
-	static constexpr int size_of_element() { return sizeof(uint64_t); }
-	static constexpr int number_of_elements() { return 1; }
-
-	//*****Elements*****
-	F element(int) { return v; }
+ * Check that each type implements the desired types from simd-concepts.h
+ * (Not sure why this fails on intelisense, but compliles ok.)
+ * ************************************************************************************************/
+static_assert(Simd<FallbackUInt64>, "FallbackUInt64 does not implement the concept Simd");
+static_assert(SimdUInt<FallbackUInt64>, "FallbackUInt64 does not implement the concept SimdFloat");
+static_assert(SimdUInt64<FallbackUInt64>, "FallbackUInt64 does not implement the concept SimdUInt64");
 
 
-	//*****Addition Operators*****
-	FallbackUInt64& operator+=(const FallbackUInt64& rhs) noexcept { v += rhs.v; return *this; }
-	FallbackUInt64& operator+=(uint64_t rhs) noexcept { v += rhs; return *this; }
 
-	//*****Subtraction Operators*****
-	FallbackUInt64& operator-=(const FallbackUInt64& rhs) noexcept { v -= rhs.v; return *this; }
-	FallbackUInt64& operator-=(uint64_t rhs) noexcept { v -= rhs; return *this; }
+#if defined(_M_X64) || defined(__x86_64)
+static_assert(Simd<Simd256UInt64>, "Simd256UInt64 does not implement the concept Simd");
+static_assert(Simd<Simd512UInt64>, "Simd512UInt64 does not implement the concept Simd");
+static_assert(SimdUInt<Simd256UInt64>, "Simd256UInt64 does not implement the concept SimdFloat");
+static_assert(SimdUInt<Simd512UInt64>, "Simd512UInt64 does not implement the concept SimdFloat");
+static_assert(SimdUInt64<Simd256UInt64>, "Simd256UInt64 does not implement the concept SimdUInt64");
+static_assert(SimdUInt64<Simd512UInt64>, "Simd512UInt64 does not implement the concept SimdUInt64");
 
-	//*****Multiplication Operators*****
-	FallbackUInt64& operator*=(const FallbackUInt64& rhs) noexcept { v *= rhs.v; return *this; }
-	FallbackUInt64& operator*=(uint64_t rhs) noexcept { v *= rhs; return *this; }
-
-	//*****Division Operators*****
-	FallbackUInt64& operator/=(const FallbackUInt64& rhs) noexcept { v /= rhs.v; return *this; }
-	FallbackUInt64& operator/=(uint64_t rhs) noexcept { v /= rhs;	return *this; }
-
-	//*****Bitwise Logic Operators*****
-	FallbackUInt64& operator&=(const FallbackUInt64& rhs) noexcept { v &= rhs.v; return *this; }
-	FallbackUInt64& operator|=(const FallbackUInt64& rhs) noexcept { v |= rhs.v; return *this; }
-	FallbackUInt64& operator^=(const FallbackUInt64& rhs) noexcept { v ^= rhs.v; return *this; }
-
-};
-
-//*****Addition Operators*****
-inline FallbackUInt64 operator+(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs += rhs; return lhs; }
-
-
-inline FallbackUInt64 operator+(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
-inline FallbackUInt64 operator+(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs += lhs; return rhs; }
-
-//*****Subtraction Operators*****
-inline FallbackUInt64 operator-(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt64 operator-(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt64 operator-(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
-
-//*****Multiplication Operators*****
-inline FallbackUInt64 operator*(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt64 operator*(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt64 operator*(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs *= lhs; return rhs; }
-
-//*****Division Operators*****
-inline FallbackUInt64 operator/(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
-inline FallbackUInt64 operator/(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
-inline FallbackUInt64 operator/(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
-
-
-//*****Bitwise Logic Operators*****
-inline FallbackUInt64 operator&(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v & rhs.v); }
-inline FallbackUInt64 operator|(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v | rhs.v); }
-inline FallbackUInt64 operator^(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v ^ rhs.v); }
-inline FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept {return FallbackUInt64(~lhs.v); }
-
-
-//*****Shifting Operators*****
-inline FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
-inline FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
-
-inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return std::rotl(a.v,bits); };
-inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return std::rotr(a.v, bits); };
-
-//*****Min/Max*****
-inline FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }
-inline FallbackUInt64 max(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::max(a.v, b.v)); }
+#endif
