@@ -73,39 +73,74 @@ public:
 		}
 	}
 
-	bool has_sse() { return edx1[25]; }
-	bool has_sse2() { return edx1[25]; }
-	bool has_sse3() { return ecx1[0]; }
-	bool has_ssse3() { return ecx1[9]; }
-	bool has_sse41() { return ecx1[19]; }
-	bool has_sse42() { return ecx1[20]; }
-	bool has_fma() { return ecx1[12]; }
-	bool has_avx() { return ecx1[28]; }
-	bool has_f16c() { return ecx1[29]; }
-	bool has_avx2() { return ebx7[5]; }
-	bool has_avx512_f() { return ebx7[16]; }
-	bool has_avx512_dq() { return ebx7[17]; }
-	bool has_avx512_ifma() { return ebx7[21]; }
-	bool has_avx512_pf() { return ebx7[26]; }
-	bool has_avx512_er() { return ebx7[27]; }
-	bool has_avx512_cd() { return ebx7[28]; }
-	bool has_sha() { return ebx7[29]; }
-	bool has_avx512_bw() { return ebx7[30]; }
-	bool has_avx512_vl() { return ebx7[31]; }
-	bool has_avx512_vbmi() { return ecx7[1]; }
-	bool has_avx512_vbmi2() { return ecx7[6]; }
-	bool has_avx512_gfni() { return ecx7[8]; }
-	bool has_avx512_vaes() { return ecx7[9]; }
+	bool has_sse() const noexcept { return edx1[25]; }
+	bool has_sse2() const noexcept { return edx1[25]; }
+	bool has_sse3() const noexcept { return ecx1[0]; }
+	bool has_ssse3() const noexcept { return ecx1[9]; }
+	bool has_sse41() const noexcept { return ecx1[19]; }
+	bool has_sse42() const noexcept { return ecx1[20]; }
+	bool has_fma() const noexcept { return ecx1[12]; }
+	bool has_avx() const noexcept { return ecx1[28]; }
+	bool has_f16c() const noexcept { return ecx1[29]; }
+	bool has_avx2() const noexcept { return ebx7[5]; }
+	bool has_avx512_f() const noexcept { return ebx7[16]; }
+	bool has_avx512_dq() const noexcept { return ebx7[17]; }
+	bool has_avx512_ifma() const noexcept { return ebx7[21]; }
+	bool has_avx512_pf() const noexcept { return ebx7[26]; }
+	bool has_avx512_er() const noexcept { return ebx7[27]; }
+	bool has_avx512_cd() const noexcept { return ebx7[28]; }
+	bool has_sha() const noexcept { return ebx7[29]; }
+	bool has_avx512_bw() const noexcept { return ebx7[30]; }
+	bool has_avx512_vl() const noexcept { return ebx7[31]; }
+	bool has_avx512_vbmi() const noexcept { return ecx7[1]; }
+	bool has_avx512_vbmi2() const noexcept { return ecx7[6]; }
+	bool has_avx512_gfni() const noexcept { return ecx7[8]; }
+	bool has_avx512_vaes() const noexcept { return ecx7[9]; }
 	
-	bool has_avx512_vpclmulqdq() { return ecx7[10]; }
-	bool has_avx512_vnni() { return ecx7[11]; }
-	bool has_avx512_bitalg() { return ecx7[12]; }
-	bool has_avx512_vpopcntdq() { return ecx7[14]; }
-	bool has_avx512_4vnniw() { return edx7[2]; }
-	bool has_avx512_4fmaps() { return edx7[3]; }
-	bool has_avx512_vp2intersect() { return edx7[8]; }
-	bool has_avx512_bf16() { return eax7_1[5]; }
-	bool has_avx512_fp16() { return edx7[23]; }
+	bool has_avx512_vpclmulqdq() const noexcept { return ecx7[10]; }
+	bool has_avx512_vnni() const noexcept { return ecx7[11]; }
+	bool has_avx512_bitalg() const noexcept { return ecx7[12]; }
+	bool has_avx512_vpopcntdq() const noexcept { return ecx7[14]; }
+	bool has_avx512_4vnniw() const noexcept { return edx7[2]; }
+	bool has_avx512_4fmaps() const noexcept { return edx7[3]; }
+	bool has_avx512_vp2intersect() const noexcept { return edx7[8]; }
+	bool has_avx512_bf16() const noexcept { return eax7_1[5]; }
+	bool has_avx512_fp16() const noexcept { return edx7[23]; }
+
+
+	
+
+	/**************************************************************************************************
+	* Checks that the CPU implements x86_64 Microarchitecture level 1
+	* See: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+	* ************************************************************************************************/
+	bool is_level_1() const noexcept {
+		return has_sse2() && has_sse();
+	}
+
+	/**************************************************************************************************
+	* Checks that the CPU implements x86_64 Microarchitecture level 2
+	* See: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+	* ************************************************************************************************/
+	bool is_level_2() const noexcept  {
+		return  has_sse42() && has_sse41() && has_sse3() && has_ssse3() &&  is_level_1();
+	}
+
+	/**************************************************************************************************
+	* Checks that the CPU implements x86_64 Microarchitecture level 3
+	* See: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+	* ************************************************************************************************/
+	bool is_level_3() const noexcept {
+		return  has_avx2() && has_fma() && has_avx() &&  has_f16c() && is_level_2();
+	}
+
+	/**************************************************************************************************
+	* Checks that the CPU implements x86_64 Microarchitecture level 4
+	* See: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+	* ************************************************************************************************/
+	bool is_level_4() const noexcept {
+		return  has_avx512_bw() && has_avx512_cd() && has_avx512_dq() && has_avx512_vl() && has_avx512_f() && is_level_3();
+	}
 
 
 	//Returns a multiline string to show user their supported features.

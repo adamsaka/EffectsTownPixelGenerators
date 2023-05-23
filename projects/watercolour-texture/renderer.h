@@ -54,7 +54,7 @@ Description:
  * ************************************************************************************************/
 template <SimdFloat S>
 class Renderer{
-    //static_assert(sizeof(Simd256Float32) == 32 );
+    
 
     private:
         int width {};

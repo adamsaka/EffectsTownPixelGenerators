@@ -39,6 +39,7 @@ Types:
 #include <cmath>
 #include <string>
 #include "simd-concepts.h"
+#include "simd-f32.h"
 
 template <typename T>
 concept FloatType = SimdFloat<T> || std::floating_point<T>;
@@ -52,7 +53,7 @@ template <typename F> requires SimdFloat<F> || std::floating_point<F> struct Col
 template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr F srgb_to_linear(F c) noexcept;
 
 static constexpr uint8_t float_to_8bit(std::floating_point auto c) noexcept;
-static constexpr uint8_t float_to_8bit(FallbackFloat32 c) noexcept;
+static uint8_t float_to_8bit(FallbackFloat32 c) noexcept;
 
 //template <typename F> std::floating_point<F> static constexpr uint32_t float_to_uint(F c) noexcept;
 template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr ColourSRGB<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept;
@@ -433,7 +434,7 @@ inline static constexpr uint8_t float_to_8bit(std::floating_point auto c) noexce
     return static_cast<uint8_t>(a);
 }
 
-inline static constexpr uint8_t float_to_8bit(FallbackFloat32 c) noexcept {
+inline static uint8_t float_to_8bit(FallbackFloat32 c) noexcept {
     const decltype(c) a = clamp(c * white8, 0.0, white8);
     return static_cast<uint8_t>(a.v);
 }
