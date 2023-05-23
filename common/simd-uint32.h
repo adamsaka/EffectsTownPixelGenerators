@@ -173,6 +173,10 @@ struct Simd512UInt32 {
 	Simd512UInt32(F a) : v(_mm512_set1_epi32(a)) {};
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx512_f();
 	}
@@ -263,6 +267,10 @@ struct Simd256UInt32 {
 	Simd256UInt32(F a) : v(_mm256_set1_epi32(a)) {};
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx() && cpuid.has_avx2();
 	}

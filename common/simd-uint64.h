@@ -70,6 +70,7 @@ struct FallbackUInt64 {
 
 	//*****Support Informtion*****
 #if defined(_M_X64) || defined(__x86_64)
+
 	static bool cpu_supported(CpuInformation) {
 		return true;
 	}
@@ -172,6 +173,10 @@ struct Simd512UInt64 {
 	F element(int i) { return v.m512i_u64[i]; }
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
 	}
@@ -262,6 +267,10 @@ struct Simd256UInt64 {
 	Simd256UInt64(F a) : v(_mm256_set1_epi64x(a)) {}
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx() && cpuid.has_avx2();
 	}

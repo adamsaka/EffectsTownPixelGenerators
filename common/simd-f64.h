@@ -71,12 +71,14 @@ struct FallbackFloat64 {
 
 
 	//*****Support Informtion*****
+	static bool cpu_supported() { return true; }
+
 #if defined(_M_X64) || defined(__x86_64)
 	static bool cpu_supported(CpuInformation) {
 		return true;
 	}
 #endif
-	static bool cpu_supported() { return true; }
+	
 
 	//*****Access Elements*****
 	F element(int) const { return v; }
@@ -243,6 +245,10 @@ struct Simd512Float64 {
 	Simd512Float64(F a) : v(_mm512_set1_pd(a)) {}
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx512_f();
 	}
@@ -413,6 +419,10 @@ struct Simd256Float64 {
 	Simd256Float64(F a) : v(_mm256_set1_pd(a)) {}
 
 	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx();
 	}
