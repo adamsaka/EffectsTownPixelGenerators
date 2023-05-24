@@ -49,6 +49,7 @@ Operators (rhs int)
 #include <bit>
 
 #include "simd-cpuid.h"
+#include "simd-concepts.h"
 
 
 /**************************************************************************************************
