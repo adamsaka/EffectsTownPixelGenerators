@@ -186,7 +186,7 @@ inline FallbackFloat64 tan(FallbackFloat64 a) { return FallbackFloat64(std::tan(
 inline FallbackFloat64 asin(FallbackFloat64 a) { return FallbackFloat64(std::asin(a.v)); }
 inline FallbackFloat64 acos(FallbackFloat64 a) { return FallbackFloat64(std::acos(a.v)); }
 inline FallbackFloat64 atan(FallbackFloat64 a) { return FallbackFloat64(std::atan(a.v)); }
-inline FallbackFloat64 atan2(FallbackFloat64 y, FallbackFloat64 x) { return FallbackFloat64(std::atan2(x.v, y.v)); }
+inline FallbackFloat64 atan2(FallbackFloat64 y, FallbackFloat64 x) { return FallbackFloat64(std::atan2(y.v, x.v)); }
 inline FallbackFloat64 sinh(FallbackFloat64 a) { return FallbackFloat64(std::sinh(a.v)); }
 inline FallbackFloat64 cosh(FallbackFloat64 a) { return FallbackFloat64(std::cosh(a.v)); }
 inline FallbackFloat64 tanh(FallbackFloat64 a) { return FallbackFloat64(std::tanh(a.v)); }
@@ -384,7 +384,7 @@ inline Simd512Float64 abs(Simd512Float64 a) { return Simd512Float64(_mm512_abs_p
 [[nodiscard("Value calculated and not used (clamp)")]]
 inline Simd512Float64 clamp(const Simd512Float64 a) noexcept {
 	const auto zero = _mm512_setzero_pd();
-	const auto one = _mm512_setzero_pd();
+	const auto one = _mm512_set1_pd(1.0);
 	return _mm512_min_pd(_mm512_max_pd(a.v, zero), one);
 }
 
@@ -566,7 +566,7 @@ inline Simd256Float64 abs(Simd256Float64 a) {
 [[nodiscard("Value calculated and not used (clamp)")]]
 inline Simd256Float64 clamp(const Simd256Float64 a) noexcept {
 	const auto zero = _mm256_setzero_pd();
-	const auto one = _mm256_setzero_pd();
+	const auto one = _mm256_set1_pd(1.0);
 	return _mm256_min_pd(_mm256_max_pd(a.v, zero), one);
 }
 

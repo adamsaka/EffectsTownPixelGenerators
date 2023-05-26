@@ -201,7 +201,7 @@ inline FallbackFloat32 tan(FallbackFloat32 a) { return FallbackFloat32(std::tan(
 inline FallbackFloat32 asin(FallbackFloat32 a) { return FallbackFloat32(std::asin(a.v)); }
 inline FallbackFloat32 acos(FallbackFloat32 a) { return FallbackFloat32(std::acos(a.v)); }
 inline FallbackFloat32 atan(FallbackFloat32 a) { return FallbackFloat32(std::atan(a.v)); }
-inline FallbackFloat32 atan2(FallbackFloat32 y, FallbackFloat32 x) { return FallbackFloat32(std::atan2(x.v, y.v)); }
+inline FallbackFloat32 atan2(FallbackFloat32 y, FallbackFloat32 x) { return FallbackFloat32(std::atan2(y.v, x.v)); }
 inline FallbackFloat32 sinh(FallbackFloat32 a) { return FallbackFloat32(std::sinh(a.v)); }
 inline FallbackFloat32 cosh(FallbackFloat32 a) { return FallbackFloat32(std::cosh(a.v)); }
 inline FallbackFloat32 tanh(FallbackFloat32 a) { return FallbackFloat32(std::tanh(a.v)); }
@@ -360,7 +360,7 @@ inline Simd512Float32 max(Simd512Float32 a, Simd512Float32 b) noexcept { return 
 [[nodiscard("Value calculated and not used (clamp)")]]
 inline Simd512Float32 clamp(const Simd512Float32 a) noexcept {
 	const auto zero = _mm512_setzero_ps();
-	const auto one = _mm512_setzero_ps();
+	const auto one = _mm512_set1_ps(1.0);
 	return _mm512_min_ps(_mm512_max_ps(a.v, zero), one);
 }
 
@@ -581,7 +581,7 @@ inline Simd256Float32 max(const Simd256Float32 a, const Simd256Float32 b)  noexc
 [[nodiscard("Value calculated and not used (clamp)")]]
 inline Simd256Float32 clamp(const Simd256Float32 a) noexcept {
 	const auto zero = _mm256_setzero_ps();
-	const auto one = _mm256_setzero_ps();
+	const auto one = _mm256_set1_ps(1.0);
 	return _mm256_min_ps(_mm256_max_ps(a.v, zero), one);
 }
 

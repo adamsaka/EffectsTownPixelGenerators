@@ -284,11 +284,11 @@ struct Simd256UInt64 {
 
 	//*****Addition Operators*****
 	Simd256UInt64& operator+=(const Simd256UInt64& rhs) noexcept {v = _mm256_add_epi64(v, rhs.v); return *this;}
-	Simd256UInt64& operator+=(uint64_t rhs) noexcept {v = _mm256_add_epi64(v, _mm256_set1_epi64x(rhs));	return *this;}
+	Simd256UInt64& operator+=(const uint64_t rhs) noexcept {v = _mm256_add_epi64(v, _mm256_set1_epi64x(rhs));	return *this;}
 
 	//*****Subtraction Operators*****
 	Simd256UInt64& operator-=(const Simd256UInt64& rhs) noexcept {v = _mm256_sub_epi64(v, rhs.v); return *this;}
-	Simd256UInt64& operator-=(uint64_t rhs) noexcept {v = _mm256_sub_epi64(v, _mm256_set1_epi64x(rhs));	return *this; }
+	Simd256UInt64& operator-=(const uint64_t rhs) noexcept {v = _mm256_sub_epi64(v, _mm256_set1_epi64x(rhs));	return *this; }
 
 	//*****Multiplication Operators*****
 	Simd256UInt64& operator*=(const Simd256UInt64& rhs) noexcept {
