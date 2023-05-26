@@ -23,6 +23,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 
 CPUID functions. 
+For run-time checking of CPU features.
+
+The static variable x86_64_cpu_level will be initialised to hold a best supported microarchitecture level.
+
+Note: Use constants in "environment.h" to check for compiler enabled CPU features.
+
 
 This is x86_64 only.  
 (We don't bother supporting x86_32 for SIMD code, those machines will use the fallback interfaces)
@@ -76,7 +82,7 @@ public:
 			eax7_1 = data[1];
 		}
 	}
-
+	
 	bool has_sse() const noexcept { return edx1[25]; }
 	bool has_sse2() const noexcept { return edx1[25]; }
 	bool has_sse3() const noexcept { return ecx1[0]; }

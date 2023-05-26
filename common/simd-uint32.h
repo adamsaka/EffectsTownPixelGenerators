@@ -375,3 +375,26 @@ static_assert(Simd<Simd512UInt32>, "Simd512UInt32 does not implement the concept
 static_assert(SimdUInt32<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUInt32");
 static_assert(SimdUInt32<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUInt32");
 #endif
+
+
+
+/**************************************************************************************************
+ Define SimdNativeUInt32 as the best supported type at compile time.
+*************************************************************************************************/
+#if defined(_M_X64) || defined(__x86_64)
+#if defined(__AVX512F__) && defined(__AVX512DQ__) 
+typedef Simd512UInt32 SimdNativeUInt32;
+#else
+#if defined(__AVX2__) && defined(__AVX__) 
+typedef Simd256UInt32 SimdNativeUInt32;
+#else
+#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
+typedef FallbackUInt32 SimdNativeUInt32;
+#else
+typedef FallbackUInt32 SimdNativeUInt32;
+#endif	
+#endif	
+#endif
+#else
+typedef FallbackUInt32 typedef FallbackUInt32 SimdNativeUInt32;
+#endif

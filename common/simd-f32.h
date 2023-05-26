@@ -679,3 +679,26 @@ static_assert(SimdFloat<Simd512Float32>, "Simd512Float32 does not implement the 
 static_assert(SimdFloat32<Simd256Float32>, "Simd256Float32 does not implement the concept SimdFloat32");
 static_assert(SimdFloat32<Simd512Float32>, "Simd512Float32 does not implement the concept SimdFloat32");
 #endif
+
+
+/**************************************************************************************************
+ Define SimdNativeFloat32 as the best supported type at compile time.  
+ (Based on microarchitecture level so that integers are also supported)
+ * ************************************************************************************************/
+#if defined(_M_X64) || defined(__x86_64)
+	#if defined(__AVX512F__) && defined(__AVX512DQ__) 
+		typedef Simd512Float32 SimdNativeFloat32;
+	#else
+		#if defined(__AVX2__) && defined(__AVX__) 
+			typedef Simd256Float32 SimdNativeFloat32;
+		#else
+			#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
+				typedef FallbackFloat32 SimdNativeFloat32;
+			#else
+				typedef FallbackFloat32 SimdNativeFloat32;
+			#endif	
+		#endif	
+	#endif
+#else
+	typedef FallbackFloat32 typedef FallbackFloat32 SimdNativeFloat32;
+#endif
