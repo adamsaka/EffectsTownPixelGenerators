@@ -93,7 +93,7 @@
       <AdditionalIncludeDirectories>../../projects/watercolour-texture/;../../3rd-party/AfterEffectsSDK/Examples/Headers/;../../3rd-party/AfterEffectsSDK/Examples/Util;../../3rd-party/AfterEffectsSDK/Examples/Headers/SP</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
