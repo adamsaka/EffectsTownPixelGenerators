@@ -31,152 +31,6 @@ This is x86_64 only.
 
 
 
-
-
-//Setup some compiler constants
-#if defined(_MSC_VER)
-	constexpr bool is_visual_studio = true;
-#else
-	constexpr bool is_visual_studio = false;
-#endif
-
-#if defined(__clang__)
-	constexpr bool is_clang = true;
-#else
-	constexpr bool is_clang = false;
-#endif
-
-#if defined(__GNUC__)
-	constexpr bool is_gcc = true;
-#else
-	constexpr bool is_gcc = false;
-#endif
-
-
-#if defined(__EMSCRIPTEN__)
-	constexpr bool emsctipten = true;
-#else
-	constexpr bool is_emsctipten = false;
-#endif 
-
-
-//Check the arhitecture
-#if defined(_M_X64) || defined(__x86_64)
-	constexpr bool is_x64 = true;
-#else
-	constexpr bool is_x64 = false;
-#endif
-
-
-//MSVC++ does not define SSE macros 
-#if (defined(_MSC_VER ) && defined(_M_X64))
-	#if !defined(__SSE__)
-		#define __SSE__ 1
-	#endif
-	#if !defined(__SSE2__)
-		#define __SSE2__ 1
-	#endif
-
-	// I don't know a way to detect SSE3 and SSE4 and compile time, but it exists if AVX does
-	#if defined(__AVX__)
-		#define __SSE3__ 1
-		#define __SSSE3__ 1
-		#define __SSE4_1__ 1
-		#define __SSE4_2__ 1
-	#endif
-#endif
-
-//Setup some constexpr variables that we can use to provide some consistancy with different compilers.
-
-#if defined(__SSE__)
-	constexpr bool compiler_has_sse = true;
-#else
-	constexpr bool compiler_has_sse = false;
-#endif
-
-#if defined(__SSE2__)
-	constexpr bool compiler_has_sse2 = true;
-#else
-	constexpr bool compiler_has_sse2 = false;
-#endif
-
-#if defined(__SSE3__)
-	constexpr bool compiler_has_sse3 = true;
-#else
-	constexpr bool compiler_has_sse3 = false;
-#endif
-
-#if defined(__SSSE3__)
-	constexpr bool compiler_has_ssse3 = true;
-#else
-	constexpr bool compiler_has_ssse3 = false;
-#endif
-
-#if defined(__SSE4_1__)
-	constexpr bool compiler_has_sse4_1 = true;
-#else
-	constexpr bool compiler_has_sse4_1 = false;
-#endif
-
-#if defined(__SSE4_2__)
-	constexpr bool compiler_has_sse4_2 = true;
-#else
-	constexpr bool compiler_has_sse4_2 = false;
-#endif
-
-#if defined(__AVX__)
-	constexpr bool compiler_has_avx = true;
-#else
-	constexpr bool compiler_has_avx = false;
-#endif
-
-#if defined(__AVX2__)
-	constexpr bool compiler_has_avx2 = true;
-#else
-	constexpr bool compiler_has_avx2 = false;
-#endif
-
-#if defined(__AVX512F__)
-	constexpr bool compiler_has_avx512f = true;
-#else
-	constexpr bool compiler_has_avx512f = false;
-#endif
-
-#if defined(__AVX512DQ__)
-	constexpr bool compiler_has_avx512dq = true;
-#else
-	constexpr bool compiler_has_avx512dq = false;
-#endif
-
-#if defined(__AVX512VL__)
-	constexpr bool compiler_has_avx512vl = true;
-#else
-	constexpr bool compiler_has_avx512vl = false;
-#endif
-
-
-#if defined(__AVX512BW__)
-	constexpr bool compiler_has_avx512bw = true;
-#else
-	constexpr bool compiler_has_avx512bw = false;
-#endif
-
-#if defined(__AVX512CD__)
-	constexpr bool compiler_has_avx512cd = true;
-#else
-	constexpr bool compiler_has_avx512cd = false;
-#endif
-
-
-
-
-
-
-
-
-
-
-
 //This is x86_64 only. 
 #if defined(_M_X64) || defined(__x86_64)
 
@@ -185,6 +39,8 @@ This is x86_64 only.
 #include <intrin.h>
 #include <bitset>
 #include <string>
+
+#include "environment.h"
 
 class CpuInformation {
 private:
@@ -290,6 +146,20 @@ public:
 		return  has_avx512_bw() && has_avx512_cd() && has_avx512_dq() && has_avx512_vl() && has_avx512_f() && is_level_3();
 	}
 
+	/**************************************************************************************************
+	* Get x86_64 Microarchitecture level 4
+	* See: https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels
+	* ************************************************************************************************/
+	int get_level() const noexcept {
+		if (is_level_4()) return 4;
+		if (is_level_3()) return 3;
+		if (is_level_2()) return 2;
+		if (is_level_1()) return 1;
+		return 0;
+	}
+
+
+
 
 	//Returns a multiline string to show user their supported features.
 	std::string to_string(){
@@ -329,7 +199,18 @@ public:
 		inline std::string yes_no(bool v) {
 			return (v) ? "Yes" : "No";
 		}
-
 };
 
-#endif
+
+/**************************************************************************************************
+* Stores the CPU level as a static global variable (detected at runtime).
+* (Will upgrade to constexpr in the case we are compiling at the highest level, but don't rely on it)
+* ************************************************************************************************/
+#if defined(__AVX512F__) && defined(__AVX512CD__) && defined(__AVX512DQ__) && defined(__AVX512VL__)
+	static constexpr int x86_64_cpu_level = 4;
+#else
+	static const int x86_64_cpu_level = CpuInformation().get_level();
+#endif 
+
+
+#endif //x86

@@ -282,7 +282,7 @@ void setup_render(Renderer<S>& renderer, const PF_InData* in_data, int width, in
 	}
 	
 	renderer.set_parameters(std::move(params));
-	std::popcount;
+	
 }
 
 /*******************************************************************************************************
