@@ -80,7 +80,7 @@ struct FallbackFloat32 {
 	static bool cpu_supported(CpuInformation) {return true;}
 
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
-	static bool cpu_level_supported(CpuInformation cpuid) {return true;}
+	static bool cpu_level_supported(CpuInformation) {return true;}
 #endif
 	
 
