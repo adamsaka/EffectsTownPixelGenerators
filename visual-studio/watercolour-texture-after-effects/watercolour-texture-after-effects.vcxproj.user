@@ -5,7 +5,24 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerAttach>false</LocalDebuggerAttach>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommand>C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\AfterFX.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerAttach>false</LocalDebuggerAttach>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-x64-Level-1|x64'">
+    <LocalDebuggerCommand>C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\AfterFX.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-x64-Level-3|x64'">
+    <LocalDebuggerCommand>C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\AfterFX.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-x64-Level-1|Win32'">
+    <LocalDebuggerCommand>C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\AfterFX.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-x64-Level-3|Win32'">
     <LocalDebuggerCommand>C:\Program Files\Adobe\Adobe After Effects 2023\Support Files\AfterFX.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

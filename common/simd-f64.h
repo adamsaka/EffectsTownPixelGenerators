@@ -70,13 +70,19 @@ struct FallbackFloat64 {
 
 
 
-	//*****Support Informtion*****
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
 	static bool cpu_supported() { return true; }
 
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() { return true; }
+
+
 #if defined(_M_X64) || defined(__x86_64)
-	static bool cpu_supported(CpuInformation) {
-		return true;
-	}
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static bool cpu_supported(CpuInformation) { return true; }
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) { return true; }
 #endif
 	
 
@@ -245,13 +251,30 @@ struct Simd512Float64 {
 	Simd512Float64(F a) : v(_mm512_set1_pd(a)) {}
 
 	//*****Support Informtion*****
+
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same class may not be supported) 
 	static bool cpu_supported() {
 		CpuInformation cpuid{};
 		cpu_supported(cpuid);
 	}
+
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same class may not be supported) 
 	static bool cpu_supported(CpuInformation cpuid) {
 		return cpuid.has_avx512_f();
 	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() {
+		CpuInformation cpuid{};
+		cpu_level_supported(cpuid);
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) {
+		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
+	}
+
+
 	static constexpr int size_of_element() { return sizeof(double); }
 	static constexpr int number_of_elements() { return 8; }
 
@@ -417,15 +440,31 @@ struct Simd256Float64 {
 	Simd256Float64() = default;
 	Simd256Float64(__m256d a) : v(a) {}
 	Simd256Float64(F a) : v(_mm256_set1_pd(a)) {}
-
+	
 	//*****Support Informtion*****
+
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
 	static bool cpu_supported() {
 		CpuInformation cpuid{};
 		cpu_supported(cpuid);
 	}
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
 	static bool cpu_supported(CpuInformation cpuid) {
-		return cpuid.has_avx();
+		return cpuid.has_avx() && cpuid.has_fma();
 	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() {
+		CpuInformation cpuid{};
+		cpu_level_supported(cpuid);
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) {
+		return cpuid.has_avx2() && cpuid.has_avx() && cpuid.has_fma();
+	}
+
+
 	static constexpr int size_of_element() { return sizeof(double); }
 	static constexpr int number_of_elements() { return 4; }
 

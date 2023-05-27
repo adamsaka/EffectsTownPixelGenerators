@@ -5,4 +5,9 @@
     <LocalDebuggerWorkingDirectory>C:\Program Files\Natron\bin</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommand>C:\Program Files\Natron\bin\natron.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>C:\Program Files\Natron\bin</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

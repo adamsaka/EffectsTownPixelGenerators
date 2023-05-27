@@ -78,15 +78,29 @@ inline void build_input_transforms_parameter_list(ParameterList& params) {
  * ************************************************************************************************/
 template <SimdFloat S>
 vec2<S> perform_input_transform(const std::string& transform_name, vec2<S> p, const ParameterList& params) {
+	constexpr typename S::F pi = 3.1415926535897932384626433832795;
+	
 	using namespace std::numbers;
+
+
+
+	//Pre-Transform (don't compute null-ops as they can affect image quality)
+	const auto tx = params.get_value(ParameterID::input_transform_translate_x);
+	if (tx != 0.0) {
+		p.x += static_cast<S::F>(tx / 100.0f);
+	}
+	const auto ty = params.get_value(ParameterID::input_transform_translate_y);
+	if (ty != 0.0) {
+		p.y += static_cast<S::F>(ty / 100.0f);
+	}
+	const auto ts = params.get_value(ParameterID::input_transform_scale);
+	if (ts != 1.0 ) {
+		p *= static_cast<S::F>(ts);
+	}
+	
 
 	const auto special1 = static_cast<S::F>(params.get_value(ParameterID::input_transform_special1));
 	const auto special2 = static_cast<S::F>(params.get_value(ParameterID::input_transform_special2));
-
-	//Pre-Transform
-	p += vec2{ static_cast<S::F>(params.get_value(ParameterID::input_transform_translate_x) / 100.0f), static_cast<S::F>(params.get_value(ParameterID::input_transform_translate_y) / 100.0f) };
-	p *= static_cast<S::F>( params.get_value(ParameterID::input_transform_scale));
-	
 
 	
 	if (transform_name == "None") return p;
@@ -117,21 +131,28 @@ vec2<S> perform_input_transform(const std::string& transform_name, vec2<S> p, co
 
 
 	if (transform_name == "Complex Cosine") {
-		p *= 3.142;
-		auto x = cos(p.x * special1) * cosh(p.y * special2);
-		auto y = -sin(p.x * special1) * sinh(p.y * special2);
+		p += 0.000001; //Slight offset improves render
+		p *= pi;
+		if (special1 != 1.0) p.x *= special1;
+		if (special2 != 1.0) p.x *= special2;
+
+		auto x = cos(p.x) * cosh(p.y);
+		auto y = -sin(p.x) * sinh(p.y);
 		return vec2{ x, y };
 	}
+
 	if (transform_name == "Complex Cosine Sqrt(r)") {
-		
+		p += 0.000001; //Slight offset improves render
 		auto r = p.magnitude();
 		auto theta = atan2(p.y, p.x);
 		r = sqrt(r);
 		p.x = r * cos(theta);
 		p.y = r * sin(theta);
-		p *= 3.145;
-		auto x = cos(p.x * special1) * cosh(p.y * special2);
-		auto y = -sin(p.x * special1) * sinh(p.y * special2);
+		p *= pi;
+		if (special1 != 1.0) p.x *= special1;
+		if (special2 != 1.0) p.x *= special2;
+		auto x = cos(p.x) * cosh(p.y);
+		auto y = -sin(p.x) * sinh(p.y );
 		return vec2{ x, y };
 	}
 

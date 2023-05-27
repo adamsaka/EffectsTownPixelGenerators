@@ -38,18 +38,35 @@ Description:
 #include "after-effects-parameter-helper.h"
 #include "after-effects-render.h"
 
+#include "..\..\common\simd-cpuid.h"
+
+#include <windows.h>
 #include <string>
 #include <sstream>
 
 
+extern "C" DllExport PF_Err after_effects_main(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, void* extra);
 static void after_effects_global_setup(const PF_InData* in_data, PF_OutData* out_data) noexcept;
 static void after_effects_about(const PF_InData* in_data, PF_OutData* out_data);
 static void after_effects_parameter_setup(PF_OutData* out_data);
 
+//Type signate for the effect mane function.
+typedef PF_Err(__cdecl* EffectMainProc)(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, void* extra);
 
 //We store a local threadlocal copy of in_data because it may be needed in places like destructors, and it is messy to pass it around everywhere.
 thread_local PF_InData* globalTL_in_data{ nullptr };
 
+//Store a copy of the dll hinstance
+HINSTANCE dll_hinstance = nullptr;
+
+
+/*******************************************************************************************************
+We want to known when the dll is loaded so we can store the hInstance.
+*******************************************************************************************************/
+BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD, _In_ LPVOID) {
+	dll_hinstance = hinstDLL;
+	return TRUE;
+}
 
 /*******************************************************************************************************
 DLL Entry function called by After Effects when the plugin is loaded.
@@ -63,6 +80,8 @@ extern "C" DllExport PF_Err PluginDataEntryFunction(PF_PluginDataPtr inPtr, PF_P
 }
 
 
+
+
 /*******************************************************************************************************
 The After Effects plugin's main entry point.
 *******************************************************************************************************/
@@ -70,8 +89,6 @@ PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data,  PF_Para
 	globalTL_in_data = in_data;
 	PF_Err err = PF_Err_NONE;
 	try {
-		
-
 		switch (cmd) {
 		case PF_Cmd_ABOUT:
 			after_effects_about(in_data, out_data);
@@ -89,10 +106,10 @@ PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data,  PF_Para
 			break;
 
 		case PF_Cmd_USER_CHANGED_PARAM:
-			
+
 			break;
 
-		case PF_Cmd_SEQUENCE_SETUP:			
+		case PF_Cmd_SEQUENCE_SETUP:
 			break;
 
 		case PF_Cmd_SEQUENCE_RESETUP:
@@ -118,15 +135,15 @@ PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data,  PF_Para
 		default:
 			break;
 		}
-		
+
 	}
 
 	//Allow throwing AE error codes as exceptions. 
 	//Note: All error codes genenerated by internally by After Effects MUST be returned.  We check and throw them.
-	catch (const PF_Err & thrown_err) {
+	catch (const PF_Err& thrown_err) {
 		err = thrown_err;
 	}
-	
+
 	//AE won't handle exceptions, we need to catch them here, and display an error message.
 	catch (const std::exception ex) {
 		std::ostringstream ss;
@@ -138,6 +155,10 @@ PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data,  PF_Para
 	globalTL_in_data = nullptr;
 	return err;
 }
+
+
+
+
 
 /*******************************************************************************************************
 GlobalSetup

@@ -359,24 +359,19 @@ Sets up the renderer and dispatches based on CPU
 *******************************************************************************************************/
 void after_effects_common_render(int width, int height, PF_InData* in_data, const PF_Rect& area, int bit_depth, PF_EffectWorld* inputLayer, PF_EffectWorld* output) {
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
-	//suites.WorldSuite3()->AEGP_GetBaseAddr32();
 	
-	//Setup the RenderData with the appropriate SIMD Type.  Then call the templated function.
-	//This effectivly dispatches based on CPU SIMD support.
-	CpuInformation cpu_info{};
-	if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
-		//AVX-512 & AVX-512DQ 
+	if constexpr (mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512f) {
+		//Compiler mode supports micro architecture level 4 (AVX-512).  
 		RenderData<Simd512Float32> rd{};
 		rd.width = width;
 		rd.height = height;
 		rd.area = area;
 		rd.output = output;
 		rd.inputLayer = inputLayer;
-		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth,  inputLayer, output, rd);
-
+		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 	}
-	else if (Simd256UInt32::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
-		//AVX & AVX2
+	else if constexpr (mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx) {
+		//Compiler mode supports micro architecture level 3 (AVX2).  
 		RenderData<Simd256Float32> rd{};
 		rd.width = width;
 		rd.height = height;
@@ -385,8 +380,8 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		rd.inputLayer = inputLayer;
 		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 	}
-	else {
-		//Fallback
+	else if constexpr (mt::environment::compiler_has_sse4_2 && mt::environment::compiler_has_sse4_1 && mt::environment::compiler_has_sse3) {
+		//Compiler mode supports micro architecture level 2 (SSE4.2).  
 		RenderData<FallbackFloat32> rd{};
 		rd.width = width;
 		rd.height = height;
@@ -394,6 +389,45 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		rd.output = output;
 		rd.inputLayer = inputLayer;
 		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+
+	}
+	else {
+		//Compiler mode just supports basic x86_64 (SSE2), so we will perform runtime dispatch.
+
+		//Setup the RenderData with the appropriate SIMD Type.  Then call the templated function.
+		//This effectivly dispatches based on CPU SIMD support.
+		CpuInformation cpu_info{};
+		if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
+			//AVX-512 & AVX-512DQ 
+			RenderData<Simd512Float32> rd{};
+			rd.width = width;
+			rd.height = height;
+			rd.area = area;
+			rd.output = output;
+			rd.inputLayer = inputLayer;
+			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+
+		}
+		else if (Simd256UInt32::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
+			//AVX & AVX2
+			RenderData<Simd256Float32> rd{};
+			rd.width = width;
+			rd.height = height;
+			rd.area = area;
+			rd.output = output;
+			rd.inputLayer = inputLayer;
+			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+		}
+		else {
+			//Fallback
+			RenderData<FallbackFloat32> rd{};
+			rd.width = width;
+			rd.height = height;
+			rd.area = area;
+			rd.output = output;
+			rd.inputLayer = inputLayer;
+			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
+		}
 	}
 }
 
