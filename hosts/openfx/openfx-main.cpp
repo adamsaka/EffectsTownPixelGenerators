@@ -42,6 +42,7 @@ Description:
 #include <exception>
 #include <string.h>
 
+
 /*******************************************************************************************************
 Globals
 *******************************************************************************************************/
@@ -68,6 +69,13 @@ static OfxStatus openfx_create_instance_action(OfxImageEffectHandle instance);
 static OfxStatus openfx_destroy_instance_action([[maybe_unused]] OfxImageEffectHandle effect);
 
 
+
+
+
+
+
+
+
 /*******************************************************************************************************
 A struct that provides the host with information about this OFX plugin.
 *******************************************************************************************************/
@@ -88,10 +96,28 @@ static OfxPlugin pluginStruct =
 Returns the number of plug-ins in this file.
 The first call from the OpenFX host. It will ask for the number of plugins in this file.
 *******************************************************************************************************/
-OfxExport int OfxGetNumberOfPlugins(void)
-{
-    CpuInformation cpuinfo{};
-    dev_log("\n\n===============================" + cpuinfo.to_string());
+OfxExport int OfxGetNumberOfPlugins(void){
+
+    //Check if the CPU is supported by this build
+    if constexpr (mt::environment::compiler_has_avx512dq) {
+        int level = CpuInformation().get_level();
+        if (level < 4) {
+             return 0;
+        }
+    }
+    if constexpr (mt::environment::compiler_has_avx2) {
+        int level = CpuInformation().get_level();
+        if (level < 3) {
+            return 0;
+        }
+    }
+    if constexpr (mt::environment::compiler_has_sse4_2) {
+        int level = CpuInformation().get_level();
+        if (level < 2) {
+            return 0;
+        }
+    }
+    
     return 1;
 }
 
@@ -102,10 +128,7 @@ Returns the plugin struct, that gives the host information about this plug-in.
 The host will call this once for each plug-in.  
 The plug-in struct contains function pointers for those plug-ins.
 *******************************************************************************************************/
-OfxExport OfxPlugin* OfxGetPlugin(int nth)
-{   
-
-
+OfxExport OfxPlugin* OfxGetPlugin(int nth){   
     if (nth == 0) return &pluginStruct;
     return 0;
 }
