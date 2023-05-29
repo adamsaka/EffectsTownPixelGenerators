@@ -32,6 +32,7 @@ Description:
 #include "parameter-id.h"
 
 #include <array>
+#include <vector>
 
 class ParameterHelper {
 private:
@@ -53,6 +54,12 @@ public:
 	void add_integer(ParameterID id, const std::string& name, int min = INT_MIN, int max = INT_MAX, int slider_min = INT_MIN, int slider_max = INT_MAX, int value = 0);
 
 	int read_integer(ParameterID id, OfxTime time);
+
+	void add_list(ParameterID id, const std::string& name, const std::vector<std::string>& list);
+
+	int read_list(ParameterID id, OfxTime time);
+
+	
 
 	
 

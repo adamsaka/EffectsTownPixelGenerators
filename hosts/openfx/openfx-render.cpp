@@ -232,6 +232,12 @@ static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime 
         case ParameterType::number:
             p.value = parameter_helper.read_slider(p.id, time);
             break;
+        case ParameterType::list:
+        {
+            int i = parameter_helper.read_list(p.id, time);
+            p.value_string = p.list[i];
+            break;
+        }
 
         default:
             break;

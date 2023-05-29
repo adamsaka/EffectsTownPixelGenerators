@@ -91,6 +91,7 @@ double ParameterHelper::read_slider(ParameterID id, OfxTime time) {
 }
 
 
+
 /********************************************************************************************************
 * Add an integer parmater.
 * Should be called in "Describe in Context" action.
@@ -124,6 +125,37 @@ void ParameterHelper::add_integer(ParameterID id, const std::string& name, int m
 *******************************************************************************************************/
 int ParameterHelper::read_integer(ParameterID id, OfxTime time) {
 	int value{};
+	global_ParameterSuite->paramGetValueAtTime(param_handle.at(parameter_id_to_int(id)), time, &value);
+	return value;
+}
+
+
+/********************************************************************************************************
+* Add a list.
+*******************************************************************************************************/
+void ParameterHelper::add_list(ParameterID id, const std::string& name, const std::vector<std::string>& list) {
+	check_null(paramset);
+
+	//Add the parameter
+	OfxPropertySetHandle param_properties{};
+	global_ParameterSuite->paramDefine(paramset, kOfxParamTypeChoice, name.c_str(), &param_properties);
+
+	//Add the list items
+	int item_number{};
+	for (const auto& item : list) {
+		global_PropertySuite->propSetString(param_properties, kOfxParamPropChoiceOption, item_number++, item.c_str());
+	}
+
+	//Add to lookup
+	param_is_added.at(parameter_id_to_int(id)) = true;
+	param_name.at(parameter_id_to_int(id)) = name;
+}
+
+/********************************************************************************************************
+* Read a list parmater.
+*******************************************************************************************************/
+int ParameterHelper::read_list(ParameterID id, OfxTime time) {
+	int value;
 	global_ParameterSuite->paramGetValueAtTime(param_handle.at(parameter_id_to_int(id)), time, &value);
 	return value;
 }

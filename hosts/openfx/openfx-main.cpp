@@ -364,6 +364,10 @@ void add_parameters(const OfxImageEffectHandle effect) {
             master_parameter_helper.add_slider(p.id, p.name, static_cast<float>(p.min), static_cast<float>(p.max), static_cast<float>(p.slider_min), static_cast<float>(p.slider_max), static_cast<float>(p.initial_value), p.precision);
             break;
 
+        case ParameterType::list:
+            master_parameter_helper.add_list(p.id,p.name,p.list);
+            break;
+
         default:
             break;
         }
