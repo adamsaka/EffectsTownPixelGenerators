@@ -261,17 +261,17 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
     switch (output.bitDepth) {
     case 8:
          {
-            /*
-            const auto ptrDest = output.pixelAddress8(x, y);
-            if (ptrDest) {
-                ptrDest[0] = static_cast<uint8_t>(clamp(c.red* static_cast<Precision>(white8), static_cast<Precision>(0.0),static_cast<Precision>(white8))); //red
-                ptrDest[1] = static_cast<uint8_t>(clamp(c.green * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //green
-                ptrDest[2] = static_cast<uint8_t>(clamp(c.blue * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //blue            
-                
-                if (hasAlpha) ptrDest[3] = static_cast<uint8_t>(clamp(c.blue * static_cast<Precision>(white8), static_cast<Precision>(0.0), static_cast<Precision>(white8))); //alpha
+            //TODO: Code not tested.
+            constexpr auto w8 = static_cast<Precision>(white8);
+            
+            for (int i = 0; i < S::number_of_elements(); i++) {
+                if (x + i >= max_x) break;
+                const auto ptrDest = output.pixelAddress8(x+i, y);
+                ptrDest[0] = static_cast<uint8_t>(clamp(c.red.element(i) * w8,0.0f,w8));
+                ptrDest[1] = static_cast<uint8_t>(clamp(c.green.element(i) * w8, 0.0f, w8));
+                ptrDest[2] = static_cast<uint8_t>(clamp(c.blue.element(i) * w8, 0.0f, w8));
+                if (hasAlpha) ptrDest[3] = static_cast<uint8_t>(clamp(c.alpha.element(i) * w8, 0.0f, w8));
             }
-            break;
-            */
          }
     case 32:
         {
@@ -280,7 +280,7 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
             for (int i = 0; i < S::number_of_elements(); i++) {
                 if (x + i >= max_x) break;
                 const auto ptrDest = output.pixelAddressFloat(x+i, y);
-                ptrDest[0] = static_cast<float>(c.red.element(i)); 
+                ptrDest[0] = static_cast<float>(c.red.element(i));
                 ptrDest[1] = static_cast<float>(c.green.element(i)); 
                 ptrDest[2] = static_cast<float>(c.blue.element(i)); 
                 if (hasAlpha) ptrDest[3] = static_cast<float>(c.alpha.element(i)); 
