@@ -332,14 +332,13 @@ struct Simd256UInt64 {
 			this->v = _mm256_mullo_epi64(v, rhs.v);											
 			return *this;
 		}
-		else {
-			/*
-			Multiplication (i64*i64->i64) is not implemented for AVX2.
-			Algorithm:
-					If x*y = [a,b]*[c,d] (where a,b,c,d are digits/dwords).
-						   = (2^64) ac + (2^32) (ad + bc) + bd
-							 (We ignore upper 64bits so, we can ignore the (2^64) term.)
-			*/
+		else {			
+			//Multiplication (i64*i64->i64) is not implemented for AVX2.
+			//Algorithm:
+			//		If x*y = [a,b]*[c,d] (where a,b,c,d are digits/dwords).
+			//			   = (2^64) ac + (2^32) (ad + bc) + bd
+			//				 (We ignore upper 64bits so, we can ignore the (2^64) term.)
+			//
 			//Given lhs = [a,b] and rhs=[c,d]
 			auto digit1 = _mm256_mul_epu32(v, rhs.v);											//=[0+carry, bd]	: Calculate bd (i32*i32->i64)
 			auto rhs_swap = _mm256_shuffle_epi32(rhs.v, 0xB1);									//=[d,c]			: Swaps the low and high dwords on RHS . 
@@ -350,6 +349,7 @@ struct Simd256UInt64 {
 			this->v = _mm256_add_epi64(digit1, digit2);											//=[ad+dc+carry,bd] : Add digits to get final result. 
 			return *this;
 		}
+		
 	}
 
 	Simd256UInt64& operator*=(uint64_t rhs) noexcept { *this *= Simd256UInt64(_mm256_set1_epi64x(rhs)); return *this; }
@@ -410,6 +410,183 @@ inline Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Sim
 inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_max_epu64(a.v, b.v)); }
 
 
+
+
+
+
+
+
+
+
+/**************************************************************************************************
+ * SIMD 128 type.  Contains 4 x 64bit Unsigned Integers
+ * Requires AVX2 support.
+ * ************************************************************************************************/
+struct Simd128UInt64 {
+	__m128i v;
+
+	typedef uint64_t F;
+
+	Simd128UInt64() = default;
+	Simd128UInt64(__m128i a) : v(a) {};
+	Simd128UInt64(F a) : v(_mm_set1_epi64x(a)) {}
+
+	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
+	static bool cpu_supported(CpuInformation cpuid) {
+		return cpuid.has_avx() && cpuid.has_avx2();
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() {
+		CpuInformation cpuid{};
+		cpu_level_supported(cpuid);
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) {
+		return cpuid.has_avx2() && cpuid.has_avx() && cpuid.has_fma();
+	}
+
+
+	static constexpr int size_of_element() { return sizeof(uint64_t); }
+	static constexpr int number_of_elements() { return 2; }
+
+	//*****Elements*****
+	F element(int i) { return v.m128i_u64[i]; }
+
+
+	//*****Addition Operators*****
+	Simd128UInt64& operator+=(const Simd128UInt64& rhs) noexcept { v = _mm_add_epi64(v, rhs.v); return *this; }
+	Simd128UInt64& operator+=(const uint64_t rhs) noexcept { v = _mm_add_epi64(v, _mm_set1_epi64x(rhs));	return *this; }
+
+	//*****Subtraction Operators*****
+	Simd128UInt64& operator-=(const Simd128UInt64& rhs) noexcept { v = _mm_sub_epi64(v, rhs.v); return *this; }
+	Simd128UInt64& operator-=(const uint64_t rhs) noexcept { v = _mm_sub_epi64(v, _mm_set1_epi64x(rhs));	return *this; }
+
+	//*****Multiplication Operators*****
+	Simd128UInt64& operator*=(const Simd128UInt64& rhs) noexcept {
+		if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+			//There is a slight chance a user is using this struct but has compiled the code with avx512dq and avx512vl enabled.
+			this->v = _mm_mullo_epi64(v, rhs.v);
+			return *this;
+		}
+		else {
+			//Multiplication (i64*i64->i64) is not implemented for AVX2.
+			//Algorithm:
+			//		If x*y = [a,b]*[c,d] (where a,b,c,d are digits/dwords).
+			//			   = (2^64) ac + (2^32) (ad + bc) + bd
+			//				 (We ignore upper 64bits so, we can ignore the (2^64) term.)
+			//
+			//Given lhs = [a,b] and rhs=[c,d]
+			auto digit1 = _mm_mul_epu32(v, rhs.v);											//=[0+carry, bd]	: Calculate bd (i32*i32->i64)
+			auto rhs_swap = _mm_shuffle_epi32(rhs.v, 0xB1);									//=[d,c]			: Swaps the low and high dwords on RHS . 
+			auto ad_bc = _mm_mullo_epi32(v, rhs_swap);										//=[ad,bc]			: Multiply every dword together (i32*i32->i32).          
+			auto bc_00 = _mm_slli_epi64(ad_bc, 32);											//=[bc,0]			: Shift Left to put bc in the upper dword.
+			auto ad_plus_bc = _mm_add_epi32(ad_bc, bc_00);									//=[ad+bc,bc]		: Perofrm addition in the upper dword
+			auto digit2 = _mm_and_si128(ad_plus_bc, _mm_set1_epi64x(0xFFFFFFFF00000000)); //=[ad+bc,0]		: Zero lower dword using &
+			this->v = _mm_add_epi64(digit1, digit2);											//=[ad+dc+carry,bd] : Add digits to get final result. 
+			return *this;
+		}
+
+	}
+
+	Simd128UInt64& operator*=(uint64_t rhs) noexcept { *this *= Simd128UInt64(_mm_set1_epi64x(rhs)); return *this; }
+
+	//*****Division Operators*****
+	Simd128UInt64& operator/=(const Simd128UInt64& rhs) noexcept { v = _mm_div_epu64(v, rhs.v); return *this; }
+	Simd128UInt64& operator/=(uint64_t rhs) noexcept { v = _mm_div_epu64(v, _mm_set1_epi64x(rhs));	return *this; }
+
+	//*****Bitwise Logic Operators*****
+	Simd128UInt64& operator&=(const Simd128UInt64& rhs) noexcept { v = _mm_and_si128(v, rhs.v); return *this; }
+	Simd128UInt64& operator|=(const Simd128UInt64& rhs) noexcept { v = _mm_or_si128(v, rhs.v); return *this; }
+	Simd128UInt64& operator^=(const Simd128UInt64& rhs) noexcept { v = _mm_xor_si128(v, rhs.v); return *this; }
+
+	//*****Make Functions****
+	static Simd128UInt64 make_sequential(uint64_t first) noexcept { return Simd128UInt64(_mm_set_epi64x(first + 1, first)); }
+
+
+
+};
+
+//*****Addition Operators*****
+inline Simd128UInt64 operator+(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128UInt64 operator+(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128UInt64 operator+(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs += lhs; return rhs; }
+
+//*****Subtraction Operators*****
+inline Simd128UInt64 operator-(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128UInt64 operator-(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128UInt64 operator-(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_sub_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
+
+//*****Multiplication Operators*****
+inline Simd128UInt64 operator*(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128UInt64 operator*(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128UInt64 operator*(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+
+//*****Division Operators*****
+inline Simd128UInt64 operator/(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline Simd128UInt64 operator/(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline Simd128UInt64 operator/(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_div_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
+
+
+//*****Bitwise Logic Operators*****
+inline Simd128UInt64 operator&(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
+inline Simd128UInt64 operator|(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
+inline Simd128UInt64 operator^(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
+inline Simd128UInt64 operator~(const Simd128UInt64& lhs) noexcept { return Simd128UInt64(_mm_xor_si128(lhs.v, _mm_set1_epi64x(0xFFFFFFFFFFFFFFFF))); } //No bitwise not in AVX2 so we use xor with a constant..
+
+
+//*****Shifting Operators*****
+inline Simd128UInt64 operator<<(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_slli_epi64(lhs.v, bits)); }
+inline Simd128UInt64 operator>>(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_srli_epi64(lhs.v, bits)); }
+
+inline Simd128UInt64 rotl(const Simd128UInt64& a, int bits) noexcept { return a << bits | a >> (64 - bits); };
+inline Simd128UInt64 rotr(const Simd128UInt64& a, int bits) noexcept { return a >> bits | a << (64 - bits); };
+
+//*****Min/Max*****
+inline Simd128UInt64 min(Simd128UInt64 a, Simd128UInt64 b) noexcept {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+		return Simd128UInt64(_mm_min_epu64(a.v, b.v)); //AVX-512
+	}
+	else {
+		//No min/max or compare for unsigned ints in SSE2 so we will just unroll.
+		auto m1 = std::min(a.v.m128i_u64[1], b.v.m128i_u64[1]);
+		auto m0 = std::min(a.v.m128i_u64[0], b.v.m128i_u64[0]);
+		return Simd128UInt64(_mm_set_epi64x(m1, m0));
+	}
+}
+
+	
+inline Simd128UInt64 max(Simd128UInt64 a, Simd128UInt64 b) noexcept {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+		return Simd128UInt64(_mm_max_epu64(a.v, b.v)); //AVX-512
+	}
+	else {
+		//No min/max or compare for unsigned ints in SSE2 so we will just unroll.
+		auto m1 = std::max(a.v.m128i_u64[1], b.v.m128i_u64[1]);
+		auto m0 = std::max(a.v.m128i_u64[0], b.v.m128i_u64[0]);
+		return Simd128UInt64(_mm_set_epi64x(m1, m0));
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif //x86_64
 
 
@@ -417,7 +594,6 @@ inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Sim
 
 /**************************************************************************************************
  * Check that each type implements the desired types from simd-concepts.h
- * (Not sure why this fails on intelisense, but compliles ok.)
  * ************************************************************************************************/
 static_assert(Simd<FallbackUInt64>, "FallbackUInt64 does not implement the concept Simd");
 static_assert(SimdUInt<FallbackUInt64>, "FallbackUInt64 does not implement the concept SimdUInt");
@@ -426,10 +602,15 @@ static_assert(SimdUInt64<FallbackUInt64>, "FallbackUInt64 does not implement the
 
 
 #if defined(_M_X64) || defined(__x86_64)
+static_assert(Simd<Simd128UInt64>, "Simd128UInt64 does not implement the concept Simd");
 static_assert(Simd<Simd256UInt64>, "Simd256UInt64 does not implement the concept Simd");
 static_assert(Simd<Simd512UInt64>, "Simd512UInt64 does not implement the concept Simd");
+
+static_assert(SimdUInt<Simd128UInt64>, "Simd128UInt64 does not implement the concept SimdUInt");
 static_assert(SimdUInt<Simd256UInt64>, "Simd256UInt64 does not implement the concept SimdUInt");
 static_assert(SimdUInt<Simd512UInt64>, "Simd512UInt64 does not implement the concept SimdUInt");
+
+static_assert(SimdUInt64<Simd128UInt64>, "Simd128UInt64 does not implement the concept SimdUInt64");
 static_assert(SimdUInt64<Simd256UInt64>, "Simd256UInt64 does not implement the concept SimdUInt64");
 static_assert(SimdUInt64<Simd512UInt64>, "Simd512UInt64 does not implement the concept SimdUInt64");
 #endif

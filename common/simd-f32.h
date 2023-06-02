@@ -126,7 +126,7 @@ struct FallbackFloat32 {
 	static FallbackFloat32 make_from_int32(FallbackUInt32 i) { return FallbackFloat32(static_cast<float>(i.v)); }
 
 	//*****Cast Functions****
-	FallbackUInt32 bitcast_to_uint32() const noexcept { return FallbackUInt32(std::bit_cast<uint32_t>(this->v)); }
+	FallbackUInt32 bitcast_to_uint() const noexcept { return FallbackUInt32(std::bit_cast<uint32_t>(this->v)); }
 
 	//*****Approximate Functions*****
 	inline FallbackFloat32 reciprocal_approx() const noexcept { return FallbackFloat32(1.0f / v); }
@@ -318,7 +318,8 @@ struct Simd512Float32 {
 	//*****Cast Functions****
 
 	//Converts to an unsigned integer.  No check is performed to see if that type is supported. Use cpu_level_supported() for safety. 
-	Simd512UInt32 bitcast_to_uint32() const { return Simd512UInt32(_mm512_castps_si512(this->v)); }
+	Simd512UInt32 bitcast_to_uint() const { return Simd512UInt32(_mm512_castps_si512(this->v)); }
+	
 
 	//*****Approximate Functions*****
 	//Returns an approximate reciprocal
@@ -549,7 +550,8 @@ struct Simd256Float32 {
 	//*****Cast Functions****
 	
 	//Warning: Requires additional CPU features (AVX2)
-	Simd256UInt32 bitcast_to_uint32() const { return Simd256UInt32(_mm256_castps_si256(this->v)); } 
+	Simd256UInt32 bitcast_to_uint() const { return Simd256UInt32(_mm256_castps_si256(this->v)); } 
+	
 
 	//*****Approximate Functions*****
 	//Returns an approximate reciprocal
@@ -709,6 +711,291 @@ inline Simd256Float32 acosh(const Simd256Float32 a) noexcept {return Simd256Floa
 [[nodiscard("Value Calculated and not used (atanh)")]]
 inline Simd256Float32 atanh(const Simd256Float32 a) noexcept {return Simd256Float32(_mm256_atanh_ps(a.v));}
 
+
+
+
+
+
+
+/***************************************************************************************************************************************************************************************************
+ * SIMD 128 type.  Contains 4 x 32bit Floats
+ * Requires SSE2 support.  
+ * (Improved performance if compiled with SSE4.1)
+ * *************************************************************************************************************************************************************************************************/
+struct Simd128Float32 {
+	__m128 v;
+	typedef float F;
+	typedef Simd128UInt32 U;
+	typedef Simd128UInt64 U64;
+
+
+	//*****Constructors*****
+	Simd128Float32() = default;
+	Simd128Float32(__m128 a) : v(a) {};
+	Simd128Float32(F a) : v(_mm_set1_ps(a)) {};
+
+	//*****Support Informtion*****
+
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
+	//Performs a runtime CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static bool cpu_supported(CpuInformation cpuid) {
+		return cpuid.has_sse() && cpuid.has_sse2() && cpuid.has_sse41();
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() {
+		CpuInformation cpuid{};
+		cpu_level_supported(cpuid);
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) {
+		return cpuid.has_sse() && cpuid.has_sse2() && cpuid.has_sse41();
+	}
+
+
+	static constexpr int size_of_element() { return sizeof(float); }
+	static constexpr int number_of_elements() { return 4; }
+
+	//*****Access Elements*****
+	F element(int i)  const { return v.m128_f32[i]; }
+	void set_element(int i, F value) { v.m128_f32[i] = value; }
+
+	//*****Addition Operators*****
+	Simd128Float32& operator+=(const Simd128Float32& rhs) noexcept { v = _mm_add_ps(v, rhs.v); return *this; } //SSE1
+	Simd128Float32& operator+=(float rhs) noexcept { v = _mm_add_ps(v, _mm_set1_ps(rhs));	return *this; }
+
+	//*****Subtraction Operators*****
+	Simd128Float32& operator-=(const Simd128Float32& rhs) noexcept { v = _mm_sub_ps(v, rhs.v); return *this; }//SSE1
+	Simd128Float32& operator-=(float rhs) noexcept { v = _mm_sub_ps(v, _mm_set1_ps(rhs));	return *this; }
+
+	//*****Multiplication Operators*****
+	Simd128Float32& operator*=(const Simd128Float32& rhs) noexcept { v = _mm_mul_ps(v, rhs.v); return *this; } //SSE1
+	Simd128Float32& operator*=(float rhs) noexcept { v = _mm_mul_ps(v, _mm_set1_ps(rhs)); return *this; }
+
+	//*****Division Operators*****
+	Simd128Float32& operator/=(const Simd128Float32& rhs) noexcept { v = _mm_div_ps(v, rhs.v); return *this; } //SSE1
+	Simd128Float32& operator/=(float rhs) noexcept { v = _mm_div_ps(v, _mm_set1_ps(rhs));	return *this; }
+
+	//*****Negate Operators*****
+	Simd128Float32 operator-() const noexcept { return Simd128Float32(_mm_sub_ps(_mm_setzero_ps(), v)); }
+
+
+	//*****Make Functions****
+	static Simd128Float32 make_sequential(F first) { return Simd128Float32(_mm_set_ps(first + 3.0f, first + 2.0f, first + 1.0f, first)); }
+
+
+	static Simd128Float32 make_from_int32(Simd128UInt32 i) { return Simd128Float32(_mm_cvtepi32_ps(i.v)); } //SSE2
+
+	//*****Cast Functions****
+	Simd128UInt32 bitcast_to_uint() const { return Simd128UInt32(_mm_castps_si128(this->v)); } //SSE2
+	
+
+	//*****Approximate Functions*****
+	//Returns an approximate reciprocal
+	[[nodiscard("Value calculated and not used (reciprocal_approx)")]]
+	inline Simd128Float32 reciprocal_approx() const noexcept { return Simd128Float32(_mm_rcp_ps(v)); }  //SSE
+
+};
+
+//*****Addition Operators*****
+inline Simd128Float32 operator+(Simd128Float32  lhs, const Simd128Float32& rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128Float32 operator+(Simd128Float32  lhs, float rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128Float32 operator+(float lhs, Simd128Float32 rhs) noexcept { rhs += lhs; return rhs; }
+
+//*****Subtraction Operators*****
+inline Simd128Float32 operator-(Simd128Float32  lhs, const Simd128Float32& rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128Float32 operator-(Simd128Float32  lhs, float rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128Float32 operator-(const float lhs, const Simd128Float32& rhs) noexcept { return Simd128Float32(_mm_sub_ps(_mm_set1_ps(lhs), rhs.v)); }
+
+//*****Multiplication Operators*****
+inline Simd128Float32 operator*(Simd128Float32  lhs, const Simd128Float32& rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128Float32 operator*(Simd128Float32  lhs, float rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128Float32 operator*(float lhs, Simd128Float32 rhs) noexcept { rhs *= lhs; return rhs; }
+
+//*****Division Operators*****
+inline Simd128Float32 operator/(Simd128Float32  lhs, const Simd128Float32& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline Simd128Float32 operator/(Simd128Float32  lhs, float rhs) noexcept { lhs /= rhs; return lhs; }
+inline Simd128Float32 operator/(const float lhs, const Simd128Float32& rhs) noexcept { return Simd128Float32(_mm_div_ps(_mm_set1_ps(lhs), rhs.v)); }
+
+//*****Rounding Functions*****
+[[nodiscard("Value calculated and not used (floor)")]]
+inline Simd128Float32 floor(Simd128Float32 a) noexcept {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128Float32(_mm_floor_ps(a.v)); //SSE4.1
+	}
+	else {
+		return Simd128Float32(_mm_set_ps(std::floor(a.v.m128_f32[3]), std::floor(a.v.m128_f32[2]), std::floor(a.v.m128_f32[1]), std::floor(a.v.m128_f32[0])));
+	}
+} 
+
+[[nodiscard("Value calculated and not used (ceil)")]]
+inline Simd128Float32 ceil(Simd128Float32 a) noexcept {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128Float32(_mm_ceil_ps(a.v)); //SSE4.1
+	}
+	else {
+		return Simd128Float32(_mm_set_ps(std::ceil(a.v.m128_f32[3]), std::ceil(a.v.m128_f32[2]), std::ceil(a.v.m128_f32[1]), std::ceil(a.v.m128_f32[0])));
+	}
+}
+
+[[nodiscard("Value calculated and not used (trunc)")]]
+inline Simd128Float32 trunc(Simd128Float32 a) noexcept { return Simd128Float32(_mm_trunc_ps(a.v)); } //SSE1
+
+[[nodiscard("Value calculated and not used (round)")]]
+inline Simd128Float32 round(Simd128Float32 a) noexcept {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128Float32(_mm_round_ps(a.v, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)); //SSE4.1
+	}
+	else {
+		return Simd128Float32(_mm_set_ps(std::round(a.v.m128_f32[3]), std::round(a.v.m128_f32[2]), std::round(a.v.m128_f32[1]), std::round(a.v.m128_f32[0])));
+	}
+}
+
+
+[[nodiscard("Value calculated and not used (fract)")]]
+inline Simd128Float32 fract(Simd128Float32 a) noexcept { return a - floor(a); } 
+
+
+
+//*****Fused Multiply Add Simd128s*****
+// Fused Multiply Add (a*b+c)
+[[nodiscard("Value calculated and not used (fma)")]]
+inline Simd128Float32 fma(const Simd128Float32  a, const Simd128Float32 b, const Simd128Float32 c) {
+	if constexpr (mt::environment::compiler_has_avx2) {
+		return _mm_fmadd_ps(a.v, b.v, c.v);  //We are compiling to level 3, but using 128 simd.
+	}
+	else {
+		return a * b + c;  //Fallback (no SSE instruction)
+	}
+} 
+
+// Fused Multiply Subtract (a*b-c)
+[[nodiscard("Value calculated and not used (fms)")]]
+inline Simd128Float32 fms(const Simd128Float32  a, const Simd128Float32 b, const Simd128Float32 c) {
+	if constexpr (mt::environment::compiler_has_avx2) {
+		return _mm_fmsub_ps(a.v, b.v, c.v);  //We are compiling to level 3, but using 128 simd.
+	}
+	else {
+		return a * b - c;  //Fallback (no SSE instruction)
+	}
+} 
+
+// Fused Negative Multiply Add (-a*b+c)
+[[nodiscard("Value calculated and not used (fnma)")]]
+inline Simd128Float32 fnma(const Simd128Float32  a, const Simd128Float32 b, const Simd128Float32 c) {
+	if constexpr (mt::environment::compiler_has_avx2) {
+		return _mm_fnmadd_ps(a.v, b.v, c.v);  //We are compiling to level 3, but using 128 simd.
+	}
+	else {
+		return -a * b + c;  //Fallback (no SSE instruction)
+	}
+}
+
+// Fused Negative Multiply Subtract (-a*b-c)
+[[nodiscard("Value calculated and not used (fnms)")]]
+inline Simd128Float32 fnms(const Simd128Float32  a, const Simd128Float32 b, const Simd128Float32 c) {
+	if constexpr (mt::environment::compiler_has_avx2) {
+		return _mm_fnmsub_ps(a.v, b.v, c.v); //We are compiling to level 3, but using 128 simd.
+	}
+	else {
+		return -a * b - c;  //Fallback (no SSE instruction)
+	}
+}
+
+
+
+//**********Min/Max*v*********
+[[nodiscard("Value calculated and not used (min)")]]
+inline Simd128Float32 min(const Simd128Float32 a, const Simd128Float32 b)  noexcept { return Simd128Float32(_mm_min_ps(a.v, b.v)); } //SSE1
+
+[[nodiscard("Value calculated and not used (max)")]]
+inline Simd128Float32 max(const Simd128Float32 a, const Simd128Float32 b)  noexcept { return Simd128Float32(_mm_max_ps(a.v, b.v)); } //SSE1
+
+//Clamp a value between 0.0 and 1.0
+[[nodiscard("Value calculated and not used (clamp)")]]
+inline Simd128Float32 clamp(const Simd128Float32 a) noexcept {
+	const auto zero = _mm_setzero_ps();
+	const auto one = _mm_set1_ps(1.0);
+	return _mm_min_ps(_mm_max_ps(a.v, zero), one);
+}
+
+//Clamp a value between min and max
+[[nodiscard("Value calculated and not used (clamp)")]]
+inline Simd128Float32 clamp(const Simd128Float32 a, const Simd128Float32 min, const Simd128Float32 max) noexcept {
+	return _mm_min_ps(_mm_max_ps(a.v, min.v), max.v);
+}
+
+//Clamp a value between min and max
+[[nodiscard("Value calculated and not used (clamp)")]]
+inline Simd128Float32 clamp(const Simd128Float32 a, const float min_f, const float max_f) noexcept {
+	const auto min = _mm_set1_ps(min_f);
+	const auto max = _mm_set1_ps(max_f);
+	return _mm_min_ps(_mm_max_ps(a.v, min), max);
+}
+
+
+
+//*****Approximate Functions*****
+[[nodiscard("Value calculated and not used (reciprocal_approx)")]]
+inline Simd128Float32 reciprocal_approx(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_rcp_ps(a.v)); } //sse
+
+//*****Mathematical Functions*****
+[[nodiscard("Value calculated and not used (sqrt)")]]
+inline Simd128Float32 sqrt(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_sqrt_ps(a.v)); } //sse
+
+[[nodiscard("Value Calculated and not used (abs)")]]
+inline Simd128Float32 abs(const Simd128Float32 a) noexcept {
+	//No SSE for abs so we just flip the bit.
+	const auto r = _mm_and_ps(_mm_set1_ps(std::bit_cast<float>(0x7FFFFFFF)), a.v);
+	return Simd128Float32(r);
+}
+
+
+//*****Trigonometric Functions *****
+[[nodiscard("Value Calculated and not used (sin)")]]
+inline Simd128Float32 sin(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_sin_ps(a.v)); }  //SSE
+
+[[nodiscard("Value Calculated and not used (cos)")]]
+inline Simd128Float32 cos(const Simd128Float32 a)  noexcept { return Simd128Float32(_mm_cos_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (tan)")]]
+inline Simd128Float32 tan(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_tan_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (asin)")]]
+inline Simd128Float32 asin(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_asin_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (acos)")]]
+inline Simd128Float32 acos(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_acos_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (atan)")]]
+inline Simd128Float32 atan(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_atan_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (atan2)")]]
+inline Simd128Float32 atan2(const Simd128Float32 a, const Simd128Float32 b) noexcept { return Simd128Float32(_mm_atan2_ps(a.v, b.v)); }
+
+[[nodiscard("Value Calculated and not used (sinh)")]]
+inline Simd128Float32 sinh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_sinh_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (cosh)")]]
+inline Simd128Float32 cosh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_cosh_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (tanh)")]]
+inline Simd128Float32 tanh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_tanh_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (asinh)")]]
+inline Simd128Float32 asinh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_asinh_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (acosh)")]]
+inline Simd128Float32 acosh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_acosh_ps(a.v)); }
+
+[[nodiscard("Value Calculated and not used (atanh)")]]
+inline Simd128Float32 atanh(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_atanh_ps(a.v)); } //SSE
+
 #endif
 
 
@@ -716,20 +1003,33 @@ inline Simd256Float32 atanh(const Simd256Float32 a) noexcept {return Simd256Floa
  * Check that each type implements the desired types from simd-concepts.h
  * (Not sure why this fails on intelisense, but compliles ok.)
  * ************************************************************************************************/
-//static_assert(Simd<FallbackFloat32>,"FallbackFloat32 does not implement the concept SIMD");
-//static_assert(SimdReal<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdReal");
-//static_assert(SimdFloat<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat");
-//static_assert(SimdFloat32<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat32");
+static_assert(Simd<FallbackFloat32>,"FallbackFloat32 does not implement the concept SIMD");
+static_assert(SimdReal<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdReal");
+static_assert(SimdFloat<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat");
+static_assert(SimdFloat32<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat32");
+static_assert(SimdFloatToInt<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloatToInt");
 
 #if defined(_M_X64) || defined(__x86_64)
+static_assert(Simd<Simd128Float32>, "Simd256Float32 does not implement the concept SIMD");
 static_assert(Simd<Simd256Float32>, "Simd256Float32 does not implement the concept SIMD");
 static_assert(Simd<Simd512Float32>, "Simd512Float32 does not implement the concept SIMD");
+
+static_assert(SimdReal<Simd128Float32>, "Simd256Float32 does not implement the concept SimdReal");
 static_assert(SimdReal<Simd256Float32>, "Simd256Float32 does not implement the concept SimdReal");
 static_assert(SimdReal<Simd512Float32>, "Simd512Float32 does not implement the concept SimdReal");
+
+static_assert(SimdFloat<Simd128Float32>, "Simd256Float32 does not implement the concept SimdFloat");
 static_assert(SimdFloat<Simd256Float32>, "Simd256Float32 does not implement the concept SimdFloat");
 static_assert(SimdFloat<Simd512Float32>, "Simd512Float32 does not implement the concept SimdFloat");
+
+static_assert(SimdFloat32<Simd128Float32>, "Simd128Float32 does not implement the concept SimdFloat32");
 static_assert(SimdFloat32<Simd256Float32>, "Simd256Float32 does not implement the concept SimdFloat32");
 static_assert(SimdFloat32<Simd512Float32>, "Simd512Float32 does not implement the concept SimdFloat32");
+
+static_assert(SimdFloatToInt<Simd128Float32>, "Simd128Float32 does not implement the concept SimdFloatToInt");
+static_assert(SimdFloatToInt<Simd256Float32>, "Simd256Float32 does not implement the concept SimdFloatToInt");
+static_assert(SimdFloatToInt<Simd512Float32>, "Simd512Float32 does not implement the concept SimdFloatToInt");
+
 #endif
 
 
@@ -745,9 +1045,9 @@ static_assert(SimdFloat32<Simd512Float32>, "Simd512Float32 does not implement th
 			typedef Simd256Float32 SimdNativeFloat32;
 		#else
 			#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-				typedef FallbackFloat32 SimdNativeFloat32;
+				typedef Simd128Float32 SimdNativeFloat32;
 			#else
-				typedef FallbackFloat32 SimdNativeFloat32;
+				typedef Simd128Float32 SimdNativeFloat32;
 			#endif	
 		#endif	
 	#endif

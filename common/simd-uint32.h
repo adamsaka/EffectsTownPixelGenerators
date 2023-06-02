@@ -170,7 +170,7 @@ inline FallbackUInt32 max(FallbackUInt32 a, FallbackUInt32 b) { return FallbackU
 
 
 /**************************************************************************************************
- * SIMD 512 type.  Contains 8 x 32bit Unsigned Integers
+ * SIMD 512 type.  Contains 16 x 32bit Unsigned Integers
  * Requires AVX-512F 
  * ************************************************************************************************/
 struct Simd512UInt32 {
@@ -277,7 +277,7 @@ inline Simd512UInt32 max(Simd512UInt32 a, Simd512UInt32 b) { return Simd512UInt3
 
 
 /**************************************************************************************************
- * SIMD 256 type.  Contains 4 x 32bit Unsigned Integers
+ * SIMD 256 type.  Contains 8 x 32bit Unsigned Integers
  * Requires AVX2 support.
  * ************************************************************************************************/
 struct Simd256UInt32 {
@@ -387,7 +387,162 @@ inline Simd256UInt32 min(Simd256UInt32 a, Simd256UInt32 b) {  return Simd256UInt
 inline Simd256UInt32 max(Simd256UInt32 a, Simd256UInt32 b) { return Simd256UInt32(_mm256_max_epu32(a.v, b.v)); }
 
 
-#endif
+
+
+
+
+
+
+
+/**************************************************************************************************
+*SIMD 128 type.Contains 4 x 32bit Unsigned Integers
+* Requires SSE2 support.
+* (will be faster with SSE4.1 enabled at compile time)
+* ************************************************************************************************/
+struct Simd128UInt32 {
+	__m128i v;
+	typedef uint32_t F;
+
+	Simd128UInt32() = default;
+	Simd128UInt32(__m128i a) : v(a) {};
+	Simd128UInt32(F a) : v(_mm_set1_epi32(a)) {};
+
+	//*****Support Informtion*****
+	static bool cpu_supported() {
+		CpuInformation cpuid{};
+		cpu_supported(cpuid);
+	}
+	static bool cpu_supported(CpuInformation cpuid) {
+		return cpuid.has_sse2() && cpuid.has_sse();
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported() {
+		CpuInformation cpuid{};
+		cpu_level_supported(cpuid);
+	}
+
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static bool cpu_level_supported(CpuInformation cpuid) {
+		return cpuid.has_sse2() && cpuid.has_sse();
+	}
+
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 4; }
+
+	//*****Elements*****
+	F element(int i) { return v.m128i_u32[i]; }
+
+	//*****Addition Operators*****
+	Simd128UInt32& operator+=(const Simd128UInt32& rhs) noexcept { v = _mm_add_epi32(v, rhs.v); return *this; }
+	Simd128UInt32& operator+=(uint32_t rhs) noexcept { v = _mm_add_epi32(v, _mm_set1_epi32(rhs));	return *this; }
+
+	//*****Subtraction Operators*****
+	Simd128UInt32& operator-=(const Simd128UInt32& rhs) noexcept { v = _mm_sub_epi32(v, rhs.v); return *this; }
+	Simd128UInt32& operator-=(uint32_t rhs) noexcept { v = _mm_sub_epi32(v, _mm_set1_epi32(rhs));	return *this; }
+
+	//*****Multiplication Operators*****
+	Simd128UInt32& operator*=(const Simd128UInt32& rhs) noexcept {
+		if constexpr (mt::environment::compiler_has_sse4_1) {
+			v = _mm_mullo_epi32(v, rhs.v); //SSE4.1
+			return *this;
+		}
+		else {
+			auto result02 = _mm_mul_epu32(v, rhs.v);  //Multiply words 0 and 2.  
+			auto result13 = _mm_mul_epu32(_mm_srli_si128(v, 4), _mm_srli_si128(rhs.v, 4));  //Multiply words 1 and 3, by shifting them into 0,2.
+			v = _mm_unpacklo_epi32(_mm_shuffle_epi32(result02, _MM_SHUFFLE(0, 0, 2, 0)), _mm_shuffle_epi32(result13, _MM_SHUFFLE(0, 0, 2, 0))); // shuffle and pack
+			return *this;
+		}
+	}  
+
+	Simd128UInt32& operator*=(uint32_t rhs) noexcept { *this *= Simd128UInt32(_mm_set1_epi32(rhs)); return *this; } 
+
+	//*****Division Operators*****
+	Simd128UInt32& operator/=(const Simd128UInt32& rhs) noexcept { v = _mm_div_epu32(v, rhs.v); return *this; }
+	Simd128UInt32& operator/=(uint32_t rhs) noexcept { v = _mm_div_epu32(v, _mm_set1_epi32(rhs));	return *this; } //SSE
+
+	//*****Bitwise Logic Operators*****
+	Simd128UInt32& operator&=(const Simd128UInt32& rhs) noexcept { v = _mm_and_si128(v, rhs.v); return *this; } //SSE2
+	Simd128UInt32& operator|=(const Simd128UInt32& rhs) noexcept { v = _mm_or_si128(v, rhs.v); return *this; }
+	Simd128UInt32& operator^=(const Simd128UInt32& rhs) noexcept { v = _mm_xor_si128(v, rhs.v); return *this; }
+
+	//*****Make Functions****
+	static Simd128UInt32 make_sequential(uint32_t first) { return Simd128UInt32(_mm_set_epi32(first + 3, first + 2, first + 1, first)); }
+
+
+	//*****Mathematical*****
+
+
+
+
+};
+
+//*****Addition Operators*****
+inline Simd128UInt32 operator+(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128UInt32 operator+(Simd128UInt32  lhs, uint32_t rhs) noexcept { lhs += rhs; return lhs; }
+inline Simd128UInt32 operator+(uint32_t lhs, Simd128UInt32 rhs) noexcept { rhs += lhs; return rhs; }
+
+//*****Subtraction Operators*****
+inline Simd128UInt32 operator-(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128UInt32 operator-(Simd128UInt32  lhs, uint32_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline Simd128UInt32 operator-(const uint32_t lhs, const Simd128UInt32& rhs) noexcept { return Simd128UInt32(_mm_sub_epi32(_mm_set1_epi32(lhs), rhs.v)); }
+
+//*****Multiplication Operators*****
+inline Simd128UInt32 operator*(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128UInt32 operator*(Simd128UInt32  lhs, uint32_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline Simd128UInt32 operator*(uint32_t lhs, Simd128UInt32 rhs) noexcept { rhs *= lhs; return rhs; }
+
+//*****Division Operators*****
+inline Simd128UInt32 operator/(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline Simd128UInt32 operator/(Simd128UInt32  lhs, uint32_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline Simd128UInt32 operator/(const uint32_t lhs, const Simd128UInt32& rhs) noexcept { return Simd128UInt32(_mm_div_epi32(_mm_set1_epi32(lhs), rhs.v)); }
+
+
+//*****Bitwise Logic Operators*****
+inline Simd128UInt32 operator&(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs &= rhs; return lhs; }
+inline Simd128UInt32 operator|(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs |= rhs; return lhs; }
+inline Simd128UInt32 operator^(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs ^= rhs; return lhs; }
+inline Simd128UInt32 operator~(const Simd128UInt32& lhs) noexcept { return Simd128UInt32(_mm_xor_si128(lhs.v, _mm_set1_epi32(0xFFFFFFFF))); } 
+
+
+//*****Shifting Operators*****
+inline Simd128UInt32 operator<<(const Simd128UInt32& lhs, int bits) noexcept { return Simd128UInt32(_mm_slli_epi32(lhs.v, bits)); } //SSE2
+inline Simd128UInt32 operator>>(const Simd128UInt32& lhs, int bits) noexcept { return Simd128UInt32(_mm_srli_epi32(lhs.v, bits)); }
+
+inline Simd128UInt32 rotl(const Simd128UInt32& a, int bits) { return a << bits | a >> (32 - bits); };
+inline Simd128UInt32 rotr(const Simd128UInt32& a, int bits) { return a >> bits | a << (32 - bits); };
+
+//*****Min/Max*****
+inline Simd128UInt32 min(Simd128UInt32 a, Simd128UInt32 b) {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128UInt32(_mm_min_epu32(a.v, b.v)); //SSE4.1
+	}
+	else {
+		//No min/max or compare for unsigned ints in SSE2 so we will just unroll.
+		auto m3 = std::min(a.v.m128i_u32[3], b.v.m128i_u32[3]);
+		auto m2 = std::min(a.v.m128i_u32[2], b.v.m128i_u32[2]);
+		auto m1 = std::min(a.v.m128i_u32[1], b.v.m128i_u32[1]);
+		auto m0 = std::min(a.v.m128i_u32[0], b.v.m128i_u32[0]);
+		return Simd128UInt32(_mm_set_epi32(m3, m2, m1, m0));
+	}
+}
+
+inline Simd128UInt32 max(Simd128UInt32 a, Simd128UInt32 b) {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128UInt32(_mm_max_epu32(a.v, b.v));  //SSE4.1
+	}
+	else {
+		//No min/max or compare for unsigned ints in SSE2 so we will just unroll.
+		auto m3 = std::max(a.v.m128i_u32[3], b.v.m128i_u32[3]);
+		auto m2 = std::max(a.v.m128i_u32[2], b.v.m128i_u32[2]);
+		auto m1 = std::max(a.v.m128i_u32[1], b.v.m128i_u32[1]);
+		auto m0 = std::max(a.v.m128i_u32[0], b.v.m128i_u32[0]);
+		return Simd128UInt32(_mm_set_epi32(m3, m2, m1, m0));
+	}
+}
+
+
+#endif //x86_64
 
 
 

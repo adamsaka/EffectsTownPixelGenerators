@@ -55,6 +55,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *************************************************************************************************/
 template <typename T>
 concept Simd = requires (T t) {
+
+	//Size of struct should be sizeof individual elements.
+	requires sizeof(t.v) == sizeof(t.element(0)) * t.number_of_elements();
+	requires sizeof(t) == sizeof(t.v);
+	
 	//General
 	requires std::copy_constructible<T>;
 	requires std::copyable<T>;
@@ -76,8 +81,7 @@ concept Simd = requires (T t) {
 	
 	
 
-	//Typedefs
-		
+	//Typedefs		
 	static_cast<typename T::F>(1);  //T::F  must exist and by castable from a numberic type
 	requires std::same_as<decltype(t.element(0)), decltype(static_cast<T::F>(1))>; //T::F must be same type as the elements.
 
@@ -149,9 +153,7 @@ concept SimdSigned = Simd<T> && requires (T t) {
 template <typename T>
 concept SimdReal = Simd<T> && SimdSigned<T> && requires (T t) {
 	
-	//Indicates the unsined int type size of the same size.  May not be safe to use.  User should check if it is supported
-	//This allows users to test for support, then before making appropriate conversion.	
-	static_cast<typename T::U>(1.0);
+
 	
 	floor(t);
 	ceil(t);
@@ -223,8 +225,7 @@ concept SimdFloat64 = SimdFloat<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<double>;
 		requires sizeof(t.element(0)) == 8;
 
-	//Casting operations.
-	t.bitcast_to_uint64();   //Returns type T::U. May not be safe to use.  User should check if it is supported.
+	
 };
 
 
@@ -239,8 +240,7 @@ concept SimdFloat32 = SimdFloat<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<float>;
 		requires sizeof(t.element(0)) == 4;
 
-	//Casting operations.
-	t.bitcast_to_uint32();   //Returns type T::U. May not be safe to use.  User should check if it is supported. 
+	
 };
 
 
@@ -294,6 +294,23 @@ template <typename T>
 concept SimdUInt32 = Simd<T> && SimdUInt<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<uint32_t>;
 	requires sizeof(t.element(0)) == 4;
+};
+
+
+/**************************************************************************************************
+* Concept for types that are based on 32-bit unsigned ints
+*
+* Must implement "SimdUInt" concept and have elements of uint32_t:
+*************************************************************************************************/
+template <typename T>
+concept SimdFloatToInt = Simd<T> && SimdFloat<T> && requires (T t) {
+	//Indicates the unsined int type size of the same size.  May not be safe to use.  User should check if it is supported
+	//This allows users to test for support, then before making appropriate conversion.	
+	static_cast<typename T::U>(1.0);
+
+	//Casting operations.
+	t.bitcast_to_uint();   //Returns type T::U. May not be safe to use.  User should check if it is supported. 
+
 };
 
 
