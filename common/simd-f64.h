@@ -155,19 +155,27 @@ inline FallbackFloat64 operator/(const double lhs, const FallbackFloat64& rhs) n
 //*****Fused Multiply Add Fallbacks*****
 // Fused Multiply Add (a*b+c)
 [[nodiscard("Value calculated and not used (fma)")]]
-inline FallbackFloat64 fma(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { return a * b + c; }
+inline FallbackFloat64 fma(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
+	return std::fma(a.v, b.v, c.v);
+}
 
 // Fused Multiply Subtract (a*b-c)
 [[nodiscard("Value calculated and not used (fms)")]]
-inline FallbackFloat64 fms(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { return a * b - c; }
+inline FallbackFloat64 fms(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
+	return std::fma(a.v, b.v, -c.v);
+}
 
 // Fused Negative Multiply Add (-a*b+c)
 [[nodiscard("Value calculated and not used (fnma)")]]
-inline FallbackFloat64 fnma(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { return -a * b + c; }
+inline FallbackFloat64 fnma(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
+	return -std::fma(a.v, b.v, c.v);
+}
 
 // Fused Negative Multiply Subtract (-a*b-c)
 [[nodiscard("Value calculated and not used (fnms)")]]
-inline FallbackFloat64 fnms(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { return -a * b - c; }
+inline FallbackFloat64 fnms(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
+	return -std::fma(a.v, b.v, -c.v);
+}
 
 //*****Rounding Functions*****
 inline FallbackFloat64 floor(FallbackFloat64 a) { return  FallbackFloat64(std::floor(a.v)); }

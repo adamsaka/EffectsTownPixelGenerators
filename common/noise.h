@@ -144,8 +144,8 @@ inline S hash(const S& coordinate, uint32_t seed ){
 }
 template<SimdFloat32 S>
 inline constexpr S hash(const vec2<S>& coordinate, uint32_t seed ) {    
-    auto r = hash_32(coordinate.x.bitcast_to_uint32(), seed);
-    r = hash_32(coordinate.y.bitcast_to_uint32(), r);
+    auto r = hash_32(coordinate.x.bitcast_to_uint(), seed);
+    r = hash_32(coordinate.y.bitcast_to_uint(), r);
     r = hash_32_final(r);
     auto result = S::make_from_int32(r>>9) / S(0xffffffff >> 9); 
     return result;
@@ -163,10 +163,10 @@ inline S hash(const vec3<S>& coordinate, uint32_t seed ) {
 
 template<SimdFloat32 S>
 inline S hash(const vec4<S>& coordinate, uint32_t seed ) {
-    auto r = hash_32(coordinate.x.bitcast_to_uint32(), seed);
-    r = hash_32(coordinate.y.bitcast_to_uint32(), r);
-    r = hash_32(coordinate.z.bitcast_to_uint32(), r);
-    r = hash_32(coordinate.w.bitcast_to_uint32(), r);
+    auto r = hash_32(coordinate.x.bitcast_to_uint(), seed);
+    r = hash_32(coordinate.y.bitcast_to_uint(), r);
+    r = hash_32(coordinate.z.bitcast_to_uint(), r);
+    r = hash_32(coordinate.w.bitcast_to_uint(), r);
     r = hash_32_final(r);
     auto result = S::make_from_int32(r >> 9) / S(0xffffffff >> 9);
     return result;

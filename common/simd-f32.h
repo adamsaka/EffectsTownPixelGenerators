@@ -85,15 +85,7 @@ struct FallbackFloat32 {
 	
 
 	
-	
-
-
-
-
-
-
-
-	static constexpr int size_of_element() { return sizeof(float); }
+		static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 1; }
 
 	//*****Access Elements*****
@@ -157,19 +149,31 @@ inline FallbackFloat32 operator/(const float lhs, const FallbackFloat32& rhs) no
 //*****Fused Multiply Add Fallbacks*****
 // Fused Multiply Add (a*b+c)
 [[nodiscard("Value calculated and not used (fma)")]]
-inline FallbackFloat32 fma(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { return a * b + c; }
+inline FallbackFloat32 fma(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { 
+	//return a * b + c; 
+	return std::fma(a.v, b.v, c.v);
+}
 
 // Fused Multiply Subtract (a*b-c)
 [[nodiscard("Value calculated and not used (fms)")]]
-inline FallbackFloat32 fms(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { return a * b - c; }
+inline FallbackFloat32 fms(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) {
+	//return a * b - c; 
+	return std::fma(a.v, b.v, -c.v);
+}
 
 // Fused Negative Multiply Add (-a*b+c)
 [[nodiscard("Value calculated and not used (fnma)")]]
-inline FallbackFloat32 fnma(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { return -a * b + c; }
+inline FallbackFloat32 fnma(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { 
+	//return -a * b + c; 
+	return -std::fma(a.v, b.v, c.v);
+}
 
 // Fused Negative Multiply Subtract (-a*b-c)
 [[nodiscard("Value calculated and not used (fnms)")]]
-inline FallbackFloat32 fnms(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { return -a * b - c; }
+inline FallbackFloat32 fnms(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { 
+	//return -a * b - c; 
+	return -std::fma(a.v, b.v, -c.v);
+}
 
 
 
