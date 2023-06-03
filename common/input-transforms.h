@@ -115,9 +115,11 @@ vec2<S> perform_input_transform(const std::string& transform_name, vec2<S> p, co
 	if (transform_name == "Abs(x,y)") {
 		return abs(p);
 	}
+
 	if (transform_name == "Sqrt(Abs(x,y))") {
 		return sqrt(abs(p));
 	}
+
 	if (transform_name == "Sqrt(r)") {
 		auto r = p.magnitude();
 		auto theta = atan2(p.y, p.x);
@@ -127,7 +129,6 @@ vec2<S> perform_input_transform(const std::string& transform_name, vec2<S> p, co
 		
 		return vec2{ x, y };
 	}
-	
 
 
 	if (transform_name == "Complex Cosine") {

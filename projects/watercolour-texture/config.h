@@ -49,3 +49,26 @@ constexpr bool project_is_solid_render = true;
 //Floating point precesion to use for this project.
 typedef float Precision;
 
+
+
+
+
+
+
+
+/********************* NEW PROJECT CHECKLIST *****************************
+* How to copy a project:
+*
+* 1. Copy and rename visual studio project folder.
+* 2. Copy ..\..\projects folder.
+* 3. Add existing project to VS and rename.
+* 4. Set custom build for ac.r
+* 5. Rename plug-in within ac.r & this file to match.
+* 6. Change location of include to point to new project folder.
+* 7. makefile for wasm builds.
+*
+*
+*
+*
+*
+* ********************************************************************/

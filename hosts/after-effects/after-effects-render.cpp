@@ -49,9 +49,11 @@ struct RenderData {
 	PF_Rect area;
 	PF_EffectWorld* inputLayer{};
 	PF_EffectWorld* output{};
+	uint8_t* input_pixels{};
 	A_u_long rowbytes{};
 };
 
+constexpr unsigned short adobe_white16 = 0x8000;
 
 /*******************************************************************************************************
 Copies a value to the output buffer. (32-bit components)
@@ -83,7 +85,7 @@ Note: Adobe 16-bit is not full 16-bit.  White is 0x8000
 *******************************************************************************************************/
 template <SimdFloat S>
 void copy_to_output_16(PF_EffectWorld* output, int x, int y, int max_x, ColourSRGB<S> c) {
-	constexpr unsigned short adobe_white16 = 0x8000;  
+
 	
 	auto black = S(0.0);
 	auto white = S(adobe_white16);
@@ -143,12 +145,183 @@ void copy_to_output_8(PF_EffectWorld* output, int x, int y, int max_x, ColourSRG
 	}
 }
 
+/*******************************************************************************************************
+Gathers 32-bit ARGB data into SIMD vectors, returning a ColourSRGB struct.
+SSE 128 bit registers
+*******************************************************************************************************/
+static inline ColourSRGB<Simd128Float32> gather_image_data_sse(float* in) {
+	const auto in1 = _mm_loadu_ps(in);
+	const auto in2 = _mm_loadu_ps(in + 4);
+	const auto in3 = _mm_loadu_ps(in + 8);
+	const auto in4 = _mm_loadu_ps(in + 12);
+	
+	//Shuffle
+	const auto r1 = _mm_unpacklo_ps(in1, in2);
+	const auto r3 = _mm_unpacklo_ps(in3, in4);
+	auto alpha = _mm_movelh_ps(r1, r3);
+	auto red = _mm_movehl_ps(r3, r1);
+	const auto r2 = _mm_unpackhi_ps(in1, in2);
+	const auto r4 = _mm_unpackhi_ps(in3, in4);
+	auto green = _mm_movelh_ps(r2, r4);
+	auto blue =  _mm_movehl_ps(r4, r2);
+
+	return ColourSRGB<Simd128Float32>(red, green, blue, alpha);
+}
+
+/*******************************************************************************************************
+Gathers 32-bit ARGB data into SIMD vectors, returning a ColourSRGB struct.
+AVX 256 bit registers
+AVX2 Required.
+*******************************************************************************************************/
+static inline ColourSRGB<Simd256Float32> gather_image_data_avx(float* in) {	
+	const auto alpha = _mm256_i32gather_ps(in, _mm256_set_epi32(28, 24, 20, 16, 12, 8, 4, 0), 4);
+	const auto red =   _mm256_i32gather_ps(in, _mm256_set_epi32(29, 25, 21, 17, 13, 9, 5, 1), 4);
+	const auto green = _mm256_i32gather_ps(in, _mm256_set_epi32(30, 26, 22, 18, 14, 10, 6, 2), 4);
+	const auto blue =  _mm256_i32gather_ps(in, _mm256_set_epi32(31, 27, 23, 19, 15, 11, 7, 3), 4);	 
+	return ColourSRGB<Simd256Float32>(red, green, blue, alpha);
+}
+
+/*******************************************************************************************************
+Gathers 32-bit ARGB data into SIMD vectors, returning a ColourSRGB struct.
+AVX 512 bit registers
+AVX-512F Required.
+*******************************************************************************************************/
+static inline ColourSRGB<Simd512Float32> gather_image_data_avx512(float* in) {
+	const auto alpha = _mm512_i32gather_ps(_mm512_set_epi32(60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4, 0), in, 4);
+	const auto red =   _mm512_i32gather_ps(_mm512_set_epi32(61, 57, 53, 49, 45, 41, 37, 33, 29, 25, 21, 17, 13, 9, 5, 1), in, 4);
+	const auto green = _mm512_i32gather_ps(_mm512_set_epi32(62, 58, 54, 50, 46, 42, 38, 34, 30, 26, 22, 18, 14, 10, 6, 2), in, 4);
+	const auto blue =  _mm512_i32gather_ps(_mm512_set_epi32(63, 59, 55, 51, 47, 43, 39, 35, 31, 27, 23, 19, 15, 11, 7, 3), in, 4);
+	return ColourSRGB<Simd512Float32>(red, green, blue, alpha);
+}
+
 
 
 
 
 /*******************************************************************************************************
-Callback for After Effects Iteration Suite.  Renders an 8-bit pixel.
+8-bit
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline ColourSRGB<S> read_input_pixel8(const RenderData<S>* rd, int x, int y) {	
+	const int sourceOffset = ((rd->inputLayer->rowbytes * y) + (x * 4 * sizeof(uint8_t)));
+	uint8_t* ptr = reinterpret_cast<uint8_t*>(sourceOffset + reinterpret_cast<uint8_t*>(rd->inputLayer->data));
+
+	//Convert to float data  (probably better to use simd)
+	alignas(sizeof(S)) std::array<float, S::number_of_elements() * 4> float_data;
+	for (int i = 0; i < S::number_of_elements() * 4; i++) {
+		float_data[i] = static_cast<float>(*ptr++) / static_cast<float>(white8);
+	}
+
+	//Gather colour data into SIMD vectors
+	if constexpr (sizeof(S) == 16) 	return gather_image_data_sse(&float_data[0]);
+	if constexpr (sizeof(S) == 32) 	return gather_image_data_avx(&float_data[0]);
+	if constexpr (sizeof(S) == 64) 	return gather_image_data_avx512(&float_data[0]);
+	
+
+	return ColourSRGB<S>{};
+	
+}
+
+/*******************************************************************************************************
+16-bit
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline ColourSRGB<S> read_input_pixel16(const RenderData<S>* rd, int x, int y) {
+	const int sourceOffset = ((rd->inputLayer->rowbytes * y) + (x * 4 * sizeof(uint16_t)));
+	uint16_t* ptr = reinterpret_cast<uint16_t*>(sourceOffset + reinterpret_cast<uint8_t*>(rd->inputLayer->data));
+	
+	//Convert to float data (probably better to use simd)
+	alignas(sizeof(S)) std::array<float, S::number_of_elements() * 4> float_data;
+	for (int i = 0; i < S::number_of_elements() * 4; i++) {
+		float_data[i] = static_cast<float>(*ptr++)/ static_cast<float>(adobe_white16);
+	}	
+
+	//Gather colour data into SIMD vectors
+	if constexpr (sizeof(S) == 16) return gather_image_data_sse(&float_data[0]);
+	if constexpr (sizeof(S) == 32) 	return gather_image_data_avx(&float_data[0]);
+	if constexpr (sizeof(S) == 64) 	return gather_image_data_avx512(&float_data[0]);
+	
+
+	return ColourSRGB<S>{};
+}
+
+/*******************************************************************************************************
+32-bit
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline ColourSRGB<S> read_input_pixel32(const RenderData<S>* rd, int x, int y) {
+	const int sourceOffset = ((rd->inputLayer->rowbytes * y) + (x * 4 * sizeof(float))) ;
+	float* ptr = reinterpret_cast<float*>(sourceOffset + reinterpret_cast<uint8_t*>(rd->inputLayer->data));
+	
+	//Gather colour data into SIMD vectors
+	if constexpr (sizeof(S) == 16) return gather_image_data_sse(ptr);
+	if constexpr (sizeof(S) == 32) 	return gather_image_data_avx(ptr);
+	if constexpr (sizeof(S) == 64) 	return gather_image_data_avx512(ptr);
+	return ColourSRGB<S>{};
+}
+
+
+
+/*******************************************************************************************************
+8-bit
+Renders a pixel (or a simd vector's worth of pixels)
+Passes of to actual project renderer
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline void render_pixel8(const RenderData<S> * rd, int x, int y) {
+	if constexpr (project_uses_input) {
+		ColourSRGB<S> input_colour = read_input_pixel8(rd,x,y);
+		auto c =  rd->renderer.render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);
+		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+	}
+	else {
+		auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+	}
+}
+
+/*******************************************************************************************************
+16-bit
+Renders a pixel (or a simd vector's worth of pixels)
+Passes of to actual project renderer
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline void render_pixel16(const RenderData<S>* rd, int x, int y) {
+	if constexpr (project_uses_input) {
+		ColourSRGB<S> input_colour = read_input_pixel16(rd,x,y);
+		auto c = rd->renderer.render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);
+		copy_to_output_16(rd->output, x, y, rd->area.right, c);
+	}
+	else {
+		auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_16(rd->output, x, y, rd->area.right, c);
+	}
+}
+
+/*******************************************************************************************************
+32-bit
+Renders a pixel (or a simd vector's worth of pixels)
+Passes of to actual project renderer
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline void render_pixel32(const RenderData<S>* rd, int x, int y) {
+	if constexpr (project_uses_input) {
+		ColourSRGB<S> input_colour = read_input_pixel32(rd,x,y);
+		auto c = rd->renderer.render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);
+		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+	}
+	else {
+		auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+	}
+}
+
+
+
+/*******************************************************************************************************
+Callback for After Effects Iteration Suite.  Renders an 32-bit line of pixels.
+This thread callback will give us a line to render.
+Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 *******************************************************************************************************/
 template <SimdFloat S>
 static PF_Err render_8bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i,	A_long itrtL) noexcept {
@@ -157,16 +330,14 @@ static PF_Err render_8bit_pixel_callback(void* refcon, A_long thread_idxL, A_lon
 	if (y < rd->area.top || y >= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
 
 	int x = rd->area.left;
-	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {		
+		render_pixel8<S>(rd, x, y);		
 	}
 	
 	//Handle the case where the width is not a multiple of S::number_of_elements
 	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {		
-		x -= S::number_of_elements() - (rd->area.right - x);
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_8(rd->output, x, y, rd->area.right, c);
+		x -= S::number_of_elements() - (rd->area.right - x);		
+		render_pixel8<S>(rd, x, y);		
 	}
 
 	return PF_Err_NONE;
@@ -179,21 +350,20 @@ Note: Adobe 16 bit is not full 16-bit.  White is 0x8000
 Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 *******************************************************************************************************/
 template <SimdFloat S>
-static PF_Err render_16bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
+static PF_Err render_16bit_pixel_callback(void* refcon, A_long , A_long  i, A_long itrtL) noexcept {
 	const auto rd = static_cast<RenderData<S> *>(refcon);
 	const auto y = i;
 	if (y < rd->area.top || y >= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
 
 	int x = rd->area.left;
 	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_16(rd->output, x, y, rd->area.right, c);
+		render_pixel16<S>(rd, x, y);		
 	}
+
 	//Handle the case where the width is not a multiple of S::number_of_elements
 	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {
 		x -= S::number_of_elements() - (rd->area.right - x);
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_16(rd->output, x, y, rd->area.right, c);
+		render_pixel16<S>(rd, x, y);		
 	}
 	return PF_Err_NONE;	
 }
@@ -201,26 +371,25 @@ static PF_Err render_16bit_pixel_callback(void* refcon, A_long thread_idxL, A_lo
 
 
 /*******************************************************************************************************
-Callback for After Effects Iteration Suite.  Renders an 32-bit pixel.
+Callback for After Effects Iteration Suite.  Renders an 32-bit line of pixels.
 This thread callback will give us a line to render.
 Note: Adobe uses ARGB colour order, with unmultiplied alpha.
 *******************************************************************************************************/
 template <SimdFloat S>
-static PF_Err render_32bit_pixel_callback(void* refcon, A_long thread_idxL, A_long  i, A_long itrtL) noexcept {
+static PF_Err render_32bit_pixel_callback(void* refcon, A_long , A_long  i, A_long itrtL) noexcept {
 	const auto rd = static_cast<RenderData<S> *>(refcon);
 	const auto y = i;
 	if (y < rd->area.top || y>= rd->area.bottom) [[unlikely]] return PF_Err_NONE;  //Check vertical bounds
 	
 	int x = rd->area.left;
 	for (; x < rd->area.right - S::number_of_elements() + 1; x += S::number_of_elements()) {
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+		render_pixel32<S>(rd, x, y);		
 	}	
+
 	//Handle the case where the width is not a multiple of S::number_of_elements
 	if (x < rd->area.right && rd->area.right>S::number_of_elements()) [[unlikely]] {
 		x -= S::number_of_elements() - (rd->area.right - x);
-		const auto c = rd->renderer.render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-		copy_to_output_32(rd->output, x, y, rd->area.right, c);
+		render_pixel32<S>(rd, x, y);		
 	}
 	return PF_Err_NONE;
 
@@ -360,6 +529,8 @@ Sets up the renderer and dispatches based on CPU
 void after_effects_common_render(int width, int height, PF_InData* in_data, const PF_Rect& area, int bit_depth, PF_EffectWorld* inputLayer, PF_EffectWorld* output) {
 	AEGP_SuiteHandler suites(in_data->pica_basicP);
 	
+
+
 	if constexpr (mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512f) {
 		//Compiler mode supports micro architecture level 4 (AVX-512).  
 		RenderData<Simd512Float32> rd{};
@@ -397,7 +568,7 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		//Setup the RenderData with the appropriate SIMD Type.  Then call the templated function.
 		//This effectivly dispatches based on CPU SIMD support.
 		CpuInformation cpu_info{};
-		if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
+		/*if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
 			//AVX-512 & AVX-512DQ 
 			RenderData<Simd512Float32> rd{};
 			rd.width = width;
@@ -418,9 +589,9 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 			rd.inputLayer = inputLayer;
 			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 		}
-		else {
+		else*/ {
 			//Fallback
-			RenderData<FallbackFloat32> rd{};
+			RenderData<Simd128Float32> rd{};
 			rd.width = width;
 			rd.height = height;
 			rd.area = area;
@@ -442,12 +613,14 @@ void after_effects_smart_render(PF_InData* in_data, PF_OutData* out_data, PF_Sma
 	check_null(smartRender);
 
 	const auto [width, height] = calculate_size(in_data);
+	uint8_t* pixel_ptrP{};
 
 	//Checkout the input buffer
 	PF_EffectWorld* inputLayer{ nullptr };
 	if constexpr (project_uses_input) {
 		check_after_effects(smartRender->cb->checkout_layer_pixels(in_data->effect_ref, 0, &inputLayer));
 		if (!inputLayer) throw (std::exception("Unable to checkout input layer."));
+		pixel_ptrP = reinterpret_cast<uint8_t*>(inputLayer->data);
 	}
 
 	//Checkout Output buffer

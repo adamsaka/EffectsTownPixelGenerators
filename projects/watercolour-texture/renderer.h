@@ -94,6 +94,7 @@ class Renderer{
 
         //Render
         ColourSRGB<S> render_pixel(S x, S y) const;
+        ColourSRGB<S> render_pixel_with_input(S x, S y, ColourSRGB<S>) const;
 
     private:
 
@@ -189,6 +190,15 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
   
 
 }    
+
+/**************************************************************************************************
+ * Render a pixel (or batch of pixels if using SIMD)
+ * an input pixel is given
+ * ************************************************************************************************/
+template <SimdFloat S>
+ColourSRGB<S> Renderer<S>::render_pixel_with_input(S x, S y, ColourSRGB<S>) const {
+    render_pixel(x, y);
+}
 
 
 
