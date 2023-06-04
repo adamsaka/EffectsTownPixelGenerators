@@ -135,26 +135,9 @@ concept SimdSigned = Simd<T> && requires (T t) {
 * round(T);
 * fract(T);						Fractional Part.  (a - floor(a))
 *
-* sqrt(t);	
-* sin(t);
-* cos(t);
-* tan(t);
-* asin(t);
-* acos(t);
-* atan(t);
-* atan2(t, t);
-* sinh(t);
-* cosh(t);
-* tanh(t);
-* asinh(t);
-* acosh(t);
-* atanh(t);
 *************************************************************************************************/
 template <typename T>
 concept SimdReal = Simd<T> && SimdSigned<T> && requires (T t) {
-	
-
-	
 	floor(t);
 	ceil(t);
 	trunc(t);
@@ -165,7 +148,15 @@ concept SimdReal = Simd<T> && SimdSigned<T> && requires (T t) {
 	clamp(t);
 	clamp(t, typename T::F(1.0), typename T::F(2.0));
 	clamp(t, T(1.0), T(2.0));
+};
 
+
+/**************************************************************************************************
+* Concept for types that are real. (Could be fixed or floating point)
+* Indicate support for mathematical operations.
+*************************************************************************************************/
+template <typename T>
+concept SimdMath = SimdReal<T> && requires (T t) {
 	sqrt(t);
 	sin(t);
 	cos(t);
@@ -181,8 +172,6 @@ concept SimdReal = Simd<T> && SimdSigned<T> && requires (T t) {
 	acosh(t);
 	atanh(t);
 };
-
-
 
 
 

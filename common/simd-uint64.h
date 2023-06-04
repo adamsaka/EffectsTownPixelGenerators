@@ -600,7 +600,6 @@ static_assert(SimdUInt<FallbackUInt64>, "FallbackUInt64 does not implement the c
 static_assert(SimdUInt64<FallbackUInt64>, "FallbackUInt64 does not implement the concept SimdUInt64");
 
 
-
 #if defined(_M_X64) || defined(__x86_64)
 static_assert(Simd<Simd128UInt64>, "Simd128UInt64 does not implement the concept Simd");
 static_assert(Simd<Simd256UInt64>, "Simd256UInt64 does not implement the concept Simd");
@@ -613,6 +612,10 @@ static_assert(SimdUInt<Simd512UInt64>, "Simd512UInt64 does not implement the con
 static_assert(SimdUInt64<Simd128UInt64>, "Simd128UInt64 does not implement the concept SimdUInt64");
 static_assert(SimdUInt64<Simd256UInt64>, "Simd256UInt64 does not implement the concept SimdUInt64");
 static_assert(SimdUInt64<Simd512UInt64>, "Simd512UInt64 does not implement the concept SimdUInt64");
+
+
+
+
 #endif
 
 

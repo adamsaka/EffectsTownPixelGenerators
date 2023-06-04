@@ -165,14 +165,14 @@ inline FallbackFloat32 fms(const FallbackFloat32  a, const FallbackFloat32 b, co
 [[nodiscard("Value calculated and not used (fnma)")]]
 inline FallbackFloat32 fnma(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { 
 	//return -a * b + c; 
-	return -std::fma(a.v, b.v, c.v);
+	return std::fma(-a.v, b.v, c.v);
 }
 
 // Fused Negative Multiply Subtract (-a*b-c)
 [[nodiscard("Value calculated and not used (fnms)")]]
 inline FallbackFloat32 fnms(const FallbackFloat32  a, const FallbackFloat32 b, const FallbackFloat32 c) { 
 	//return -a * b - c; 
-	return -std::fma(a.v, b.v, -c.v);
+	return std::fma(-a.v, b.v, -c.v);
 }
 
 
@@ -896,7 +896,7 @@ inline Simd128Float32 fnma(const Simd128Float32  a, const Simd128Float32 b, cons
 		return _mm_fnmadd_ps(a.v, b.v, c.v);  //We are compiling to level 3, but using 128 simd.
 	}
 	else {
-		return -a * b + c;  //Fallback (no SSE instruction)
+		return -(a * b) + c;  //Fallback (no SSE instruction)
 	}
 }
 
@@ -907,7 +907,7 @@ inline Simd128Float32 fnms(const Simd128Float32  a, const Simd128Float32 b, cons
 		return _mm_fnmsub_ps(a.v, b.v, c.v); //We are compiling to level 3, but using 128 simd.
 	}
 	else {
-		return -a * b - c;  //Fallback (no SSE instruction)
+		return -(a * b) - c;  //Fallback (no SSE instruction)
 	}
 }
 
@@ -1033,6 +1033,12 @@ static_assert(SimdFloat32<Simd512Float32>, "Simd512Float32 does not implement th
 static_assert(SimdFloatToInt<Simd128Float32>, "Simd128Float32 does not implement the concept SimdFloatToInt");
 static_assert(SimdFloatToInt<Simd256Float32>, "Simd256Float32 does not implement the concept SimdFloatToInt");
 static_assert(SimdFloatToInt<Simd512Float32>, "Simd512Float32 does not implement the concept SimdFloatToInt");
+
+//SIMD Math Support
+static_assert(SimdMath<Simd128Float32>, "Simd128Float32 does not implement the concept SimdMath");
+static_assert(SimdMath<Simd256Float32>, "Simd256Float32 does not implement the concept SimdMath");
+static_assert(SimdMath<Simd512Float32>, "Simd512Float32 does not implement the concept SimdMath");
+
 
 #endif
 

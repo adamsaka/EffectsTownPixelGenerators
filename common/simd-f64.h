@@ -168,13 +168,13 @@ inline FallbackFloat64 fms(const FallbackFloat64  a, const FallbackFloat64 b, co
 // Fused Negative Multiply Add (-a*b+c)
 [[nodiscard("Value calculated and not used (fnma)")]]
 inline FallbackFloat64 fnma(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
-	return -std::fma(a.v, b.v, c.v);
+	return std::fma(-a.v, b.v, c.v);
 }
 
 // Fused Negative Multiply Subtract (-a*b-c)
 [[nodiscard("Value calculated and not used (fnms)")]]
 inline FallbackFloat64 fnms(const FallbackFloat64  a, const FallbackFloat64 b, const FallbackFloat64 c) { 
-	return -std::fma(a.v, b.v, -c.v);
+	return std::fma(-a.v, b.v, -c.v);
 }
 
 //*****Rounding Functions*****
@@ -395,6 +395,47 @@ inline Simd512Float64 reciprocal_approx(Simd512Float64 a) { return Simd512Float6
 
 //*****Mathematical Functions*****
 inline Simd512Float64 sqrt(Simd512Float64 a) { return Simd512Float64(_mm512_sqrt_pd(a.v)); }
+
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd512Float64 exp(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_exp_pd(a.v)); } 
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd512Float64 exp2(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_exp2_pd(a.v)); } 
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd512Float64 exp10(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_exp10_pd(a.v)); } 
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd512Float64 expm1(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_expm1_pd(a.v)); } 
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd512Float64 log(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_log_pd(a.v)); } 
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd512Float64 log1p(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_log1p_pd(a.v)); } 
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd512Float64 log2(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_log2_pd(a.v)); } 
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd512Float64 log10(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_log10_pd(a.v)); } 
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd512Float64 cbrt(const Simd512Float64 a) noexcept { return Simd512Float64(_mm512_cbrt_pd(a.v)); } 
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd512Float64 hypot(const Simd512Float64 a, const Simd512Float64 b) noexcept { return Simd512Float64(_mm512_hypot_pd(a.v, b.v)); } 
+
 inline Simd512Float64 sin(Simd512Float64 a) { return Simd512Float64(_mm512_sin_pd(a.v)); }
 inline Simd512Float64 cos(Simd512Float64 a) { return Simd512Float64(_mm512_cos_pd(a.v)); }
 inline Simd512Float64 tan(Simd512Float64 a) { return Simd512Float64(_mm512_tan_pd(a.v)); }
@@ -589,8 +630,52 @@ inline Simd256Float64 max(Simd256Float64 a, Simd256Float64 b) { return Simd256Fl
 //*****Approximate Functions*****
 inline Simd256Float64 reciprocal_approx(Simd256Float64 a) { return Simd256Float64(1.0 / a); } //No AVX for packed doubles.
 
+
+
 //*****Mathematical Functions*****
 inline Simd256Float64 sqrt(Simd256Float64 a) { return Simd256Float64(_mm256_sqrt_pd(a.v)); }
+
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd256Float64 exp(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_exp_pd(a.v)); } 
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd256Float64 exp2(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_exp2_pd(a.v)); } 
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd256Float64 exp10(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_exp10_pd(a.v)); } 
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd256Float64 expm1(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_expm1_pd(a.v)); } 
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd256Float64 log(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_log_pd(a.v)); } 
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd256Float64 log1p(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_log1p_pd(a.v)); } 
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd256Float64 log2(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_log2_pd(a.v)); } 
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd256Float64 log10(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_log10_pd(a.v)); } 
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd256Float64 cbrt(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_cbrt_pd(a.v)); } 
+
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd256Float64 hypot(const Simd256Float64 a, const Simd256Float64 b) noexcept { return Simd256Float64(_mm256_hypot_pd(a.v, b.v)); } 
+
 inline Simd256Float64 sin(Simd256Float64 a) { return Simd256Float64(_mm256_sin_pd(a.v)); }
 inline Simd256Float64 cos(Simd256Float64 a) { return Simd256Float64(_mm256_cos_pd(a.v)); }
 inline Simd256Float64 tan(Simd256Float64 a) { return Simd256Float64(_mm256_tan_pd(a.v)); }
@@ -875,6 +960,48 @@ inline Simd128Float64 abs(const Simd128Float64 a) noexcept {
 }
 
 
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd128Float64 exp(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_exp_pd(a.v)); } //sse
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd128Float64 exp2(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_exp2_pd(a.v)); } //sse
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd128Float64 exp10(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_exp10_pd(a.v)); } //sse
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd128Float64 expm1(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_expm1_pd(a.v)); } //sse
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd128Float64 log(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log_pd(a.v)); } //sse
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd128Float64 log1p(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log1p_pd(a.v)); } //sse
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd128Float64 log2(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log2_pd(a.v)); } //sse
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd128Float64 log10(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log10_pd(a.v)); } //sse
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd128Float64 cbrt(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_cbrt_pd(a.v)); } //sse
+
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd128Float64 hypot(const Simd128Float64 a, const Simd128Float64 b) noexcept { return Simd128Float64(_mm_hypot_pd(a.v, b.v)); } //sse
+
+
 //*****Trigonometric Functions *****
 [[nodiscard("Value Calculated and not used (sin)")]]
 inline Simd128Float64 sin(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_sin_pd(a.v)); }  //SSE
@@ -915,7 +1042,17 @@ inline Simd128Float64 acosh(const Simd128Float64 a) noexcept { return Simd128Flo
 [[nodiscard("Value Calculated and not used (atanh)")]]
 inline Simd128Float64 atanh(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_atanh_pd(a.v)); } //SSE
 
+//Calculate sin(x) where x is in degrees.
+[[nodiscard("Value Calculated and not used (sind)")]]
+inline Simd128Float64 sind(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_sind_pd(a.v)); }  //SSE
 
+//Calculate cos(x) where x is in degrees.
+[[nodiscard("Value Calculated and not used (cosd)")]]
+inline Simd128Float64 cosd(const Simd128Float64 a)  noexcept { return Simd128Float64(_mm_cosd_pd(a.v)); }
+
+//Calculate tan(x) where x is in degrees.
+[[nodiscard("Value Calculated and not used (tand)")]]
+inline Simd128Float64 tand(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_tand_pd(a.v)); }
 
 
 
@@ -935,20 +1072,39 @@ static_assert(Simd<FallbackFloat64>, "FallbackFloat64 does not implement the con
 static_assert(SimdReal<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdReal");
 static_assert(SimdFloat<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat");
 static_assert(SimdFloat64<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat64");
+static_assert(SimdMath<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat64");
+
 
 #if defined(_M_X64) || defined(__x86_64)
+static_assert(Simd<Simd128Float64>, "Simd128Float64 does not implement the concept SIMD");
 static_assert(Simd<Simd256Float64>, "Simd256Float64 does not implement the concept SIMD");
 static_assert(Simd<Simd512Float64>, "Simd512Float64 does not implement the concept SIMD");
+
+//Real
+static_assert(SimdReal<Simd128Float64>, "Simd128Float64 does not implement the concept SimdReal");
 static_assert(SimdReal<Simd256Float64>, "Simd256Float64 does not implement the concept SimdReal");
 static_assert(SimdReal<Simd512Float64>, "Simd512Float64 does not implement the concept SimdReal");
+
+//Float
+static_assert(SimdFloat<Simd128Float64>, "Simd128Float64 does not implement the concept SimdFloat");
 static_assert(SimdFloat<Simd256Float64>, "Simd256Float64 does not implement the concept SimdFloat");
 static_assert(SimdFloat<Simd512Float64>, "Simd512Float64 does not implement the concept SimdFloat");
+
+//Float64
+static_assert(SimdFloat64<Simd128Float64>, "Simd128Float64 does not implement the concept SimdFloat64");
 static_assert(SimdFloat64<Simd256Float64>, "Simd256Float64 does not implement the concept SimdFloat64");
 static_assert(SimdFloat64<Simd512Float64>, "Simd512Float64 does not implement the concept SimdFloat64");
 
+//Uint conversion support.
 static_assert(SimdFloatToInt<Simd128Float64>, "Simd128Float64 does not implement the concept SimdFloatToInt");
 static_assert(SimdFloatToInt<Simd256Float64>, "Simd256Float64 does not implement the concept SimdFloatToInt");
 static_assert(SimdFloatToInt<Simd512Float64>, "Simd512Float64 does not implement the concept SimdFloatToInt");
+
+//SIMD Math Support
+static_assert(SimdMath<Simd128Float64>, "Simd128Float64 does not implement the concept SimdMath");
+static_assert(SimdMath<Simd256Float64>, "Simd256Float64 does not implement the concept SimdMath");
+static_assert(SimdMath<Simd512Float64>, "Simd512Float64 does not implement the concept SimdMath");
+
 #endif
 
 
