@@ -1,7 +1,7 @@
 #pragma once
 /********************************************************************************************************
 
-Authors:		(c) 2022 Maths Town
+Authors:		(c) 2023 Maths Town
 
 Licence:		The MIT License
 

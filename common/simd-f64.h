@@ -1,6 +1,6 @@
 /********************************************************************************************************
 
-Authors:		(c) 2022 Maths Town
+Authors:		(c) 2023 Maths Town
 
 Licence:		The MIT License
 
@@ -670,7 +670,6 @@ inline Simd256Float64 log10(const Simd256Float64 a) noexcept { return Simd256Flo
 //Calculate cube root
 [[nodiscard("Value calculated and not used (cbrt)")]]
 inline Simd256Float64 cbrt(const Simd256Float64 a) noexcept { return Simd256Float64(_mm256_cbrt_pd(a.v)); } 
-
 
 //Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
 [[nodiscard("Value calculated and not used (hypot)")]]

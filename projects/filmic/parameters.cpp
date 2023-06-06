@@ -1,6 +1,6 @@
 /********************************************************************************************************
 
-Authors:		(c) 2022 Maths Town
+Authors:		(c) 2023 Maths Town
 
 Licence:		The MIT License
 
@@ -43,18 +43,31 @@ Description:
 ParameterList build_project_parameters() {
 	ParameterList params;
 	
+	std::vector<std::string> colourspace_list{};
+	colourspace_list.push_back("Filmic sRGB");
+	colourspace_list.push_back("Filmic Log");	
+	colourspace_list.push_back("Standard (.exr)");
+	
+	params.add_entry(ParameterEntry::make_list(ParameterID::colourspace_in, "Input Type", colourspace_list));
+
 	std::vector<std::string> input_list{};
-	input_list.push_back("ACES Approx (Narkowicz)");
-	params.add_entry(ParameterEntry::make_list(ParameterID::filmic_mode, "Filmic Curve", std::move(input_list)));
+
+	input_list.push_back("Very Low Contrast");
+	input_list.push_back("Low Contrast");
+	input_list.push_back("Medium Low Contrast");
+	input_list.push_back("Medium Contrast");
+	input_list.push_back("Medium High Contrast");
+	input_list.push_back("High Contrast");
+	input_list.push_back("Very High Contrast");
+	input_list.push_back("None (Show Input Colour Space)");
+
+	params.add_entry(ParameterEntry::make_list(ParameterID::filmic_mode, "Filmic Look", std::move(input_list)));
 
 	params.add_entry(ParameterEntry::make_number(ParameterID::mix_amount, "Apply %",0.0,200.0,100.0,0.0,100.0,2));
 
-	std::vector<std::string> colourspace_list{};
-	colourspace_list.push_back("sRGB");
-	colourspace_list.push_back("REC.709");
-	colourspace_list.push_back("Linear");
-	params.add_entry(ParameterEntry::make_list(ParameterID::colourspace_in, "Input Colour Space", colourspace_list));
-	params.add_entry(ParameterEntry::make_list(ParameterID::colourspace_out, "Output Colour Space", std::move(colourspace_list)));
+	
+	
+	//params.add_entry(ParameterEntry::make_list(ParameterID::colourspace_out, "Output Colour Space", std::move(colourspace_list)));
 	
 	
 	//[NOT USED]

@@ -1,6 +1,6 @@
 /********************************************************************************************************
 
-Authors:		(c) 2022 Maths Town
+Authors:		(c) 2023 Maths Town
 
 Licence:		The MIT License
 
@@ -30,6 +30,8 @@ Types:
    Colour8   = 8 bit per pixel (RGBA colour order).  (sRGB Colour Space)
    ColourSRGB<F> = Floating point colour (F is float or double)  (0.0 .. 1.0 range)
    ColourLinear<F> = Floating point colour (F is float or double)  (0.0 .. 1.0 range)
+
+   TODO: Make compatible with SIMD Types
 
 
 *******************************************************************************************************/
@@ -195,7 +197,7 @@ struct ColourSRGB {
                   2. that no gamma is applied to the alpha channel.
         *************************************************************************************************/
         ColourLinear<F> to_linear_simple() const noexcept {
-            return ColourLinear<F>(std::pow(red, static_cast<F>(2.2)), std::pow(green, static_cast<F>(2.2)), std::pow(blue, static_cast<F>(2.2)), alpha);
+            return ColourLinear<F>(pow(red, F{ 2.2 }), pow(green, static_cast<F>(2.2)), pow(blue, F{ 2.2 }), alpha);
         } 
 
         /**************************************************************************************************
@@ -370,6 +372,13 @@ struct ColourLinear {
             return c;
         }
 
+        /**************************************************************************************************
+        Un-multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
+        *************************************************************************************************/
+        ColourSRGB<F> to_srgb_simple() const noexcept {
+            return ColourSRGB<F>(pow(red, F{ 1.0/2.2 }), pow(green, F(1.0/2.2)), pow(blue, F{ 1.0/2.2 }), alpha);
+        }
+
 	
 
 	//Do colour multiplication
@@ -416,7 +425,7 @@ inline ColourSRGB<F> mix_colours(const ColourSRGB<F> & c1, const ColourSRGB<F> &
 Converts a single component of sRGB colour to linear.
 Uses the peicewise function as per the specification.  However, uses ^2.2 if outide 0.0 .. 1.0
 *************************************************************************************************/
-template <typename F>
+template <typename F> requires std::floating_point<F>
 static constexpr F srgb_to_linear(F c) noexcept{
     if (c > 0.04045 && c < 1.0) [[likely]] return std::pow((c+0.055)/1.055, static_cast<F>(2.4));      
     if (c <= 0.04045 && c > 0.0 ) return c/12.92;

@@ -1,6 +1,6 @@
 /********************************************************************************************************
 
-Authors:		(c) 2022 Maths Town
+Authors:		(c) 2023 Maths Town
 
 Licence:		The MIT License
 
@@ -85,7 +85,7 @@ struct FallbackFloat32 {
 	
 
 	
-		static constexpr int size_of_element() { return sizeof(float); }
+	static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 1; }
 
 	//*****Access Elements*****
@@ -215,6 +215,10 @@ inline FallbackFloat32 reciprocal_approx(FallbackFloat32 a) noexcept { return Fa
 
 //*****Mathematical Functions*****
 inline FallbackFloat32 sqrt(FallbackFloat32 a) { return FallbackFloat32(std::sqrt(a.v)); }
+inline FallbackFloat32 abs(FallbackFloat32 a) { return FallbackFloat32(std::abs(a.v)); }
+inline FallbackFloat32 pow(FallbackFloat32 a, FallbackFloat32 b) { return FallbackFloat32(std::pow(a.v,b.v)); }
+
+
 inline FallbackFloat32 sin(FallbackFloat32 a) { return FallbackFloat32(std::sin(a.v)); }
 inline FallbackFloat32 cos(FallbackFloat32 a) { return FallbackFloat32(std::cos(a.v)); }
 inline FallbackFloat32 tan(FallbackFloat32 a) { return FallbackFloat32(std::tan(a.v)); }
@@ -228,7 +232,7 @@ inline FallbackFloat32 tanh(FallbackFloat32 a) { return FallbackFloat32(std::tan
 inline FallbackFloat32 asinh(FallbackFloat32 a) { return FallbackFloat32(std::asinh(a.v)); }
 inline FallbackFloat32 acosh(FallbackFloat32 a) { return FallbackFloat32(std::acosh(a.v)); }
 inline FallbackFloat32 atanh(FallbackFloat32 a) { return FallbackFloat32(std::atanh(a.v)); }
-inline FallbackFloat32 abs(FallbackFloat32 a) { return FallbackFloat32(std::abs(a.v)); }
+
 
 
 
@@ -429,6 +433,9 @@ inline Simd512Float32 reciprocal_approx(Simd512Float32 a) noexcept { return Simd
 //*****Mathematical Functions*****
 [[nodiscard("Value calculated and not used (sqrt)")]]
 inline Simd512Float32 sqrt(Simd512Float32 a) noexcept { return Simd512Float32(_mm512_sqrt_ps(a.v)); }
+
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd512Float32 pow(Simd512Float32 a, Simd512Float32 b) noexcept { return Simd512Float32(_mm512_pow_ps(a.v,b.v)); }
 
 [[nodiscard("Value calculated and not used (abs)")]]
 inline Simd512Float32 abs(Simd512Float32 a) noexcept { return Simd512Float32(_mm512_abs_ps(a.v)); }
@@ -667,12 +674,59 @@ inline Simd256Float32 reciprocal_approx(const Simd256Float32 a) noexcept {return
 [[nodiscard("Value calculated and not used (sqrt)")]] 
 inline Simd256Float32 sqrt(const Simd256Float32 a) noexcept {return Simd256Float32(_mm256_sqrt_ps(a.v));}
 
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd256Float32 pow(Simd256Float32 a, Simd256Float32 b) noexcept { return Simd256Float32(_mm256_pow_ps(a.v, b.v)); }
+
 [[nodiscard("Value Calculated and not used (abs)")]]
 inline Simd256Float32 abs(const Simd256Float32 a) noexcept {	
 	//No AVX for abs so we just flip the bit.
 	const auto r = _mm256_and_ps(_mm256_set1_ps(std::bit_cast<float>(0x7FFFFFFF)), a.v); 
 	return Simd256Float32(r);
 }
+
+
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd256Float32 exp(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_exp_ps(a.v)); }
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd256Float32 exp2(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_exp2_ps(a.v)); }
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd256Float32 exp10(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_exp10_ps(a.v)); }
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd256Float32 expm1(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_expm1_ps(a.v)); }
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd256Float32 log(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_log_ps(a.v)); }
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd256Float32 log1p(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_log1p_ps(a.v)); }
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd256Float32 log2(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_log2_ps(a.v)); }
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd256Float32 log10(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_log10_ps(a.v)); }
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd256Float32 cbrt(const Simd256Float32 a) noexcept { return Simd256Float32(_mm256_cbrt_ps(a.v)); }
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd256Float32 hypot(const Simd256Float32 a, const Simd256Float32 b) noexcept { return Simd256Float32(_mm256_hypot_ps(a.v, b.v)); }
+
+
+
 
 //*****Trigonometric Functions *****
 
@@ -951,6 +1005,9 @@ inline Simd128Float32 reciprocal_approx(const Simd128Float32 a) noexcept { retur
 //*****Mathematical Functions*****
 [[nodiscard("Value calculated and not used (sqrt)")]]
 inline Simd128Float32 sqrt(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_sqrt_ps(a.v)); } //sse
+
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd128Float32 pow(Simd128Float32 a, Simd128Float32 b) noexcept { return Simd128Float32(_mm_pow_ps(a.v, b.v)); }
 
 [[nodiscard("Value Calculated and not used (abs)")]]
 inline Simd128Float32 abs(const Simd128Float32 a) noexcept {
