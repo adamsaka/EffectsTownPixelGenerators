@@ -440,6 +440,46 @@ inline Simd512Float32 pow(Simd512Float32 a, Simd512Float32 b) noexcept { return 
 [[nodiscard("Value calculated and not used (abs)")]]
 inline Simd512Float32 abs(Simd512Float32 a) noexcept { return Simd512Float32(_mm512_abs_ps(a.v)); }
 
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd512Float32 exp(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_exp_ps(a.v)); }
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd512Float32 exp2(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_exp2_ps(a.v)); }
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd512Float32 exp10(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_exp10_ps(a.v)); }
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd512Float32 expm1(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_expm1_ps(a.v)); }
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd512Float32 log(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_log_ps(a.v)); }
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd512Float32 log1p(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_log1p_ps(a.v)); }
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd512Float32 log2(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_log2_ps(a.v)); }
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd512Float32 log10(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_log10_ps(a.v)); }
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd512Float32 cbrt(const Simd512Float32 a) noexcept { return Simd512Float32(_mm512_cbrt_ps(a.v)); }
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd512Float32 hypot(const Simd512Float32 a, const Simd512Float32 b) noexcept { return Simd512Float32(_mm512_hypot_ps(a.v, b.v)); }
+
 
 
 
@@ -670,7 +710,7 @@ inline Simd256Float32 clamp(const Simd256Float32 a, const float min_f, const flo
 [[nodiscard("Value calculated and not used (reciprocal_approx)")]]
 inline Simd256Float32 reciprocal_approx(const Simd256Float32 a) noexcept {return Simd256Float32(_mm256_rcp_ps(a.v));}
 
-//*****Mathematical Functions*****
+//*****256-bit SIMD Mathematical Functions*****
 [[nodiscard("Value calculated and not used (sqrt)")]] 
 inline Simd256Float32 sqrt(const Simd256Float32 a) noexcept {return Simd256Float32(_mm256_sqrt_ps(a.v));}
 
@@ -1002,19 +1042,72 @@ inline Simd128Float32 clamp(const Simd128Float32 a, const float min_f, const flo
 [[nodiscard("Value calculated and not used (reciprocal_approx)")]]
 inline Simd128Float32 reciprocal_approx(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_rcp_ps(a.v)); } //sse
 
-//*****Mathematical Functions*****
+
+
+
+//*****128-bit SIMD Mathematical Functions*****
+
+//Calculate square root.
 [[nodiscard("Value calculated and not used (sqrt)")]]
 inline Simd128Float32 sqrt(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_sqrt_ps(a.v)); } //sse
 
+//Calculating a^b
 [[nodiscard("Value calculated and not used (pow)")]]
 inline Simd128Float32 pow(Simd128Float32 a, Simd128Float32 b) noexcept { return Simd128Float32(_mm_pow_ps(a.v, b.v)); }
 
+//Calculate the absoulte value.  Performed by unsetting the sign bit.
 [[nodiscard("Value Calculated and not used (abs)")]]
 inline Simd128Float32 abs(const Simd128Float32 a) noexcept {
 	//No SSE for abs so we just flip the bit.
 	const auto r = _mm_and_ps(_mm_set1_ps(std::bit_cast<float>(0x7FFFFFFF)), a.v);
 	return Simd128Float32(r);
 }
+
+//Calculate e^x
+[[nodiscard("Value calculated and not used (exp)")]]
+inline Simd128Float32 exp(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_exp_ps(a.v)); } //sse
+
+//Calculate 2^x
+[[nodiscard("Value calculated and not used (exp2)")]]
+inline Simd128Float32 exp2(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_exp2_ps(a.v)); } //sse
+
+//Calculate 10^x
+[[nodiscard("Value calculated and not used (exp10)")]]
+inline Simd128Float32 exp10(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_exp10_ps(a.v)); } //sse
+
+//Calculate (e^x)-1.0
+[[nodiscard("Value calculated and not used (exp_minus1)")]]
+inline Simd128Float32 expm1(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_expm1_ps(a.v)); } //sse
+
+//Calulate natural log(x)
+[[nodiscard("Value calculated and not used (log)")]]
+inline Simd128Float32 log(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_log_ps(a.v)); } //sse
+
+//Calulate log(1.0 + x)
+[[nodiscard("Value calculated and not used (log1p)")]]
+inline Simd128Float32 log1p(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_log1p_ps(a.v)); } //sse
+
+//Calculate log_1(x)
+[[nodiscard("Value calculated and not used (log2)")]]
+inline Simd128Float32 log2(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_log2_ps(a.v)); } //sse
+
+//Calculate log_10(x)
+[[nodiscard("Value calculated and not used (log10)")]]
+inline Simd128Float32 log10(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_log10_ps(a.v)); } //sse
+
+//Calculate cube root
+[[nodiscard("Value calculated and not used (cbrt)")]]
+inline Simd128Float32 cbrt(const Simd128Float32 a) noexcept { return Simd128Float32(_mm_cbrt_ps(a.v)); } //sse
+
+
+//Calculate hypot(x).  That is: sqrt(a^2 + b^2) while avoiding overflow.
+[[nodiscard("Value calculated and not used (hypot)")]]
+inline Simd128Float32 hypot(const Simd128Float32 a, const Simd128Float32 b) noexcept { return Simd128Float32(_mm_hypot_ps(a.v, b.v)); } //sse
+
+
+
+
+
 
 
 //*****Trigonometric Functions *****
