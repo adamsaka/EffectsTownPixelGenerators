@@ -194,6 +194,19 @@ inline FallbackFloat64 reciprocal_approx(FallbackFloat64 a) { return FallbackFlo
 
 //*****Mathematical Functions*****
 inline FallbackFloat64 sqrt(FallbackFloat64 a) { return FallbackFloat64(std::sqrt(a.v)); }
+inline FallbackFloat64 abs(FallbackFloat64 a) { return FallbackFloat64(std::abs(a.v)); }
+inline FallbackFloat64 pow(FallbackFloat64 a, FallbackFloat64 b) { return FallbackFloat64(std::pow(a.v, b.v)); }
+inline FallbackFloat64 exp(FallbackFloat64 a) { return FallbackFloat64(std::exp(a.v)); }
+inline FallbackFloat64 exp2(FallbackFloat64 a) { return FallbackFloat64(std::exp2(a.v)); }
+inline FallbackFloat64 exp10(FallbackFloat64 a) { return FallbackFloat64(std::pow(10.0, a.v)); }
+inline FallbackFloat64 expm1(FallbackFloat64 a) { return FallbackFloat64(std::expm1(a.v)); }
+inline FallbackFloat64 log(FallbackFloat64 a) { return FallbackFloat64(std::log(a.v)); }
+inline FallbackFloat64 log1p(FallbackFloat64 a) { return FallbackFloat64(std::log1p(a.v)); }
+inline FallbackFloat64 log2(FallbackFloat64 a) { return FallbackFloat64(std::log2(a.v)); }
+inline FallbackFloat64 log10(FallbackFloat64 a) { return FallbackFloat64(std::log10(a.v)); }
+inline FallbackFloat64 cbrt(FallbackFloat64 a) { return FallbackFloat64(std::cbrt(a.v)); }
+inline FallbackFloat64 hypot(FallbackFloat64 a, FallbackFloat64 b) { return FallbackFloat64(std::hypot(a.v, b.v)); }
+
 inline FallbackFloat64 sin(FallbackFloat64 a) { return FallbackFloat64(std::sin(a.v)); }
 inline FallbackFloat64 cos(FallbackFloat64 a) { return FallbackFloat64(std::cos(a.v)); }
 inline FallbackFloat64 tan(FallbackFloat64 a) { return FallbackFloat64(std::tan(a.v)); }
@@ -207,7 +220,7 @@ inline FallbackFloat64 tanh(FallbackFloat64 a) { return FallbackFloat64(std::tan
 inline FallbackFloat64 asinh(FallbackFloat64 a) { return FallbackFloat64(std::asinh(a.v)); }
 inline FallbackFloat64 acosh(FallbackFloat64 a) { return FallbackFloat64(std::acosh(a.v)); }
 inline FallbackFloat64 atanh(FallbackFloat64 a) { return FallbackFloat64(std::atanh(a.v)); }
-inline FallbackFloat64 abs(FallbackFloat64 a) { return FallbackFloat64(std::abs(a.v)); }
+
 
 //Clamp a value between 0.0 and 1.0
 [[nodiscard("Value calculated and not used (clamp)")]]
@@ -393,8 +406,12 @@ inline Simd512Float64 max(Simd512Float64 a, Simd512Float64 b) { return Simd512Fl
 //*****Approximate Functions*****
 inline Simd512Float64 reciprocal_approx(Simd512Float64 a) { return Simd512Float64(_mm512_rcp14_pd(a.v)); }
 
-//*****Mathematical Functions*****
+//*****512-bit Mathematical Functions*****
 inline Simd512Float64 sqrt(Simd512Float64 a) { return Simd512Float64(_mm512_sqrt_pd(a.v)); }
+
+//Calculate a raised to the power of b
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd512Float64 pow(Simd512Float64 a, Simd512Float64 b) noexcept { return Simd512Float64(_mm512_pow_pd(a.v, b.v)); }
 
 //Calculate e^x
 [[nodiscard("Value calculated and not used (exp)")]]
@@ -632,8 +649,12 @@ inline Simd256Float64 reciprocal_approx(Simd256Float64 a) { return Simd256Float6
 
 
 
-//*****Mathematical Functions*****
+//*****256-bit Mathematical Functions*****
 inline Simd256Float64 sqrt(Simd256Float64 a) { return Simd256Float64(_mm256_sqrt_pd(a.v)); }
+
+
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd256Float64 pow(Simd256Float64 a, Simd256Float64 b) noexcept { return Simd256Float64(_mm256_pow_pd(a.v, b.v)); }
 
 //Calculate e^x
 [[nodiscard("Value calculated and not used (exp)")]]
@@ -947,7 +968,7 @@ inline Simd128Float64 clamp(const Simd128Float64 a, const float min_f, const flo
 [[nodiscard("Value calculated and not used (reciprocal_approx)")]]
 inline Simd128Float64 reciprocal_approx(const Simd128Float64 a) noexcept { return Simd128Float64(1.0/a.v); }
 
-//*****Mathematical Functions*****
+//*****128-bit Mathematical Functions*****
 [[nodiscard("Value calculated and not used (sqrt)")]]
 inline Simd128Float64 sqrt(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_sqrt_pd(a.v)); } //sse2
 
@@ -957,7 +978,9 @@ inline Simd128Float64 abs(const Simd128Float64 a) noexcept {
 	const auto r = _mm_and_pd(_mm_set1_pd(std::bit_cast<float>(0x7FFFFFFF)), a.v);
 	return Simd128Float64(r);
 }
-
+//Calculating a raised to the power of b
+[[nodiscard("Value calculated and not used (pow)")]]
+inline Simd128Float64 pow(Simd128Float64 a, Simd128Float64 b) noexcept { return Simd128Float64(_mm_pow_pd(a.v, b.v)); }
 
 //Calculate e^x
 [[nodiscard("Value calculated and not used (exp)")]]
@@ -983,7 +1006,7 @@ inline Simd128Float64 log(const Simd128Float64 a) noexcept { return Simd128Float
 [[nodiscard("Value calculated and not used (log1p)")]]
 inline Simd128Float64 log1p(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log1p_pd(a.v)); } //sse
 
-//Calculate log_1(x)
+//Calculate log_2(x)
 [[nodiscard("Value calculated and not used (log2)")]]
 inline Simd128Float64 log2(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_log2_pd(a.v)); } //sse
 
