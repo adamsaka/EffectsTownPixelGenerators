@@ -110,6 +110,11 @@ struct FallbackFloat64 {
 	static bool cpu_level_supported(CpuInformation ) { return true; }
 #endif
 
+	//Performs a compile time CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static constexpr bool compiler_supported() {
+		return true;
+	}
+
 	//Performs a compile time supprot to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static constexpr bool compiler_level_supported() {
 		return true;

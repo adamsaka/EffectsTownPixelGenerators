@@ -69,7 +69,7 @@ concept Simd = requires (T t) {
 	
 	//Has CPU Support functions
 	T::compiler_level_supported();
-
+	T::compiler_supported();
 	
 	//Public Elements
 	t.v;
