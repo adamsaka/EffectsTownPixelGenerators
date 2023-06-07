@@ -56,6 +56,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 template <typename T>
 concept Simd = requires (T t) {
 
+	
+
 	//Size of struct should be sizeof individual elements.
 	requires sizeof(t.v) == sizeof(t.element(0)) * t.number_of_elements();
 	requires sizeof(t) == sizeof(t.v);
@@ -65,6 +67,9 @@ concept Simd = requires (T t) {
 	requires std::copyable<T>;
 	requires std::movable<T>;
 	
+	//Has CPU Support functions
+	T::compiler_level_supported();
+
 	
 	//Public Elements
 	t.v;

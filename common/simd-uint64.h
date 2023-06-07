@@ -107,6 +107,17 @@ struct FallbackUInt64 {
 	static bool cpu_level_supported(CpuInformation) { return true; }
 #endif
 
+	//Performs a compile time CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static constexpr bool compiler_supported() {
+		return true;
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return true;
+	}
+
+
 	//*****Elements*****
 	static constexpr int size_of_element() { return sizeof(uint64_t); }
 	static constexpr int number_of_elements() { return 1; }	

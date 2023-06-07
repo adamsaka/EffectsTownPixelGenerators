@@ -338,6 +338,11 @@ struct Simd256UInt32 {
 		return cpuid.has_avx() && cpuid.has_avx2();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_avx && mt::environment::compiler_has_fma;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -347,6 +352,11 @@ struct Simd256UInt32 {
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation cpuid) {
 		return cpuid.has_avx2() && cpuid.has_avx() && cpuid.has_fma();
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx && mt::environment::compiler_has_fma;
 	}
 
 	//*****Elements*****
