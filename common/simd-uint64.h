@@ -525,33 +525,11 @@ struct Simd128UInt64 {
 			this->v = _mm_mullo_epi64(v, rhs.v);
 			return *this;
 		} 
-		else if constexpr (mt::environment::compiler_has_sse4_1) {
-			//Multiplication (i64*i64->i64) is not implemented for AVX2.
-			//Algorithm:
-			//		If x*y = [a,b]*[c,d] (where a,b,c,d are digits/dwords).
-			//			   = (2^64) ac + (2^32) (ad + bc) + bd
-			//				 (We ignore upper 64bits so, we can ignore the (2^64) term.)
-			//
-			//Given lhs = [a,b] and rhs=[c,d]
-			auto digit1 = _mm_mul_epu32(v, rhs.v);											//=[0+carry, bd]	: Calculate bd (i32*i32->i64)
-			auto rhs_swap = _mm_shuffle_epi32(rhs.v, 0xB1);									//=[d,c]			: Swaps the low and high dwords on RHS . 
-			auto ad_bc = _mm_mullo_epi32(v, rhs_swap);	/*SSE41*/							//=[ad,bc]			: Multiply every dword together (i32*i32->i32).          
-			auto bc_00 = _mm_slli_epi64(ad_bc, 32);											//=[bc,0]			: Shift Left to put bc in the upper dword.
-			auto ad_plus_bc = _mm_add_epi32(ad_bc, bc_00);									//=[ad+bc,bc]		: Perofrm addition in the upper dword
-			auto digit2 = _mm_and_si128(ad_plus_bc, _mm_set1_epi64x(0xFFFFFFFF00000000));   //=[ad+bc,0]		: Zero lower dword using &
-			this->v = _mm_add_epi64(digit1, digit2);										//=[ad+dc+carry,bd] : Add digits to get final result. 
-			return *this;
-		}
 		else {
-			auto digit1 = _mm_mul_epu32(v, rhs.v);											//=[0+carry, bd]	: Calculate bd (i32*i32->i64)
-			auto rhs_swap = _mm_shuffle_epi32(rhs.v, 0xB1);									//=[d,c]			: Swaps the low and high dwords on RHS . 
-			auto ad_bc = software_mullo_epu32(v, rhs_swap);	/*SSE2 fallback*/				//=[ad,bc]			: Multiply every dword together (i32*i32->i32).          
-			auto bc_00 = _mm_slli_epi64(ad_bc, 32);											//=[bc,0]			: Shift Left to put bc in the upper dword.
-			auto ad_plus_bc = _mm_add_epi32(ad_bc, bc_00);									//=[ad+bc,bc]		: Perofrm addition in the upper dword
-			auto digit2 = _mm_and_si128(ad_plus_bc, _mm_set1_epi64x(0xFFFFFFFF00000000));   //=[ad+bc,0]		: Zero lower dword using &
-			this->v = _mm_add_epi64(digit1, digit2);										//=[ad+dc+carry,bd] : Add digits to get final result. 
-			return *this;
-			
+			//Not supported, we will just unroll as there are only 2 values anyway.			
+			const auto m1 = v.m128i_u64[1] * rhs.v.m128i_u64[1];
+			const auto m0 = v.m128i_u64[0] * rhs.v.m128i_u64[0];
+			v = _mm_set_epi64x(m1, m0);			
 			return *this;
 		}
 
