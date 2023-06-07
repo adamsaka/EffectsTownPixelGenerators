@@ -21,25 +21,47 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 
-Basic SIMD Types for 32-bit Unsigned Integers.
+Basic SIMD Types for 32-bit Unsigned Integers:
 
-Each type provides the following operations so they can be used in templated functions.
+FallbackUint64		- Works on all build modes and CPUs.  Forwards most requests to the standard library.
 
-Support information.
-	static bool cpu_supported(CpuInformation cpuid)
-	static constexpr int size_of_element()
-	static constexpr int number_of_elements()
+Simd128Uint64		- x86_64 Microarchitecture Level 1 - Works on all x86_64 CPUs.
+					- Requires SSE and SSE2 support.  Will use SSE4.1 instructions when __SSE4_1__ or __AVX__ defined.
 
-Operators (rhs same type):
-	+=, -=, *=, &=, |=, ^=,
-	+,  -,  *,  &,  |,  ^,  ~
+Simd256Uint64		- x86_64 Microarchitecture Level 3.
+					- Requires AVX, AVX2 and FMA support.
 
-Operators (rhs uint32_t)
-	+=, -=, *=, /=
-	+,  -,  *,  /
+Simd512Uint64		- x86_64 Microarchitecture Level 4.
+					- Requires AVX512F, AVX512DQ, ACX512VL, AVX512CD, AVX512BW
 
-Operators (rhs int)
-	<< >>
+SimdNativeUint64	- A Typedef referring to one of the above types.  Chosen based on compiler support/mode.
+					- Just use this type in your code if you are building for a specific platform.
+
+
+Checking CPU Support:
+Unless you are using a SimdNative typedef, you must check for CPU support before using any of these types.
+
+Types reqpresenting floats, doubles, ints, longs etc are arranged in microarchitecture level groups.
+Generally CPUs have more SIMD support for floats than ints (and 32 bit is better than 64-bit).
+Ensure the CPU supports the full "level" if you need to use more than one type.
+
+
+To check support at compile time:
+	- Use compiler_level_supported()
+	- If you won't use any of the type conversion functions you can use compiler_supported()
+
+To check support at run time:
+	- Use cpu_level_supported()
+	- If you won't use any of the type conversion functions you can use cpu_supported()
+
+Runtime detection notes:
+Visual studio will support compiling all types and switching at runtime. However this often results in slower
+code than compiling with full compiler support.  Visual studio will optimise AVX code well when build support is enabled.
+If you are able, I recommend distributing code at different support levels. (1,3,4). Let the user choose which to download,
+or your installer can make the switch.  It is also possible to dynamically load different .dlls
+
+WASM Support:
+I've included FallbackFloat32 for use with Emscripen, but use SimdNativeFloat32 as SIMD support will be added soon.
 
 
 *********************************************************************************************************/
@@ -82,11 +104,21 @@ struct FallbackUInt32 {
 	static bool cpu_level_supported(CpuInformation ) { return true; }
 #endif
 
-	static constexpr int size_of_element() { return sizeof(uint32_t); }
-	static constexpr int number_of_elements() { return 1; }
+	//Performs a compile time CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static constexpr bool compiler_supported() {
+		return true;
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return true;
+	}
 
 	//*****Elements*****
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 1; }
 	F element(int) { return v; }
+	void set_element(int, F value) { v = value; }
 
 	//*****Make Functions****
 	static FallbackUInt32 make_sequential(uint32_t first) { return FallbackUInt32(first); }
@@ -190,6 +222,11 @@ struct Simd512UInt32 {
 		return cpuid.has_avx512_f();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_avx512f;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -201,12 +238,16 @@ struct Simd512UInt32 {
 		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
 	}
 
-
-	static constexpr int size_of_element() { return sizeof(uint32_t); }
-	static constexpr int number_of_elements() { return 16; }
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_avx512f && mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512bw && mt::environment::compiler_has_avx512cd;
+	}
 
 	//*****Elements*****
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 16; }	
 	F element(int i) { return v.m512i_u32[i]; }
+	void set_element(int i, F value) { v.m512i_u32[i] = value; }
 
 	//*****Make Functions****
 	static Simd512UInt32 make_sequential(uint32_t first) { return Simd512UInt32(_mm512_set_epi32(first + 15, first + 14, first + 13, first + 12, first + 11, first + 10, first + 9, first + 8, first + 7, first + 6, first + 5, first + 4, first + 3, first + 2, first + 1, first)); }
@@ -308,11 +349,11 @@ struct Simd256UInt32 {
 		return cpuid.has_avx2() && cpuid.has_avx() && cpuid.has_fma();
 	}
 
-	static constexpr int size_of_element() { return sizeof(uint32_t); }
-	static constexpr int number_of_elements() { return 8; }
-
 	//*****Elements*****
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 8; }	
 	F element(int i) { return v.m256i_u32[i]; }
+	void set_element(int i, F value) { v.m256i_u32[i] = value; }
 
 	//*****Addition Operators*****
 	Simd256UInt32& operator+=(const Simd256UInt32& rhs) noexcept { v = _mm256_add_epi32(v, rhs.v); return *this; }
@@ -427,11 +468,11 @@ struct Simd128UInt32 {
 		return cpuid.has_sse2() && cpuid.has_sse();
 	}
 
-	static constexpr int size_of_element() { return sizeof(uint32_t); }
-	static constexpr int number_of_elements() { return 4; }
-
 	//*****Elements*****
+	static constexpr int size_of_element() { return sizeof(uint32_t); }
+	static constexpr int number_of_elements() { return 4; }	
 	F element(int i) { return v.m128i_u32[i]; }
+	void set_element(int i, F value) { v.m128i_u32[i] = value; }
 
 	//*****Addition Operators*****
 	Simd128UInt32& operator+=(const Simd128UInt32& rhs) noexcept { v = _mm_add_epi32(v, rhs.v); return *this; }

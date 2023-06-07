@@ -105,13 +105,22 @@ struct FallbackFloat32 {
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation) {return true;}
 #endif
+
+	//Performs a compile time CPU check to see if this type is supported.  Checks this type ONLY (integers in same the same level may not be supported) 
+	static constexpr bool compiler_supported() {
+		return true;
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return true;
+	}
 	
 
 	
-	static constexpr int size_of_element() { return sizeof(float); }
-	static constexpr int number_of_elements() { return 1; }
-
 	//*****Access Elements*****
+	static constexpr int size_of_element() { return sizeof(float); }
+	static constexpr int number_of_elements() { return 1; }	
 	F element(int)  const { return v; }
 	void set_element(int, F value) { v = value; }
 
