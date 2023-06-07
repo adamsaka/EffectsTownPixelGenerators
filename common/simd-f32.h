@@ -21,24 +21,47 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 
-Basic SIMD Types for 32-bit floats.
+Basic SIMD Types for 32-bit floats:
 
-Note: Generally CPUs have more SIMD support for floats than ints.
-Always check cpu_supported() for both types when using converting/casting functions.
+FallbackFloat32		- Works on all build modes and CPUs.  Forwards most requests to the standard library.
 
-Each type provides the following operations so they can be used in templated functions.
+Simd128Float32		- x86_64 Microarchitecture Level 1 - Works on all x86_64 CPUs. 
+					- Requires SSE and SSE2 support.  Will use SSE4.1 instructions when __SSE4_1__ or __AVX__ defined.
+
+Simd256Float32		- x86_64 Microarchitecture Level 3.
+					- Requires AVX, AVX2 and FMA support.
+
+Simd512Float32		- x86_64 Microarchitecture Level 4.
+					- Requires AVX512F, AVX512DQ, ACX512VL, AVX512CD, AVX512BW
+
+SimdNativeFloat32	- A Typedef referring to one of the above types.  Chosen based on compiler support/mode.
+                    - Just use this type in your code if you are building for a specific platform.
 
 
-Support information.
-	static bool cpu_supported(CpuInformation cpuid)
-	static constexpr int size_of_element()
-	static constexpr int number_of_elements()
+Checking CPU Support:
+Unless you are using a SimdNative typedef, you must check for CPU support before using any of these types.
 
-Operators (rhs same type):
+Types reqpresenting floats, doubles, ints, longs etc are arranged in microarchitecture level groups.
+Generally CPUs have more SIMD support for floats than ints.
+Ensure the CPU supports the full "level" if you need to use more than one type.
 
 
-Operators (rhs int)
+To check support at compile time:
+	- Use compiler_level_supported()
+	- If you won't use any of the type conversion functions you can use compiler_supported()
 
+To check support at run time:
+	- Use cpu_level_supported()
+	- If you won't use any of the type conversion functions you can use cpu_supported()
+
+Runtime detection notes:
+Visual studio will support compiling all types and switching at runtime. However this often results in slower
+code than compiling with full compiler support.  Visual studio will optimise AVX code well when build support is enabled.
+If you are able, I recommend distributing code at different support levels. (1,3,4). Let the user choose which to download,
+or your installer can make the switch.  It is also possible to dynamically load different .dlls
+
+WASM Support:
+I've included FallbackFloat32 for use with Emscripen, but use SimdNativeFloat32 as SIMD support will be added soon.
 
 
 *********************************************************************************************************/
@@ -46,7 +69,7 @@ Operators (rhs int)
 
 #include <cmath>
 
-
+#include "environment.h"
 #include "simd-cpuid.h"
 #include "simd-concepts.h"
 #include "simd-uint32.h"
@@ -285,6 +308,11 @@ struct Simd512Float32 {
 		return cpuid.has_avx512_f();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_avx512f;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -295,6 +323,12 @@ struct Simd512Float32 {
 	static bool cpu_level_supported(CpuInformation cpuid) {
 		return cpuid.has_avx512_f() && cpuid.has_avx512_dq(); 
 	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_avx512f && mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512bw && mt::environment::compiler_has_avx512cd;
+	}
+
 
 
 	
@@ -563,6 +597,11 @@ struct Simd256Float32 {
 		return cpuid.has_avx() && cpuid.has_fma();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_avx && mt::environment::compiler_has_fma;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -572,6 +611,11 @@ struct Simd256Float32 {
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation cpuid) {
 		return cpuid.has_avx2() && cpuid.has_avx() && cpuid.has_fma();
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx && mt::environment::compiler_has_fma;
 	}
 
 
@@ -856,6 +900,11 @@ struct Simd128Float32 {
 		return cpuid.has_sse() && cpuid.has_sse2() && cpuid.has_sse41();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_sse && mt::environment::compiler_has_sse2;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -867,6 +916,10 @@ struct Simd128Float32 {
 		return cpuid.has_sse() && cpuid.has_sse2() && cpuid.has_sse41();
 	}
 
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_sse && mt::environment::compiler_has_sse2;
+	}
 
 	static constexpr int size_of_element() { return sizeof(float); }
 	static constexpr int number_of_elements() { return 4; }

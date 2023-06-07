@@ -85,42 +85,45 @@ namespace mt::environment {
 	#endif
 #endif
 
-
+//FMA is not defined by visual studio, so we need AVX2 support to compile with it.
+#if !defined(__FMA__) && defined(__AVX2__)
+	#define __FMA__ 1
+#endif
 
 
 //Setup some constexpr variables that we can use to provide some consistancy with different compilers.
 
-#if defined(__SSE__)
+#if defined(__SSE__) || defined(__AVX__)
 	constexpr bool compiler_has_sse = true;
 #else
 	constexpr bool compiler_has_sse = false;
 #endif
 
-#if defined(__SSE2__)
+#if defined(__SSE2__) || defined(__AVX__)
 	constexpr bool compiler_has_sse2 = true;
 #else
 	constexpr bool compiler_has_sse2 = false;
 #endif
 
-#if defined(__SSE3__)
+#if defined(__SSE3__) || defined(__AVX__)
 	constexpr bool compiler_has_sse3 = true;
 #else
 	constexpr bool compiler_has_sse3 = false;
 #endif
 
-#if defined(__SSSE3__)
+#if defined(__SSSE3__) || defined(__AVX__)
 	constexpr bool compiler_has_ssse3 = true;
 #else
 	constexpr bool compiler_has_ssse3 = false;
 #endif
 
-#if defined(__SSE4_1__)
+#if defined(__SSE4_1__) || defined(__AVX__)
 	constexpr bool compiler_has_sse4_1 = true;
 #else
 	constexpr bool compiler_has_sse4_1 = false;
 #endif
 
-#if defined(__SSE4_2__)
+#if defined(__SSE4_2__) || defined(__AVX__)
 	constexpr bool compiler_has_sse4_2 = true;
 #else
 	constexpr bool compiler_has_sse4_2 = false;
@@ -136,6 +139,12 @@ namespace mt::environment {
 	constexpr bool compiler_has_avx2 = true;
 #else
 	constexpr bool compiler_has_avx2 = false;
+#endif
+
+#if defined(__FMA__)
+	constexpr bool compiler_has_fma = true;
+#else
+	constexpr bool compiler_has_fma = false;
 #endif
 
 #if defined(__AVX512F__)
