@@ -32,9 +32,9 @@ Description:
 
 
 //**WARNING**: ALSO update these constants in AE.r.  They must match.
-#define PluginName					"Filmic"
+#define PluginName					"Blender Filmic"
 #define PluginMenu					"Effects Town"
-#define PluginIdentifier			"Town.Effects.Filmic"
+#define PluginIdentifier			"Town.Effects.BlenderFilmic"
 #define	PluginMajorVersion			1
 #define	PluginMinorVersion			0
 #define	PluginBugVersion			0

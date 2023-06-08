@@ -16,8 +16,8 @@ BEGIN
 	"MIB8",
 	"eman",
 	0, 0x0,
-	8, 0x0,
-	"\x06Filmic\0", 
+	16, 0x0,
+	"\x0EBlender Filmic\0", 
 
 	"MIB8",
 	"gtac", 
@@ -70,8 +70,8 @@ BEGIN
 	"MIB8",
 	"ANMe",
 	0, 0x0,
-	20, 0x0,
-	"\x13Town.Effects.Filmic", 
+	28, 0x0,
+	"\x1ATown.Effects.BlenderFilmic\0", 
 
 	"MIB8",
 	0x6165464CL, 

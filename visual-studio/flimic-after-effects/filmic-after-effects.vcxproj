@@ -40,7 +40,7 @@
     <ProjectGuid>{BEA1ECD0-AB80-4422-89FF-7034ECE960C4}</ProjectGuid>
     <RootNamespace>watercolourtextureaftereffects</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>filmic-after-effects</ProjectName>
+    <ProjectName>blenderfilmic-after-effects</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
