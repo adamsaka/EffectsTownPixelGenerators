@@ -495,6 +495,7 @@ struct Simd128UInt64 {
 		return mt::environment::compiler_has_sse && mt::environment::compiler_has_sse2;
 	}
 
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -505,6 +506,7 @@ struct Simd128UInt64 {
 	static bool cpu_level_supported(CpuInformation cpuid) {
 		return cpuid.has_sse2() && cpuid.has_sse2() ;
 	}
+
 
 	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static constexpr bool compiler_level_supported() {

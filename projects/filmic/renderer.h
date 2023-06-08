@@ -155,8 +155,8 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
 
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, const ColourSRGB<S>& in_colour) {
-    ColourSRGB<S> c = in_colour;
+static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, ColourSRGB<S> c) {
+    //TODO.  Should use lerp rather than nearest neighbour.    
 
     S idx_f = floor(clamp(c.red) * 4096.0f);
     for (int i = 0; i < idx_f.number_of_elements(); i++) {
@@ -186,7 +186,7 @@ static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, const ColourS
         auto v = lut[idx];
 
         c.blue.set_element(i, v);
-    }
+    } 
     return c;
 }
 
@@ -196,10 +196,9 @@ static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, const ColourS
 
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> unapply1DLut(const std::array<float, 4096>& lut, const ColourSRGB<S>& in_colour) {
-    ColourSRGB<S> c = in_colour;
+static ColourSRGB<S> unapply1DLut(const std::array<float, 4096>& lut, ColourSRGB<S>c) {   
+    //TODO.  Should use lerp rather than nearest neighbour.
 
-    
     for (int i = 0; i < c.red.number_of_elements(); i++) {
         auto lower = std::lower_bound(lut.begin(), lut.end(), c.red.element(i));
         auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : 4096;
@@ -225,30 +224,46 @@ static ColourSRGB<S> unapply1DLut(const std::array<float, 4096>& lut, const Colo
 Blender Standard to Filmic Log
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> to_filmic_log(const ColourSRGB<S>& in_colour) {
-    
-
-
-    ColourSRGB<S> c = in_colour;
-    
-    //To Linear.  TODO: Use accurate transform.
-    c.red = pow(c.red, 2.2);
-    c.green = pow(c.green, 2.2);
-    c.blue = pow(c.blue, 2.2);
-
+static ColourSRGB<S> to_filmic_log(ColourSRGB<S> c) {
     c.red = log2(c.red );
     c.green = log2(c.green);
     c.blue = log2(c.blue);
 
     c.red = rescale_to_01(c.red, S{ -12.473931188 }, S{ 4.026068812 });
     c.green = rescale_to_01(c.green, S{ -12.473931188 }, S{ 4.026068812 });
-    c.blue = rescale_to_01(c.blue, S{ -12.473931188 }, S{ 4.026068812 });
-
-
- 
+    c.blue = rescale_to_01(c.blue, S{ -12.473931188 }, S{ 4.026068812 }); 
     return c;
 }
 
+/**************************************************************************************************
+Blender Filmic Log to Standard
+ * ************************************************************************************************/
+template <SimdFloat S>
+static ColourSRGB<S> to_standard(ColourSRGB<S> c) {
+    c.red = rescale_from_01(c.red, S{ -12.473931188 }, S{ 4.026068812 });
+    c.green = rescale_from_01(c.green, S{ -12.473931188 }, S{ 4.026068812 });
+    c.blue = rescale_from_01(c.blue, S{ -12.473931188 }, S{ 4.026068812 });
+
+    c.red = exp2(c.red);
+    c.green = exp2(c.green);
+    c.blue = exp2(c.blue);
+
+    return c;
+}
+
+
+
+/**************************************************************************************************
+Blender Standard to Filmic Log
+Blender applies the exposure in standard (linear space)
+ * ************************************************************************************************/
+template <SimdFloat S>
+static ColourSRGB<S> apply_exposure(ColourSRGB<S> c, const float exposure) {    
+    c.red *= exp2(exposure);
+    c.green *= exp2(exposure);
+    c.blue *= exp2(exposure);    
+    return c;
+}
 
 
 /**************************************************************************************************
@@ -260,22 +275,68 @@ ColourSRGB<S> Renderer<S>::render_pixel_with_input(S x, S y, const ColourSRGB<S>
     if (width <= 0 || height <= 0) return ColourSRGB<S>{};
          
     ColourSRGB<S> c = in_colour;
+    const auto exposure = static_cast<typename S::F>(params.get_value(ParameterID::exposure));
 
-    if (params.get_string(ParameterID::colourspace_in) == "Filmic sRGB") {
+
+    //Convert to Filmic Log Space
+    if (params.get_string(ParameterID::colourspace_in) == "Filmic sRGB") {        
         c = unapply1DLut(base_contrast,c);
+        if (exposure != 0.0f) {
+            c = to_standard(c);
+            c = apply_exposure(c, exposure);
+            c = to_filmic_log(c);
+        }
+
     }
-    else if (params.get_string(ParameterID::colourspace_in) == "Standard (.exr)") {
+    else if (params.get_string(ParameterID::colourspace_in) == "Filmic Log") {
+        if (exposure != 0.0f) {
+            c = to_standard(c);
+            c = apply_exposure(c, exposure);
+            c = to_filmic_log(c);
+        }
+    }
+    else if (params.get_string(ParameterID::colourspace_in) == "Standard (sRGB)") {
+        //To Standard (Linear)
+        c.red = pow(c.red, 2.2);
+        c.green = pow(c.green, 2.2);
+        c.blue = pow(c.blue, 2.2);
+        
+        if (exposure != 0.0f) c = apply_exposure(c, exposure);        
         c = to_filmic_log(c);
     }
+    else if (params.get_string(ParameterID::colourspace_in) == "Standard (Linear)") {
+        if (exposure != 0.0f) c = apply_exposure(c, exposure);
+        c = to_filmic_log(c);
+    }
+    auto c_prelook = c;
+    //We are now in filmic log colour space with exposure applied.
 
-    if (params.get_string(ParameterID::filmic_mode) == "Very Low Contrast") return apply1DLut(very_low_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "Low Contrast") return apply1DLut(low_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "Medium Low Contrast") return apply1DLut(medium_low_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "Medium Contrast") return apply1DLut(base_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "Medium High Contrast") return apply1DLut(medium_high_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "High Contrast") return apply1DLut(high_contrast, c);
-    if (params.get_string(ParameterID::filmic_mode) == "Very High Contrast") return apply1DLut(very_high_contrast, c);
+    //Blender's looks are applied in the filmic log colour space.  These looks convert directly to sRGB.
+    if (params.get_string(ParameterID::filmic_mode) == "Very Low Contrast") c = apply1DLut(very_low_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "Low Contrast") c = apply1DLut(low_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "Medium Low Contrast") c = apply1DLut(medium_low_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "Medium Contrast") c = apply1DLut(base_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "Medium High Contrast") c = apply1DLut(medium_high_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "High Contrast") c = apply1DLut(high_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "Very High Contrast") c = apply1DLut(very_high_contrast, c);
+    else if (params.get_string(ParameterID::filmic_mode) == "None") c = apply1DLut(base_contrast, c); //Same as medium
 
+
+    //Apply Mix
+    const auto mix = static_cast<typename S::F>(params.get_value(ParameterID::mix_amount));
+    if (mix != 100.0f) {
+        c = mix_colours(c_prelook, c, S(mix *0.01f));
+    }
+
+
+
+    //Apply Gamma
+    const auto gamma = static_cast<typename S::F>(params.get_value(ParameterID::gamma));
+    if (gamma != 1.0f) {
+        c.red = pow(c.red, 1.0f/gamma);
+        c.green = pow(c.green, 1.0f / gamma);
+        c.blue = pow(c.blue, 1.0f / gamma);
+    }
 
     return c;
 }

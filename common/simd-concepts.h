@@ -34,24 +34,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 * These types may or may not actually use SIMD instructions. 
 * Any type that implements the required concepts can be used.
 * 
-* All Simd types must implement the following:
 * 
-* v								Underlying Value.  (Can be any suitable type:  float, double, __mm256, __m512)
-* F								Typedef giving the type of a single element (eg. float, double)
-* size_of_element()				sizeof(F).  Size of a single element.
-* number_of_elements()			Number of elements in v. (eg 8 for floats in __mm256)
-* element(n)					Returns an indvidual element.
-* 
-* cpu_supported(CpuInformation) Given a CPUInformation struct, indicate if this type is supported.
-* 
-* Required Operators
-* +, +=
-* -, -=
-* *, *=
-* /, /=
-* - (negate)
-* 
-* T::make_sequential(first)		Make a T and fill it with sequential elements starting at first
 *************************************************************************************************/
 template <typename T>
 concept Simd = requires (T t) {

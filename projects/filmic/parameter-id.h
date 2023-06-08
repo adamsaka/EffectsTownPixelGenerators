@@ -61,6 +61,8 @@ enum class ParameterID {
 	
 	colourspace_in,
 	colourspace_out,
+	exposure,
+	gamma,
 
 
 

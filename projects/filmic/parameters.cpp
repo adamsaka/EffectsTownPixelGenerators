@@ -46,12 +46,13 @@ ParameterList build_project_parameters() {
 	std::vector<std::string> colourspace_list{};
 	colourspace_list.push_back("Filmic sRGB");
 	colourspace_list.push_back("Filmic Log");	
-	colourspace_list.push_back("Standard (.exr)");
+	colourspace_list.push_back("Standard (sRGB)");
+	colourspace_list.push_back("Standard (Linear)");
 	
 	params.add_entry(ParameterEntry::make_list(ParameterID::colourspace_in, "Input Type", colourspace_list));
 
 	std::vector<std::string> input_list{};
-
+	input_list.push_back("None");
 	input_list.push_back("Very Low Contrast");
 	input_list.push_back("Low Contrast");
 	input_list.push_back("Medium Low Contrast");
@@ -59,11 +60,14 @@ ParameterList build_project_parameters() {
 	input_list.push_back("Medium High Contrast");
 	input_list.push_back("High Contrast");
 	input_list.push_back("Very High Contrast");
-	input_list.push_back("None (Show Input Colour Space)");
+	//input_list.push_back("None (Show Input Colour Space)");
 
 	params.add_entry(ParameterEntry::make_list(ParameterID::filmic_mode, "Filmic Look", std::move(input_list)));
 
-	params.add_entry(ParameterEntry::make_number(ParameterID::mix_amount, "Apply %",0.0,200.0,100.0,0.0,100.0,2));
+	params.add_entry(ParameterEntry::make_number(ParameterID::mix_amount, "Apply %",0.0,200.0,100.0,0.0,200.0,2));
+	
+	params.add_entry(ParameterEntry::make_number(ParameterID::exposure, "Exposure", -10.0, +10.0, 0.0, 0.0, 100.0, 3));
+	params.add_entry(ParameterEntry::make_number(ParameterID::gamma, "Gamma (Extra)", 0.0, +10.0, 1.0, 0.0, 10.0, 2));
 
 	
 	

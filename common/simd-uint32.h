@@ -467,6 +467,11 @@ struct Simd128UInt32 {
 		return cpuid.has_sse2() && cpuid.has_sse();
 	}
 
+	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
+	static constexpr bool compiler_supported() {
+		return mt::environment::compiler_has_sse && mt::environment::compiler_has_sse2;
+	}
+
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
@@ -476,6 +481,11 @@ struct Simd128UInt32 {
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation cpuid) {
 		return cpuid.has_sse2() && cpuid.has_sse();
+	}
+
+	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	static constexpr bool compiler_level_supported() {
+		return mt::environment::compiler_has_sse && mt::environment::compiler_has_sse2;
 	}
 
 	//*****Elements*****
@@ -557,8 +567,8 @@ inline Simd128UInt32 operator~(const Simd128UInt32& lhs) noexcept { return Simd1
 
 
 //*****Shifting Operators*****
-inline Simd128UInt32 operator<<(const Simd128UInt32& lhs, int bits) noexcept { return Simd128UInt32(_mm_slli_epi32(lhs.v, bits)); } //SSE2
-inline Simd128UInt32 operator>>(const Simd128UInt32& lhs, int bits) noexcept { return Simd128UInt32(_mm_srli_epi32(lhs.v, bits)); }
+inline Simd128UInt32 operator<<(const Simd128UInt32& lhs, const int bits) noexcept { return Simd128UInt32(_mm_slli_epi32(lhs.v, bits)); } //SSE2
+inline Simd128UInt32 operator>>(const Simd128UInt32& lhs, const int bits) noexcept { return Simd128UInt32(_mm_srli_epi32(lhs.v, bits)); }
 
 inline Simd128UInt32 rotl(const Simd128UInt32& a, int bits) { return a << bits | a >> (32 - bits); };
 inline Simd128UInt32 rotr(const Simd128UInt32& a, int bits) { return a >> bits | a << (32 - bits); };
@@ -577,6 +587,8 @@ inline Simd128UInt32 min(Simd128UInt32 a, Simd128UInt32 b) {
 		return Simd128UInt32(_mm_set_epi32(m3, m2, m1, m0));
 	}
 }
+
+
 
 inline Simd128UInt32 max(Simd128UInt32 a, Simd128UInt32 b) {
 	if constexpr (mt::environment::compiler_has_sse4_1) {
@@ -608,10 +620,17 @@ static_assert(SimdUInt<FallbackUInt32>, "FallbackUInt32 does not implement the c
 static_assert(SimdUInt32<FallbackUInt32>, "FallbackUInt32 does not implement the concept SimdUInt32");
 
 #if defined(_M_X64) || defined(__x86_64)
-static_assert(SimdUInt<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUint");
-static_assert(SimdUInt<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUint");
+static_assert(Simd<Simd128UInt32>, "Simd128UInt32 does not implement the concept Simd");
 static_assert(Simd<Simd256UInt32>, "Simd256UInt32 does not implement the concept Simd");
 static_assert(Simd<Simd512UInt32>, "Simd512UInt32 does not implement the concept Simd");
+
+static_assert(SimdUInt<Simd128UInt32>, "Simd256UInt32 does not implement the concept SimdUint");
+static_assert(SimdUInt<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUint");
+static_assert(SimdUInt<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUint");
+
+
+
+static_assert(SimdUInt32<Simd128UInt32>, "Simd128UInt32 does not implement the concept SimdUInt32");
 static_assert(SimdUInt32<Simd256UInt32>, "Simd256UInt32 does not implement the concept SimdUInt32");
 static_assert(SimdUInt32<Simd512UInt32>, "Simd512UInt32 does not implement the concept SimdUInt32");
 #endif
