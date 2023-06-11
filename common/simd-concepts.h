@@ -265,6 +265,8 @@ concept SimdUInt = Simd<T> && requires (T t) {
 	t &= 0xff;
 	t |= 0xff;
 	t ^= 0xff;
+	rotl(t, 2);
+	rotr(t, 4);
 };
 
 

@@ -184,8 +184,8 @@ inline FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept { return FallbackUI
 inline FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
 inline FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
 
-inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return std::rotl(a.v, bits); };
-inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return std::rotr(a.v, bits); };
+inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return a << bits | a >> (64 - bits); };
+inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return a >> bits | a<< (64 - bits); };
 
 //*****Min/Max*****
 inline FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }
@@ -311,8 +311,8 @@ inline Simd512UInt64 operator~(const Simd512UInt64& lhs) noexcept { return Simd5
 inline Simd512UInt64 operator<<(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_slli_epi64(lhs.v, bits)); }
 inline Simd512UInt64 operator>>(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_srli_epi64(lhs.v, bits)); }
 
-inline Simd512UInt64 rotl(const Simd512UInt64& a, int bits) { return a << bits | a >> (64 - bits); };
-inline Simd512UInt64 rotr(const Simd512UInt64& a, int bits) { return a >> bits | a << (64 - bits); };
+inline Simd512UInt64 rotl(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rolv_epi64(a.v, _mm512_set1_epi64(bits))); }
+inline Simd512UInt64 rotr(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rorv_epi64(a.v, _mm512_set1_epi64(bits))); }
 
 //*****Min/Max*****
 inline Simd512UInt64 min(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_min_epu64(a.v, b.v)); }
@@ -453,9 +453,8 @@ inline Simd256UInt64 operator~(const Simd256UInt64& lhs) noexcept { return Simd2
 //*****Shifting Operators*****
 inline Simd256UInt64 operator<<(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_slli_epi64(lhs.v, bits)); }
 inline Simd256UInt64 operator>>(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_srli_epi64(lhs.v, bits)); }
-
-inline Simd256UInt64 rotl(const Simd256UInt64& a, int bits) noexcept { return a << bits | a >> (64 - bits); };
-inline Simd256UInt64 rotr(const Simd256UInt64& a, int bits) noexcept { return a >> bits | a << (64 - bits); };
+inline Simd256UInt64 rotl(const Simd256UInt64& a, int bits) {return a << bits | a >> (64 - bits);};
+inline Simd256UInt64 rotr(const Simd256UInt64& a, int bits) {return a >> bits | a << (64 - bits);};
 
 //*****Min/Max*****
 inline Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_min_epu64(a.v, b.v)); }
@@ -605,8 +604,24 @@ inline Simd128UInt64 operator~(const Simd128UInt64& lhs) noexcept { return Simd1
 inline Simd128UInt64 operator<<(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_slli_epi64(lhs.v, bits)); } //sse2
 inline Simd128UInt64 operator>>(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_srli_epi64(lhs.v, bits)); }
 
-inline Simd128UInt64 rotl(const Simd128UInt64& a, int bits) noexcept { return a << bits | a >> (64 - bits); };
-inline Simd128UInt64 rotr(const Simd128UInt64& a, int bits) noexcept { return a >> bits | a << (64 - bits); };
+inline Simd128UInt64 rotl(const Simd128UInt64& a, int bits) {
+	if constexpr (mt::environment::compiler_has_avx512f) {
+		return _mm_rolv_epi64(a.v, _mm_set1_epi64x(bits));
+	}
+	else {
+		return a << bits | a >> (64 - bits);
+	}
+};
+
+
+inline Simd128UInt64 rotr(const Simd128UInt64& a, int bits) {
+	if constexpr (mt::environment::compiler_has_avx512f) {
+		return _mm_rorv_epi64(a.v, _mm_set1_epi64x(bits));
+	}
+	else {
+		return a >> bits | a << (64 - bits);
+	}
+};
 
 //*****Min/Max*****
 inline Simd128UInt64 min(Simd128UInt64 a, Simd128UInt64 b) noexcept {
