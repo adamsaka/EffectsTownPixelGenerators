@@ -161,6 +161,21 @@ concept SimdMath = SimdReal<T> && requires (T t) {
 	asinh(t);
 	acosh(t);
 	atanh(t);
+	sqrt(t);
+	abs(t);
+	pow(t, 2.0f);
+	exp(t);
+	exp2(t);
+	exp10(t);
+	expm1(t);
+	log(t);
+	log1p(t);
+	log2(t);
+	log10(t);
+	cbrt(t);
+	hypot(t, t);
+
+
 };
 
 

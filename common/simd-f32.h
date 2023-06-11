@@ -1236,11 +1236,15 @@ static_assert(SimdReal<FallbackFloat32>, "FallbackFloat32 does not implement the
 static_assert(SimdFloat<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat");
 static_assert(SimdFloat32<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat32");
 static_assert(SimdFloatToInt<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloatToInt");
+static_assert(SimdMath<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdMath");
+
+
 
 #if defined(_M_X64) || defined(__x86_64)
 static_assert(Simd<Simd128Float32>, "Simd256Float32 does not implement the concept SIMD");
 static_assert(Simd<Simd256Float32>, "Simd256Float32 does not implement the concept SIMD");
 static_assert(Simd<Simd512Float32>, "Simd512Float32 does not implement the concept SIMD");
+
 
 static_assert(SimdReal<Simd128Float32>, "Simd256Float32 does not implement the concept SimdReal");
 static_assert(SimdReal<Simd256Float32>, "Simd256Float32 does not implement the concept SimdReal");
