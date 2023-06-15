@@ -401,7 +401,7 @@ static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle ef
     dev_log("Adding Output Clip");
     check_openfx(global_EffectSuite->clipDefine(effect, "Output", &properties));
     if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA));  //RGBA format 
-    if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB));   //RGB format 
+    //if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB));   //RGB format 
 
 
     
@@ -411,7 +411,7 @@ static OfxStatus openfx_describe_in_context_action(const OfxImageEffectHandle ef
             dev_log("Adding Input Clip");
             check_openfx(global_EffectSuite->clipDefine(effect, "Source", &properties));
             if (global_hostData.supportsComponentRGBA) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 0, kOfxImageComponentRGBA)); //RGBA format
-            if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
+            //if (global_hostData.supportsComponentRGB) check_openfx(global_PropertySuite->propSetString(properties, kOfxImageEffectPropSupportedComponents, 1, kOfxImageComponentRGB)); //RGB format
         }
     }
     
