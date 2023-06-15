@@ -551,35 +551,10 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		rd.inputLayer = inputLayer;
 		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 	}
-	else if constexpr (mt::environment::compiler_has_sse4_2 && mt::environment::compiler_has_sse4_1 && mt::environment::compiler_has_sse3) {
-		//Compiler mode supports micro architecture level 2 (SSE4.2).  
-		RenderData<FallbackFloat32> rd{};
-		rd.width = width;
-		rd.height = height;
-		rd.area = area;
-		rd.output = output;
-		rd.inputLayer = inputLayer;
-		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
-
-	}
 	else {
-		//Compiler mode just supports basic x86_64 (SSE2), so we will perform runtime dispatch.
-
-		//Setup the RenderData with the appropriate SIMD Type.  Then call the templated function.
-		//This effectivly dispatches based on CPU SIMD support.
+		//Compiler mode just supports basic x86_64 (SSE2), so we will perform runtime dispatch to AVX2 code if supported..
 		CpuInformation cpu_info{};
-		/*if (Simd512UInt32::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info)) {
-			//AVX-512 & AVX-512DQ 
-			RenderData<Simd512Float32> rd{};
-			rd.width = width;
-			rd.height = height;
-			rd.area = area;
-			rd.output = output;
-			rd.inputLayer = inputLayer;
-			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
-
-		}
-		else if (Simd256UInt32::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
+		if (Simd256UInt32::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info)) {
 			//AVX & AVX2
 			RenderData<Simd256Float32> rd{};
 			rd.width = width;
@@ -589,8 +564,8 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 			rd.inputLayer = inputLayer;
 			after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 		}
-		else*/ {
-			//Fallback
+		else {
+			//SSE2 (Generic x86_64)
 			RenderData<Simd128Float32> rd{};
 			rd.width = width;
 			rd.height = height;

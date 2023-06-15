@@ -172,7 +172,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
 
 
-    //CPU Dispatch (assuming x86 for now)
+    //CPU Dispatch (assuming x86_64 for now)
     if constexpr (mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512f) {
         //AVX-512 & AVX-512DQ supported by compiler.
         Renderer<Simd512Float32> renderer{};
@@ -185,7 +185,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
         do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
     }
     else {
-        //Generic build.  Do runtime CPU dispatch
+        //Compiler mode just supports basic x86_64 (SSE2), so we will perform runtime dispatch to AVX2 code if supported.
         CpuInformation cpu_info{};
         if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info) && Simd256UInt32::cpu_supported(cpu_info)) {
             //AVX & AVX2
@@ -194,7 +194,7 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
             do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
         }
         else {
-            //Fallback to SSE instructions.
+            //SSE2 (Generic x86_64)
             Renderer<Simd128Float32> renderer{};
             setup_render(renderer, width, height, instance_data->parameter_helper, time);
             do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
