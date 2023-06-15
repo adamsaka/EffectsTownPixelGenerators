@@ -24,6 +24,9 @@ Description:
 
 	Render functions for the openFX host.
 
+TODO: 8-BIT Support
+    : Premultiplied alpha Support
+
 ********************************************************************************************************/
 #pragma once
 #include "openfx-render.h"
@@ -34,8 +37,9 @@ Description:
 #include "renderer.h"
 #include "parameters.h"
 #include "config.h"
-#include "..\..\common\linear-algebra.h"
 
+
+#include "..\..\common\linear-algebra.h"
 #include "..\..\common\simd-cpuid.h"
 #include "..\..\common\simd-f32.h"
 #include "..\..\common\simd-uint32.h"
@@ -43,96 +47,26 @@ Description:
 
 #include <bit>
 
-static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept;
 
-static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
-
-template <typename S>
+//Contains data that will be sent to different threads.
+template <SimdFloat S>
 struct RenderThreadData {
     Renderer<S>* renderer;
     ClipHolder* output;
     OfxRectI* render_window;
 };
 
-template <typename S>
-static void render_line(RenderThreadData<S>* rd, int y) {
-    //dev_log("Render Line " + std::to_string(y));
-    
-    int x = rd->render_window->x1;
-    for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements() ) {
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
-    }
-    //Handle the case where the width is not a multiple of S::number_of_elements
-    if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
-        x -= S::number_of_elements() - (rd->render_window->x2 - x);
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
 
-    }
-}
-
-
-/*******************************************************************************************************
-
-*******************************************************************************************************/
-template <typename S>
-void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
-    RenderThreadData<S>* rd = static_cast<RenderThreadData<S>*>(customArg);
-
-    for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
-        if (y % threadMax == threadIndex) {
-            render_line(rd, y);
-        }
-    }
-}
-
-
-/*******************************************************************************************************
-
-*******************************************************************************************************/
-template <typename S>
-static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
-    RenderThreadData<S> rd{};
-    rd.renderer = &renderer;
-    rd.output = &output;
-    rd.render_window = &render_window;
+/***Forward Declarations***/
+static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept;
+static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
+template <SimdFloat S> void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg);
+template <SimdFloat S> static void render_line(RenderThreadData<S>* rd, int y);
+template <SimdFloat S> static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output);
+template <SimdFloat S> static void setup_render(Renderer<S>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time);
 
 
 
-    unsigned int num_threads;
-    global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
-    //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
-
-    if (num_threads > 1) [[likely]] {
-        global_MultiThreadSuite->multiThread(thread_entry_pixel_render<S>, num_threads, &rd);
-    }
-    else {
-        for (int y = render_window.y1; y < render_window.y2; y++) {
-            if (global_EffectSuite->abort(instance)) return;
-            render_line(&rd, y);
-        }
-    }
-}
-
-
-/*******************************************************************************************************
-
-*******************************************************************************************************/
-template <typename S>
-static void setup_render(Renderer<S>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time) {
-
-    auto params = read_parameters(parameter_helper, time);
-
-    renderer.set_size(width, height);
-    renderer.set_seed("OpenFX");
-    if (params.contains(ParameterID::seed)) {
-        renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
-    }
-
-
-    renderer.set_parameters(std::move(params));
-}
 
 /*******************************************************************************************************
 Render
@@ -223,9 +157,27 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
 }
 
 
+/*******************************************************************************************************
+Sets up the host-independant renderer object. 
+Templated on the datatype
+*******************************************************************************************************/
+template <SimdFloat S>
+static void setup_render(Renderer<S>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time) {
+    auto params = read_parameters(parameter_helper, time);
+
+    renderer.set_size(width, height);
+    renderer.set_seed("OpenFX");
+    if (params.contains(ParameterID::seed)) {
+        renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
+    }
+
+
+    renderer.set_parameters(std::move(params));
+}
+
 
 /*******************************************************************************************************
-
+Read the parameters values from the host and store in a host-independant parameter list.
 *******************************************************************************************************/
 static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time) {
     auto params = build_project_parameters();
@@ -255,7 +207,7 @@ static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime 
 /*******************************************************************************************************
 
 *******************************************************************************************************/
-template <typename S>
+template <SimdFloat S>
 inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, int max_x, ColourRGBA<S> c) {
     const bool hasAlpha = output.componentsPerPixel == 4;
 
@@ -278,10 +230,11 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
                 ptrDest[2] = static_cast<uint8_t>(clamp(c.blue.element(i) * w8, 0.0f, w8));
                 if (hasAlpha) ptrDest[3] = static_cast<uint8_t>(clamp(c.alpha.element(i) * w8, 0.0f, w8));
             }
+            break;
          }
     case 32:
         {
-            
+            //TODO: Use SIMD       
             
             for (int i = 0; i < S::number_of_elements(); i++) {
                 if (x + i >= max_x) break;
@@ -301,20 +254,9 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /*******************************************************************************************************
 Assume the output already contains the top image.  Any transparent parts are filled with source.
 *******************************************************************************************************/
-[[maybe_unused]]
 static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept {
     if (output.componentsPerPixel != 4) return;
 
@@ -342,3 +284,70 @@ static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& sour
 }
 
 
+
+/*******************************************************************************************************
+Thread Entry Point for rendering.
+Used as a callback by OpenFX host.
+
+Currently just balances worklaod using % operator.
+*******************************************************************************************************/
+template <SimdFloat S>
+void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg) {
+    RenderThreadData<S>* rd = static_cast<RenderThreadData<S>*>(customArg);
+    for (int y = rd->render_window->y1; y < rd->render_window->y2; y++) {
+        if (y % threadMax == threadIndex) {
+            render_line(rd, y);
+        }
+    }
+}
+
+
+/*******************************************************************************************************
+Render a line.  
+(Called on a worker thread)
+*******************************************************************************************************/
+template <SimdFloat S>
+static void render_line(RenderThreadData<S>* rd, int y) {
+    //dev_log("Render Line " + std::to_string(y));
+
+    int x = rd->render_window->x1;
+    for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements()) {
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+    }
+    //Handle the case where the width is not a multiple of S::number_of_elements
+    if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
+        x -= S::number_of_elements() - (rd->render_window->x2 - x);
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+
+    }
+}
+
+
+
+/*******************************************************************************************************
+Render a pixel (or more likely a SIMD vector's worth of them).
+(Called on a worker thread)
+*******************************************************************************************************/
+template <SimdFloat S>
+static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
+    RenderThreadData<S> rd{};
+    rd.renderer = &renderer;
+    rd.output = &output;
+    rd.render_window = &render_window;
+
+    unsigned int num_threads;
+    global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
+    //dev_log(std::string("Number of threads : ") + std::to_string(num_threads));
+
+    if (num_threads > 1) [[likely]] {
+        global_MultiThreadSuite->multiThread(thread_entry_pixel_render<S>, num_threads, &rd);
+    }
+    else {
+        for (int y = render_window.y1; y < render_window.y2; y++) {
+            if (global_EffectSuite->abort(instance)) return;
+            render_line(&rd, y);
+        }
+    }
+}
