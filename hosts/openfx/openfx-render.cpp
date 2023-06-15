@@ -172,25 +172,33 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
 
 
-    //Runtime CPU Dispatch
-    CpuInformation cpu_info{};
-    if (Simd512UInt64::cpu_supported(cpu_info) && Simd512Float32::cpu_supported(cpu_info) && Simd512UInt32::cpu_supported(cpu_info) ) {
-        //AVX-512 & AVX-512DQ 
+    //CPU Dispatch (assuming x86 for now)
+    if constexpr (mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512f) {
+        //AVX-512 & AVX-512DQ supported by compiler.
         Renderer<Simd512Float32> renderer{};
         setup_render(renderer, width, height, instance_data->parameter_helper, time);
         do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
-
-    }else if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info) && Simd256UInt32::cpu_supported(cpu_info)){
-        //AVX & AVX2
-        Renderer<Simd256Float32> renderer{};       
-        setup_render(renderer, width, height, instance_data->parameter_helper, time);       
+    }
+    else if constexpr (mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx && mt::environment::compiler_has_fma) {
+        Renderer<Simd256Float32> renderer{};
+        setup_render(renderer, width, height, instance_data->parameter_helper, time);
         do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
     }
     else {
-        //Fallback
-        Renderer<FallbackFloat32> renderer{};
-        setup_render(renderer, width, height, instance_data->parameter_helper, time);
-        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+        //Generic build.  Do runtime CPU dispatch
+        CpuInformation cpu_info{};
+        if (Simd256UInt64::cpu_supported(cpu_info) && Simd256Float32::cpu_supported(cpu_info) && Simd256UInt32::cpu_supported(cpu_info)) {
+            //AVX & AVX2
+            Renderer<Simd256Float32> renderer{};
+            setup_render(renderer, width, height, instance_data->parameter_helper, time);
+            do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+        }
+        else {
+            //Fallback to SSE instructions.
+            Renderer<Simd128Float32> renderer{};
+            setup_render(renderer, width, height, instance_data->parameter_helper, time);
+            do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+        }
     }
 
 

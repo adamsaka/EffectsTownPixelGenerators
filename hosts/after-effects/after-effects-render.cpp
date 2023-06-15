@@ -541,7 +541,7 @@ void after_effects_common_render(int width, int height, PF_InData* in_data, cons
 		rd.inputLayer = inputLayer;
 		after_effect_cpu_dispatch(width, height, in_data, area, bit_depth, inputLayer, output, rd);
 	}
-	else if constexpr (mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx) {
+	else if constexpr (mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx && mt::environment::compiler_has_fma) {
 		//Compiler mode supports micro architecture level 3 (AVX2).  
 		RenderData<Simd256Float32> rd{};
 		rd.width = width;

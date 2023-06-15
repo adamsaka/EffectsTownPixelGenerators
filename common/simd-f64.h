@@ -1338,19 +1338,20 @@ static_assert(SimdCompareOps<Simd512Float64>, "Simd512Float64 does not implement
  (Based on microarchitecture level so that integers are also supported)
 *************************************************************************************************/
 #if defined(_M_X64) || defined(__x86_64)
-#if defined(__AVX512F__) && defined(__AVX512DQ__) 
-typedef Simd512Float64 SimdNativeFloat64;
+	#if defined(__AVX512F__) && defined(__AVX512DQ__) 
+	typedef Simd512Float64 SimdNativeFloat64;
+	#else
+	#if defined(__AVX2__) && defined(__AVX__) 
+	typedef Simd256Float64 SimdNativeFloat64;
+	#else
+	#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
+	typedef FallbackFloat64 SimdNativeFloat64;
+	#else
+	typedef FallbackFloat64 SimdNativeFloat64;
+	#endif	
+	#endif	
+	#endif
 #else
-#if defined(__AVX2__) && defined(__AVX__) 
-typedef Simd256Float64 SimdNativeFloat64;
-#else
-#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-typedef FallbackFloat64 SimdNativeFloat64;
-#else
-typedef FallbackFloat64 SimdNativeFloat64;
-#endif	
-#endif	
-#endif
-#else
-typedef FallbackFloat64 SimdNativeFloat64;
+	//not x64
+	typedef FallbackFloat64 SimdNativeFloat64;
 #endif
