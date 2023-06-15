@@ -527,10 +527,9 @@ Common Render Function to Smart and Non-Smart rendering.
 Sets up the renderer and dispatches based on CPU
 *******************************************************************************************************/
 void after_effects_common_render(int width, int height, PF_InData* in_data, const PF_Rect& area, int bit_depth, PF_EffectWorld* inputLayer, PF_EffectWorld* output) {
-	AEGP_SuiteHandler suites(in_data->pica_basicP);
-	
+	AEGP_SuiteHandler suites(in_data->pica_basicP);	
 
-
+	static_assert(mt::environment::is_x64, "Only x86_64 implemented");
 	if constexpr (mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512f) {
 		//Compiler mode supports micro architecture level 4 (AVX-512).  
 		RenderData<Simd512Float32> rd{};
