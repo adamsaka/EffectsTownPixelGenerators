@@ -69,13 +69,6 @@ static OfxStatus openfx_create_instance_action(OfxImageEffectHandle instance);
 static OfxStatus openfx_destroy_instance_action([[maybe_unused]] OfxImageEffectHandle effect);
 
 
-
-
-
-
-
-
-
 /*******************************************************************************************************
 A struct that provides the host with information about this OFX plugin.
 *******************************************************************************************************/
@@ -330,7 +323,7 @@ static OfxStatus openfx_describe_action(const OfxImageEffectHandle effect) {
 
     //Indicate which bit depths we can support.
     check_openfx(global_PropertySuite->propSetInt(effectProperties, kOfxImageEffectPropSupportsMultipleClipDepths, 0, false));                //Multiple Bit Depths
-    check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
+    //check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthByte));        //8 Bit Colour
     check_openfx(global_PropertySuite->propSetString(effectProperties, kOfxImageEffectPropSupportedPixelDepths, 2, kOfxBitDepthFloat));       //32 Bit Float Colour
 
     // define the contexts we can be used in
