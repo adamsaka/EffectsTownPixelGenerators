@@ -65,12 +65,12 @@ void ThrowPrettyException(const std::string& file, const std::string& function, 
 Writes a log entry if in debug mode
 *******************************************************************************************************/
 void dev_log(std::string s) {
-// #ifdef _DEBUG
+#ifdef _DEBUG
 
 	std::ofstream file("c:\\temp\\ofxlog.txt", std::ios::app);
 	file << " : " << s << std::endl;
 
 	return;
-// #endif
+#endif
 }
 

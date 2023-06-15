@@ -453,7 +453,7 @@ static OfxStatus openfx_image_effect_action_get_clip_preferences([[maybe_unused]
     //Continuous sampling (can generate frames between frames).
     check_openfx(global_PropertySuite->propSetInt(out_args, kOfxImageClipPropContinuousSamples, 0, 1 /*true*/));
 
-    //Has yime varying effect even in parameters constant?
+    //Has time varying effect even in parameters constant?
     check_openfx(global_PropertySuite->propSetInt(out_args, kOfxImageEffectFrameVarying, 0, 0 /*false*/));   
 
 
