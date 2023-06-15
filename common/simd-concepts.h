@@ -174,10 +174,35 @@ concept SimdMath = SimdReal<T> && requires (T t) {
 	log10(t);
 	cbrt(t);
 	hypot(t, t);
-
-
 };
 
+/**************************************************************************************************
+* Concept for types that implement compare functions.
+* The functions are for comparing individual elements.
+*************************************************************************************************/
+template <typename T>
+concept SimdCompareOps = Simd<T>&& requires (T t) {
+	//Branchless If functions
+	if_equal(t, t, t, t);
+	if_less(t, t, t, t);
+	if_less_equal(t, t, t, t);
+	if_greater(t, t, t, t);
+	if_greater_equal(t, t, t, t);
+	if_nan(t, t, t);
+
+	//The compare functions all return a mask which is a type dependant mask.
+	//The only requirement is that it can be used as an argument to blend.
+	compare_equal(t, t);
+	compare_less(t, t);
+	compare_less_equal(t, t);
+	compare_greater(t, t);
+	compare_greater_equal(t, t);
+	isnan(t);
+	blend(t, t, compare_equal(t, t));
+
+	
+
+};
 
 
 

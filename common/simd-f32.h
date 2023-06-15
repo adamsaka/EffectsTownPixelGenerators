@@ -1373,7 +1373,7 @@ static_assert(SimdFloat<FallbackFloat32>, "FallbackFloat32 does not implement th
 static_assert(SimdFloat32<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloat32");
 static_assert(SimdFloatToInt<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdFloatToInt");
 static_assert(SimdMath<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdMath");
-
+static_assert(SimdCompareOps<FallbackFloat32>, "FallbackFloat32 does not implement the concept SimdCompareOps");
 
 
 #if defined(_M_X64) || defined(__x86_64)
@@ -1403,6 +1403,10 @@ static_assert(SimdMath<Simd128Float32>, "Simd128Float32 does not implement the c
 static_assert(SimdMath<Simd256Float32>, "Simd256Float32 does not implement the concept SimdMath");
 static_assert(SimdMath<Simd512Float32>, "Simd512Float32 does not implement the concept SimdMath");
 
+//Compare Ops
+static_assert(SimdCompareOps<Simd128Float32>, "Simd128Float32 does not implement the concept SimdCompareOps");
+static_assert(SimdCompareOps<Simd256Float32>, "Simd256Float32 does not implement the concept SimdCompareOps");
+static_assert(SimdCompareOps<Simd512Float32>, "Simd512Float32 does not implement the concept SimdCompareOps");
 
 #endif
 

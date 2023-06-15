@@ -275,7 +275,22 @@ inline FallbackFloat64 clamp(const FallbackFloat64 a, const double min_f, const 
 	return std::min(std::max(a.v, min_f), max_f);
 }
 
+//*****Conditional Functions *****
 
+//Compare if 2 values are equal and return a mask.
+inline bool compare_equal(const FallbackFloat64 a, const FallbackFloat64 b) noexcept { return (a.v == b.v); }
+inline bool compare_less(const FallbackFloat64 a, const FallbackFloat64 b) noexcept { return(a.v < b.v); }
+inline bool compare_less_equal(const FallbackFloat64 a, const FallbackFloat64 b) noexcept { return (a.v <= b.v); }
+inline bool compare_greater(const FallbackFloat64 a, const FallbackFloat64 b) noexcept { return (a.v > b.v); }
+inline bool compare_greater_equal(const FallbackFloat64 a, const FallbackFloat64 b) noexcept { return (a.v >= b.v); }
+inline bool isnan(const FallbackFloat64 a) noexcept { return std::isnan(a.v); }
+
+//Blend two values together based on mask.  First argument if zero. Second argument if 1.
+//Note: the if_false argument is first!!
+[[nodiscard("Value Calculated and not used (blend)")]]
+inline FallbackFloat64 blend(const FallbackFloat64 if_false, const FallbackFloat64 if_true, bool mask) noexcept {
+	return (mask) ? if_true : if_false;
+}
 
 
 
@@ -538,6 +553,40 @@ inline Simd512Float64 clamp(const Simd512Float64 a, const float min_f, const flo
 	return _mm512_min_pd(_mm512_max_pd(a.v, min), max);
 }
 
+//*****AVX-512 Conditional Functions *****
+
+//Compare ordered.
+[[nodiscard("Value Calculated and not used (compare_equal)")]]
+inline __mmask8 compare_equal(const Simd512Float64 a, const Simd512Float64 b) noexcept { return _mm512_cmp_pd_mask(a.v, b.v, _CMP_EQ_OQ); }
+
+//Compare ordered.
+[[nodiscard("Value Calculated and not used (compare_less)")]]
+inline __mmask8 compare_less(const Simd512Float64 a, const Simd512Float64 b) noexcept { return _mm512_cmp_pd_mask(a.v, b.v, _CMP_LT_OQ); }
+
+//Compare ordered.
+[[nodiscard("Value Calculated and not used (compare_less_equal)")]]
+inline __mmask8 compare_less_equal(const Simd512Float64 a, const Simd512Float64 b) noexcept { return _mm512_cmp_pd_mask(a.v, b.v, _CMP_LE_OQ); }
+
+//Compare ordered.
+[[nodiscard("Value Calculated and not used (compare_greater)")]]
+inline __mmask8 compare_greater(const Simd512Float64 a, const Simd512Float64 b) noexcept { return _mm512_cmp_pd_mask(a.v, b.v, _CMP_GT_OQ); }
+
+//Compare ordered.
+[[nodiscard("Value Calculated and not used (compare_greater_equal)")]]
+inline __mmask8 compare_greater_equal(const Simd512Float64 a, const Simd512Float64 b) noexcept { return _mm512_cmp_pd_mask(a.v, b.v, _CMP_GE_OQ); }
+
+//Compare to nan
+[[nodiscard("Value Calculated and not used (compare_is_nan)")]]
+inline __mmask8 isnan(const Simd512Float64 a) noexcept { return _mm512_cmp_pd_mask(a.v, a.v, _CMP_UNORD_Q); }
+
+
+//Blend two values together based on mask.First argument if zero.Second argument if 1.
+//Note: the if_false argument is first!!
+[[nodiscard("Value Calculated and not used (blend)")]]
+inline Simd512Float64 blend(const Simd512Float64 if_false, const Simd512Float64 if_true, __mmask8 mask) noexcept {
+	return Simd512Float64(_mm512_mask_blend_pd(mask, if_false.v, if_true.v));
+}
+
 
 /**************************************************************************************************
  * SIMD 256 type.  Contains 8 x 64bit Floats
@@ -794,6 +843,22 @@ inline Simd256Float64 clamp(const Simd256Float64 a, const float min_f, const flo
 }
 
 
+//*****Conditional Functions *****
+
+//Compare ordered.
+inline __m256d compare_equal(const Simd256Float64 a, const Simd256Float64 b) noexcept { return _mm256_cmp_pd(a.v, b.v, _CMP_EQ_OQ); }
+inline __m256d compare_less(const Simd256Float64 a, const Simd256Float64 b) noexcept { return _mm256_cmp_pd(a.v, b.v, _CMP_LT_OS); }
+inline __m256d compare_less_equal(const Simd256Float64 a, const Simd256Float64 b) noexcept { return _mm256_cmp_pd(a.v, b.v, _CMP_LE_OS); }
+inline __m256d compare_greater(const Simd256Float64 a, const Simd256Float64 b) noexcept { return _mm256_cmp_pd(a.v, b.v, _CMP_GT_OS); }
+inline __m256d compare_greater_equal(const Simd256Float64 a, const Simd256Float64 b) noexcept { return _mm256_cmp_pd(a.v, b.v, _CMP_GE_OS); }
+inline __m256d isnan(const Simd256Float64 a) noexcept { return _mm256_cmp_pd(a.v, a.v, _CMP_UNORD_Q); }
+
+//Blend two values together based on mask.First argument if zero.Second argument if 1.
+//Note: the if_false argument is first!!
+[[nodiscard("Value Calculated and not used (blend)")]]
+inline Simd256Float64 blend(const Simd256Float64 if_false, const Simd256Float64 if_true, __m256d mask) noexcept {
+	return Simd256Float64(_mm256_blendv_pd(if_false.v, if_true.v, mask));
+}
 
 
 
@@ -1145,12 +1210,76 @@ inline Simd128Float64 cosd(const Simd128Float64 a)  noexcept { return Simd128Flo
 inline Simd128Float64 tand(const Simd128Float64 a) noexcept { return Simd128Float64(_mm_tand_pd(a.v)); }
 
 
+//*****Conditional Functions *****
+
+//Compare if 2 values are equal and return a mask.
+inline __m128d compare_equal(const Simd128Float64 a, const Simd128Float64 b) noexcept { return _mm_cmpeq_pd(a.v, b.v); }
+inline __m128d compare_less(const Simd128Float64 a, const Simd128Float64 b) noexcept { return _mm_cmplt_pd(a.v, b.v); }
+inline __m128d compare_less_equal(const Simd128Float64 a, const Simd128Float64 b) noexcept { return _mm_cmple_pd(a.v, b.v); }
+inline __m128d compare_greater(const Simd128Float64 a, const Simd128Float64 b) noexcept { return _mm_cmpgt_pd(a.v, b.v); }
+inline __m128d compare_greater_equal(const Simd128Float64 a, const Simd128Float64 b) noexcept { return _mm_cmpge_pd(a.v, b.v); }
+inline __m128d isnan(const Simd128Float64 a) noexcept { return _mm_cmpunord_pd(a.v, a.v); }
+
+//Blend two values together based on mask.  First argument if zero. Second argument if 1.
+//Note: the if_false argument is first!!
+[[nodiscard("Value Calculated and not used (blend)")]]
+inline Simd128Float64 blend(const Simd128Float64 if_false, const Simd128Float64 if_true, __m128d mask) noexcept {
+	if constexpr (mt::environment::compiler_has_sse4_1) {
+		return Simd128Float64(_mm_blendv_pd(if_false.v, if_true.v, mask));
+	}
+	else {
+		return Simd128Float64(_mm_or_pd(_mm_andnot_pd(mask, if_false.v), _mm_and_pd(mask, if_true.v)));
+	}
+}
+
 
 
 
 #endif //x86_64
 
 
+/**************************************************************************************************
+ * Templated Functions for all types
+ * ************************************************************************************************/
+
+ //If values a and b are equal return if_true, otherwise return if_false.
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_equal)")]]
+inline T if_equal(const T value_a, const T value_b, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, compare_equal(value_a, value_b));
+}
+
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_less)")]]
+inline T if_less(const T value_a, const T value_b, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, compare_less(value_a, value_b));
+}
+
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_less_equal)")]]
+inline T if_less_equal(const T value_a, const T value_b, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, compare_less_equal(value_a, value_b));
+}
+
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_greater)")]]
+inline T if_greater(const T value_a, const T value_b, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, compare_greater(value_a, value_b));
+}
+
+
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_greater_equal)")]]
+inline T if_greater_equal(const T value_a, const T value_b, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, compare_greater_equal(value_a, value_b));
+}
+
+
+template <SimdFloat64 T>
+[[nodiscard("Value Calculated and not used (if_nan)")]]
+inline T if_nan(const T value_a, const T if_true, const T if_false) noexcept {
+	return blend(if_false, if_true, isnan(value_a));
+}
 
 
 
@@ -1163,7 +1292,7 @@ static_assert(SimdReal<FallbackFloat64>, "FallbackFloat64 does not implement the
 static_assert(SimdFloat<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat");
 static_assert(SimdFloat64<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat64");
 static_assert(SimdMath<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdFloat64");
-
+static_assert(SimdCompareOps<FallbackFloat64>, "FallbackFloat64 does not implement the concept SimdCompareOps");
 
 #if defined(_M_X64) || defined(__x86_64)
 static_assert(Simd<Simd128Float64>, "Simd128Float64 does not implement the concept SIMD");
@@ -1194,6 +1323,12 @@ static_assert(SimdFloatToInt<Simd512Float64>, "Simd512Float64 does not implement
 static_assert(SimdMath<Simd128Float64>, "Simd128Float64 does not implement the concept SimdMath");
 static_assert(SimdMath<Simd256Float64>, "Simd256Float64 does not implement the concept SimdMath");
 static_assert(SimdMath<Simd512Float64>, "Simd512Float64 does not implement the concept SimdMath");
+
+//Compare Ops
+static_assert(SimdCompareOps<Simd128Float64>, "Simd128Float64 does not implement the concept SimdCompareOps");
+static_assert(SimdCompareOps<Simd256Float64>, "Simd256Float64 does not implement the concept SimdCompareOps");
+static_assert(SimdCompareOps<Simd512Float64>, "Simd512Float64 does not implement the concept SimdCompareOps");
+
 
 #endif
 
