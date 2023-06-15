@@ -250,7 +250,7 @@ static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime 
 
 *******************************************************************************************************/
 template <typename S>
-inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, int max_x, ColourSRGB<S> c) {
+inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y, int max_x, ColourRGBA<S> c) {
     const bool hasAlpha = output.componentsPerPixel == 4;
 
     if constexpr (!project_is_solid_render) {

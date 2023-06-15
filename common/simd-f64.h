@@ -1352,5 +1352,5 @@ typedef FallbackFloat64 SimdNativeFloat64;
 #endif	
 #endif
 #else
-typedef FallbackFloat64 typedef FallbackFloat64 SimdNativeFloat64;
+typedef FallbackFloat64 SimdNativeFloat64;
 #endif

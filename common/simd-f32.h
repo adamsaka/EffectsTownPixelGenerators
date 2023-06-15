@@ -1429,6 +1429,7 @@ static_assert(SimdCompareOps<Simd512Float32>, "Simd512Float32 does not implement
 			#endif	
 		#endif	
 	#endif
-#else
-	typedef FallbackFloat32 typedef FallbackFloat32 SimdNativeFloat32;
+#else 
+	//non x64
+	typedef FallbackFloat32 SimdNativeFloat32;
 #endif

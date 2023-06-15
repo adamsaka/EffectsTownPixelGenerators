@@ -28,7 +28,7 @@ Description:
 Types:
 
    Colour8   = 8 bit per pixel (RGBA colour order).  (sRGB Colour Space)
-   ColourSRGB<F> = Floating point colour (F is float or double)  (0.0 .. 1.0 range)
+   ColourRGBA<F> = Floating point colour (F is float or double)  (0.0 .. 1.0 range)
    ColourLinear<F> = Floating point colour (F is float or double)  (0.0 .. 1.0 range)
 
    TODO: Make compatible with SIMD Types
@@ -49,7 +49,7 @@ concept FloatType = SimdFloat<T> || std::floating_point<T>;
 /****Forward Declaration of Types***/
 struct Colour8;
 template <FloatType F> struct ColourLinear;
-template <typename F> requires SimdFloat<F> || std::floating_point<F> struct ColourSRGB;
+template <typename F> requires SimdFloat<F> || std::floating_point<F> struct ColourRGBA;
 
 /****Forward Declaration of Functions***/
 template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr F srgb_to_linear(F c) noexcept;
@@ -58,7 +58,7 @@ static constexpr uint8_t float_to_8bit(std::floating_point auto c) noexcept;
 static uint8_t float_to_8bit(SimdFloat auto c) noexcept;
 
 //template <typename F> std::floating_point<F> static constexpr uint32_t float_to_uint(F c) noexcept;
-template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr ColourSRGB<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept;
+template <typename F> requires SimdFloat<F> || std::floating_point<F> static constexpr ColourRGBA<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept;
 
 
 /***Constants****/
@@ -125,14 +125,14 @@ struct Colour8 {
 
 
 /**************************************************************************************************
-ColourSRGB Type
+ColourRGBA Type
 Type:           Floating point (single or double by template)
 Gamma:          SRGB
 Colour Order :  RGBA
 
 *************************************************************************************************/
 template <typename F> requires SimdFloat<F> || std::floating_point<F>
-struct ColourSRGB {
+struct ColourRGBA {
     public:
         F red{ 0.0 };
         F green{ 0.0 };
@@ -144,15 +144,15 @@ struct ColourSRGB {
         *************************************************************************************************/
 
         //Default Contructor
-        ColourSRGB() = default;
+        ColourRGBA() = default;
 
         ///Construct from components
-        ColourSRGB(F r, F g, F b, F a = 1.0) noexcept {
+        ColourRGBA(F r, F g, F b, F a = 1.0) noexcept {
             red = r; green = g; blue = b; alpha = a; 
         }
 
         ///Construct from 8-bit components
-        ColourSRGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a=0xff) noexcept {
+        ColourRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a=0xff) noexcept {
             red = static_cast<F>(r) / white8;
             green = static_cast<F>(g) / white8;
             blue = static_cast<F>(b) / white8;
@@ -161,7 +161,7 @@ struct ColourSRGB {
 
         ///Construct from ColourLinear (float or double)
         template <typename F2>
-        ColourSRGB(const ColourSRGB<F2> & c) noexcept {		
+        ColourRGBA(const ColourRGBA<F2> & c) noexcept {		
             red = static_cast<F>(c.red);
             green = static_cast<F>(c.green);
             blue = static_cast<F>(c.blue);
@@ -169,7 +169,7 @@ struct ColourSRGB {
         }
 
         //Construct from HSL values.  All inputs 0..1
-        static ColourSRGB<F> from_hsl(F alpha, F hue, F saturation, F lightness){
+        static ColourRGBA<F> from_hsl(F alpha, F hue, F saturation, F lightness){
             return HSLtoRGB<F>(alpha, hue, saturation, lightness);
         }
 
@@ -177,7 +177,7 @@ struct ColourSRGB {
         Convert to string.
         *************************************************************************************************/
         std::string to_string() const {
-            return "ColourSRGB{r=" + std::to_string(red) + ", g="+ std::to_string(green) + ", b="+ std::to_string(blue) + ", a="+ std::to_string(alpha) + "}";
+            return "ColourRGBA{r=" + std::to_string(red) + ", g="+ std::to_string(green) + ", b="+ std::to_string(blue) + ", a="+ std::to_string(alpha) + "}";
         }
 
         
@@ -221,7 +221,7 @@ struct ColourSRGB {
         Multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
         Note: Routines in this library assume alpha is not pre-multiplied.
         *************************************************************************************************/
-        ColourSRGB<F> premultiply_alpha() const noexcept {
+        ColourRGBA<F> premultiply_alpha() const noexcept {
             auto c = *this;
             c.red *= c.alpha;
             c.green *= c.alpha;
@@ -232,7 +232,7 @@ struct ColourSRGB {
         /**************************************************************************************************
         Un-multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
         *************************************************************************************************/
-        ColourSRGB<F> un_premultiply_alpha() const noexcept {
+        ColourRGBA<F> un_premultiply_alpha() const noexcept {
             auto c = *this;
             c.red /= c.alpha;
             c.green /= c.alpha;
@@ -243,176 +243,22 @@ struct ColourSRGB {
         /**************************************************************************************************
         Clamps all colour components to 0.0 ... 1.0
         *************************************************************************************************/
-        ColourSRGB<F> clamp() const noexcept {
+        ColourRGBA<F> clamp() const noexcept {
             const auto r = (red < 0.0 ) ? 0.0 : ((red>1.0) ? 1.0 : red);
             const auto g = (green < 0.0 ) ? 0.0 : ((green>1.0) ? 1.0 : green);
             const auto b = (blue < 0.0 ) ? 0.0 : ((blue>1.0) ? 1.0 : blue);
             const auto a = (alpha < 0.0 ) ? 0.0 : ((alpha>1.0) ? 1.0 : alpha);
-            return ColourSRGB<F>(r,g,b,a);
+            return ColourRGBA<F>(r,g,b,a);
         }  
            
 };
 
 
 
-/**************************************************************************************************
-ColourLinear Type
-Type:           Floating point (single or double by template)
-Gamma:          Linear
-Colour Order :  RGBA
-*************************************************************************************************/
-template <FloatType F> 
-struct ColourLinear {
-    public:
-        F red{ 0.0 };
-        F green{ 0.0 };
-        F blue{ 0.0 };
-        F alpha{ 1.0 };
-
-        /**************************************************************************************************
-        Constructors
-        *************************************************************************************************/
-
-        //Default Contructor
-        ColourLinear() = default;
-
-        ///Construct from components
-        ColourLinear(F r, F g, F b, F a = 1.0) noexcept {
-            red = r; green = g; blue = b; alpha = a; 
-        }
-
-        ///Construct from 8-bit components
-        ColourLinear(uint8_t r, uint8_t g, uint8_t b, uint8_t a=0xff) noexcept {
-            red = static_cast<F>(r) / white8;
-            green = static_cast<F>(g) / white8;
-            blue = static_cast<F>(b) / white8;
-            alpha = static_cast<F>(a) / white8;
-        }
-
-        ///Construct from Colour8
-        ColourLinear(const Colour8 & c) noexcept{
-            red = static_cast<F>(c.red) / white8;
-            green = static_cast<F>(c.green) / white8;
-            blue = static_cast<F>(c.blue) / white8;
-            alpha = static_cast<F>(c.alpha) / white8;
-        }
-        
-        ///Construct from ColourLinear (float or double)
-        template <typename F2>
-        ColourLinear(const ColourLinear<F2> & c) noexcept {		
-            red = static_cast<F>(c.red);
-            green = static_cast<F>(c.green);
-            blue = static_cast<F>(c.blue);
-            alpha = static_cast<F>(c.alpha);
-        }
-
-        //construct from SRGB Colour
-        template <typename F2>
-        ColourLinear(const ColourSRGB<F2> & c) noexcept {		
-            red = static_cast<F>(c.red);
-            green = static_cast<F>(c.green);
-            blue = static_cast<F>(c.blue);
-            alpha = static_cast<F>(c.alpha);
-        }
-
-        /**************************************************************************************************
-        Convert to string.
-        *************************************************************************************************/
-        std::string to_string() const {
-            return "ColourLinear{r=" + std::to_string(red) + ", g="+ std::to_string(green) + ", b="+ std::to_string(blue) + ", a="+ std::to_string(alpha) + "}";
-        }
-
-        /**************************************************************************************************
-        Convert to Colour8
-        *************************************************************************************************/
-        Colour8 to_colour8() const noexcept {
-            return Colour8(float_to_8bit(red), float_to_8bit(green), float_to_8bit(blue), float_to_8bit(alpha) );
-        }
-
-        /**************************************************************************************************
-        Returns colour as an unsigned int.        
-        RGBA colour order.        
-        *************************************************************************************************/
-        uint32_t to_uint32() const noexcept {          
-            return  (float_to_uint(red) << 24) | (float_to_uint(green) << 16) | (float_to_uint(blue) << 8 ) | (float_to_uint(alpha) );            
-        }
-
-    
-        /**************************************************************************************************
-        Clamps all colour components to 0.0 ... 1.0
-        *************************************************************************************************/
-        ColourLinear<F> clamp() const noexcept {
-            const auto r = (red < 0.0 ) ? 0.0 : ((red>1.0) ? 1.0 : red);
-            const auto g = (green < 0.0 ) ? 0.0 : ((green>1.0) ? 1.0 : green);
-            const auto b = (blue < 0.0 ) ? 0.0 : ((blue>1.0) ? 1.0 : blue);
-            const auto a = (alpha < 0.0 ) ? 0.0 : ((alpha>1.0) ? 1.0 : alpha);
-            return ColourLinear<F>(r,g,b,a);
-        } 
-
-        /**************************************************************************************************
-        Multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
-        Note: Routines in this library assume alpha is not pre-multiplied.
-        *************************************************************************************************/
-        ColourLinear<F> premultiply_alpha() const noexcept {
-            auto c = *this;
-            c.red *= c.alpha;
-            c.green *= c.alpha;
-            c.blue *= c.alpha;
-            return c;
-        }
-
-        /**************************************************************************************************
-        Un-multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
-        *************************************************************************************************/
-        ColourLinear<F> un_premultiply_alpha() const noexcept {
-            auto c = *this;
-            c.red /= c.alpha;
-            c.green /= c.alpha;
-            c.blue /= c.alpha;
-            return c;
-        }
-
-        /**************************************************************************************************
-        Un-multiplies the alpha channel through the colour. (For pre-mulitplied alpha buffers)
-        *************************************************************************************************/
-        ColourSRGB<F> to_srgb_simple() const noexcept {
-            return ColourSRGB<F>(pow(red, F{ 1.0/2.2 }), pow(green, F(1.0/2.2)), pow(blue, F{ 1.0/2.2 }), alpha);
-        }
-
-	
-
-	//Do colour multiplication
-	ColourLinear operator*(const ColourLinear& rhs) const noexcept{
-		return ColourLinear{red * rhs.red, green*rhs.green, blue*rhs.blue, alpha * rhs.alpha };
-	}
-
-
-	ColourLinear operator*(F rhs) const noexcept {
-		return ColourLinear{red * rhs, green * rhs, blue * rhs, alpha * rhs};
-	}
-
-
-
-};
-
-
-
-/**************************************************************************************************
-Mix two colours together with a weight (0.0..1.0)
-*************************************************************************************************/
-template <typename F>
-inline ColourLinear<F> mix_colours(const ColourLinear<F> & c1, const ColourLinear<F> & c2, F weight) noexcept {
-	return ColourLinear<F>(
-		c1.red * (1.0 - weight) + c2.red * weight,
-		c1.green * (1.0 - weight) + c2.green * weight,
-		c1.blue * (1.0 - weight) + c2.blue * weight,
-        c1.alpha * (1.0-weight) + c2.alpha * weight
-		);
-}
 
 template <typename F>
-inline ColourSRGB<F> mix_colours(const ColourSRGB<F> & c1, const ColourSRGB<F> & c2, F weight) noexcept {
-	return ColourSRGB<F>(
+inline ColourRGBA<F> mix_colours(const ColourRGBA<F> & c1, const ColourRGBA<F> & c2, F weight) noexcept {
+	return ColourRGBA<F>(
 		c1.red * (1.0 - weight) + c2.red * weight,
 		c1.green * (1.0 - weight) + c2.green * weight,
 		c1.blue * (1.0 - weight) + c2.blue * weight,
@@ -480,7 +326,7 @@ static constexpr  F _HuetoRGB(F v1, F v2, F h) noexcept {
 Conver HSL to RGB.  HSL values are all 0..1
 ***************************************************************************************************/
 template <typename F>
-static constexpr ColourSRGB<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept{
+static constexpr ColourRGBA<F> HSLtoRGB(F alpha, F h, F s, F l) noexcept{
 	if (s == 0) return Colour(alpha, l, l, l);
 	const F v2 = (l< 0.5) ? l * (1 + s) : (l + s) - (l*s);
 	const F v1 = 2 * l - v2;

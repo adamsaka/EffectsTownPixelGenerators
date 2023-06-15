@@ -42,7 +42,7 @@ concept Simd = requires (T t) {
 	
 
 	//Size of struct should be sizeof individual elements.
-	requires sizeof(t.v) == sizeof(t.element(0)) * t.number_of_elements();
+	requires sizeof(t.v) == sizeof(t.element(0)) * T::number_of_elements();
 	requires sizeof(t) == sizeof(t.v);
 	
 	//General

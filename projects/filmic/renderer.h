@@ -113,8 +113,8 @@ class Renderer{
         }
 
         //Render
-        ColourSRGB<S> render_pixel(S x, S y) const;
-        ColourSRGB<S> render_pixel_with_input(S x, S y, const ColourSRGB<S>&) const;
+        ColourRGBA<S> render_pixel(S x, S y) const;
+        ColourRGBA<S> render_pixel_with_input(S x, S y, const ColourRGBA<S>&) const;
 
     private:
 
@@ -144,9 +144,9 @@ void Renderer<S>::set_size(int w, int h) noexcept {
  * 
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
-    if (width <=0 || height <=0) return ColourSRGB<S>{};
-    return ColourSRGB<S>{}; 
+ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
+    if (width <=0 || height <=0) return ColourRGBA<S>{};
+    return ColourRGBA<S>{}; 
 }   
 
 
@@ -155,7 +155,7 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
 
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, ColourSRGB<S> c) {
+static ColourRGBA<S> apply1DLut(const std::array<float,4096>& lut, ColourRGBA<S> c) {
     //TODO.  Should use lerp rather than nearest neighbour.    
 
     S idx_f = floor(clamp(c.red) * 4096.0f);
@@ -196,7 +196,7 @@ static ColourSRGB<S> apply1DLut(const std::array<float,4096>& lut, ColourSRGB<S>
 
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> unapply1DLut(const std::array<float, 4096>& lut, ColourSRGB<S>c) {   
+static ColourRGBA<S> unapply1DLut(const std::array<float, 4096>& lut, ColourRGBA<S>c) {   
     //TODO.  Should use lerp rather than nearest neighbour.
 
     for (int i = 0; i < c.red.number_of_elements(); i++) {
@@ -224,7 +224,7 @@ static ColourSRGB<S> unapply1DLut(const std::array<float, 4096>& lut, ColourSRGB
 Blender Standard to Filmic Log
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> to_filmic_log(ColourSRGB<S> c) {
+static ColourRGBA<S> to_filmic_log(ColourRGBA<S> c) {
     c.red = log2(c.red );
     c.green = log2(c.green);
     c.blue = log2(c.blue);
@@ -239,7 +239,7 @@ static ColourSRGB<S> to_filmic_log(ColourSRGB<S> c) {
 Blender Filmic Log to Standard
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> to_standard(ColourSRGB<S> c) {
+static ColourRGBA<S> to_standard(ColourRGBA<S> c) {
     c.red = rescale_from_01(c.red, S{ -12.473931188 }, S{ 4.026068812 });
     c.green = rescale_from_01(c.green, S{ -12.473931188 }, S{ 4.026068812 });
     c.blue = rescale_from_01(c.blue, S{ -12.473931188 }, S{ 4.026068812 });
@@ -258,7 +258,7 @@ Blender Standard to Filmic Log
 Blender applies the exposure in standard (linear space)
  * ************************************************************************************************/
 template <SimdFloat S>
-static ColourSRGB<S> apply_exposure(ColourSRGB<S> c, const float exposure) {    
+static ColourRGBA<S> apply_exposure(ColourRGBA<S> c, const float exposure) {    
     c.red *= exp2(exposure);
     c.green *= exp2(exposure);
     c.blue *= exp2(exposure);    
@@ -271,10 +271,10 @@ static ColourSRGB<S> apply_exposure(ColourSRGB<S> c, const float exposure) {
  * an input pixel is given
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourSRGB<S> Renderer<S>::render_pixel_with_input(S x, S y, const ColourSRGB<S>& in_colour) const {
-    if (width <= 0 || height <= 0) return ColourSRGB<S>{};
+ColourRGBA<S> Renderer<S>::render_pixel_with_input(S x, S y, const ColourRGBA<S>& in_colour) const {
+    if (width <= 0 || height <= 0) return ColourRGBA<S>{};
          
-    ColourSRGB<S> c = in_colour;
+    ColourRGBA<S> c = in_colour;
     const auto exposure = static_cast<typename S::F>(params.get_value(ParameterID::exposure));
 
 

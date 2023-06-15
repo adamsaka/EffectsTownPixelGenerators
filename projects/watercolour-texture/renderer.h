@@ -93,8 +93,8 @@ class Renderer{
         }
 
         //Render
-        ColourSRGB<S> render_pixel(S x, S y) const;
-        ColourSRGB<S> render_pixel_with_input(S x, S y, ColourSRGB<S>) const;
+        ColourRGBA<S> render_pixel(S x, S y) const;
+        ColourRGBA<S> render_pixel_with_input(S x, S y, ColourRGBA<S>) const;
 
     private:
 
@@ -124,8 +124,8 @@ void Renderer<S>::set_size(int w, int h) noexcept {
  * 
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
-    if (width <=0 || height <=0) return ColourSRGB<S>{};
+ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
+    if (width <=0 || height <=0) return ColourRGBA<S>{};
     next_random<typename S::F>(seed); //Reset random seed so it is the same for each pixel
     
     auto parameter_scale = static_cast<S::F>(params.get_value(ParameterID::scale));
@@ -181,7 +181,7 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
     
 
     
-    return ColourSRGB{r,g,b}; 
+    return ColourRGBA{r,g,b}; 
 
 
 
@@ -196,7 +196,7 @@ ColourSRGB<S> Renderer<S>::render_pixel(S x, S y) const {
  * an input pixel is given
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourSRGB<S> Renderer<S>::render_pixel_with_input(S x, S y, ColourSRGB<S>) const {
+ColourRGBA<S> Renderer<S>::render_pixel_with_input(S x, S y, ColourRGBA<S>) const {
     render_pixel(x, y);
 }
 

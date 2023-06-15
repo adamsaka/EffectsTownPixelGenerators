@@ -713,5 +713,5 @@ typedef FallbackUInt64 SimdNativeUInt64;
 #endif	
 #endif
 #else
-typedef FallbackUInt64 typedef FallbackUInt64 SimdNativeUInt64;
+typedef FallbackUInt64 SimdNativeUInt64;
 #endif
