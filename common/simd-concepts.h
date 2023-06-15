@@ -188,7 +188,8 @@ concept SimdCompareOps = Simd<T>&& requires (T t) {
 	if_less_equal(t, t, t, t);
 	if_greater(t, t, t, t);
 	if_greater_equal(t, t, t, t);
-	if_nan(t, t, t);
+	
+	//
 
 	//The compare functions all return a mask which is a type dependant mask.
 	//The only requirement is that it can be used as an argument to blend.
@@ -197,7 +198,7 @@ concept SimdCompareOps = Simd<T>&& requires (T t) {
 	compare_less_equal(t, t);
 	compare_greater(t, t);
 	compare_greater_equal(t, t);
-	isnan(t);
+	
 	blend(t, t, compare_equal(t, t));
 
 	
@@ -231,6 +232,8 @@ concept SimdFloat = Simd<T> && SimdSigned<T> && SimdReal<T> && requires (T t) {
 	fnma(T(1.0), T(2.0), t);
 	fnms(T(1.0), T(2.0), t);
 
+	
+
 };
 
 
@@ -242,9 +245,7 @@ concept SimdFloat = Simd<T> && SimdSigned<T> && SimdReal<T> && requires (T t) {
 template <typename T>
 concept SimdFloat64 = SimdFloat<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<double>;
-		requires sizeof(t.element(0)) == 8;
-
-	
+		requires sizeof(t.element(0)) == 8;	
 };
 
 
@@ -257,9 +258,7 @@ concept SimdFloat64 = SimdFloat<T> && requires (T t) {
 template <typename T>
 concept SimdFloat32 = SimdFloat<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<float>;
-		requires sizeof(t.element(0)) == 4;
-
-	
+		requires sizeof(t.element(0)) == 4;	
 };
 
 
