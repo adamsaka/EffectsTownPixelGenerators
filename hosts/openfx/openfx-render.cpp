@@ -257,6 +257,7 @@ inline static void copy_pixel_to_output_buffer(ClipHolder& output, int x, int y,
 /*******************************************************************************************************
 Assume the output already contains the top image.  Any transparent parts are filled with source.
 *******************************************************************************************************/
+[[maybe_unused]]
 static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& source, ClipHolder& output) noexcept {
     if (output.componentsPerPixel != 4) return;
 
@@ -301,6 +302,25 @@ void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsign
     }
 }
 
+/*******************************************************************************************************
+32-bit
+Renders a pixel (or a simd vector's worth of pixels)
+Passes of to actual project renderer
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline void render_pixel(RenderThreadData<S>* rd, int x, int y) {
+    if constexpr (project_uses_input) {
+        
+        ColourRGBA<S> input_colour {S(1.0f),S(0.0f),S(0.0f),S(1.0f)};
+        
+        const auto c = rd->renderer->render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+    }
+    else {
+        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
+        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+    }
+}
 
 /*******************************************************************************************************
 Render a line.  
@@ -312,14 +332,12 @@ static void render_line(RenderThreadData<S>* rd, int y) {
 
     int x = rd->render_window->x1;
     for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements()) {
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+        render_pixel(rd, x, y);
     }
     //Handle the case where the width is not a multiple of S::number_of_elements
     if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
         x -= S::number_of_elements() - (rd->render_window->x2 - x);
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+        render_pixel(rd, x, y);
 
     }
 }

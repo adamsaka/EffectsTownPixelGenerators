@@ -144,7 +144,7 @@ void Renderer<S>::set_size(int w, int h) noexcept {
  * 
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
+ColourRGBA<S> Renderer<S>::render_pixel(S x [[maybe_unused]], S y [[maybe_unused]] ) const {
     if (width <=0 || height <=0) return ColourRGBA<S>{};
     return ColourRGBA<S>{}; 
 }   
@@ -271,7 +271,7 @@ static ColourRGBA<S> apply_exposure(ColourRGBA<S> c, const float exposure) {
  * an input pixel is given
  * ************************************************************************************************/
 template <SimdFloat S>
-ColourRGBA<S> Renderer<S>::render_pixel_with_input(S x, S y, const ColourRGBA<S>& in_colour) const {
+ColourRGBA<S> Renderer<S>::render_pixel_with_input(S x [[maybe_unused]], S y [[maybe_unused]], const ColourRGBA<S>& in_colour) const {
     if (width <= 0 || height <= 0) return ColourRGBA<S>{};
          
     ColourRGBA<S> c = in_colour;

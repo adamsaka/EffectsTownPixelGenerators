@@ -428,7 +428,7 @@ inline Simd256UInt32 operator/(const uint32_t lhs, const Simd256UInt32& rhs) noe
 inline Simd256UInt32 operator&(Simd256UInt32  lhs, const Simd256UInt32& rhs) noexcept { lhs &= rhs; return lhs; }
 inline Simd256UInt32 operator|(Simd256UInt32  lhs, const Simd256UInt32& rhs) noexcept { lhs |= rhs; return lhs; }
 inline Simd256UInt32 operator^(Simd256UInt32  lhs, const Simd256UInt32& rhs) noexcept { lhs ^= rhs; return lhs; }
-inline Simd256UInt32 operator~(const Simd256UInt32& lhs) noexcept { return Simd256UInt32(_mm256_xor_si256(lhs.v, _mm256_set1_epi32(0xFFFFFFFF))); } //No bitwise not in AVX2 so we use xor with a constant..
+inline Simd256UInt32 operator~(const Simd256UInt32& lhs) noexcept { return Simd256UInt32(_mm256_xor_si256(lhs.v, _mm256_cmpeq_epi32(lhs.v, lhs.v))); } //No bitwise not in AVX2 so we use xor with a constant..
 
 
 //*****Shifting Operators*****
@@ -567,7 +567,7 @@ inline Simd128UInt32 operator/(const uint32_t lhs, const Simd128UInt32& rhs) noe
 inline Simd128UInt32 operator&(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs &= rhs; return lhs; }
 inline Simd128UInt32 operator|(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs |= rhs; return lhs; }
 inline Simd128UInt32 operator^(Simd128UInt32  lhs, const Simd128UInt32& rhs) noexcept { lhs ^= rhs; return lhs; }
-inline Simd128UInt32 operator~(const Simd128UInt32& lhs) noexcept { return Simd128UInt32(_mm_xor_si128(lhs.v, _mm_set1_epi32(0xFFFFFFFF))); } 
+inline Simd128UInt32 operator~(const Simd128UInt32& lhs) noexcept { return Simd128UInt32(_mm_xor_si128(lhs.v, _mm_cmpeq_epi32(lhs.v,lhs.v))); } 
 
 
 //*****Shifting Operators*****

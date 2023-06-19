@@ -64,7 +64,8 @@ typedef float Precision;
 * 3. Add existing project to VS and rename.
 * 4. Set custom build for ac.r
 * 5. Rename plug-in within ac.r & this file to match.
-* 6. Change location of include to point to new project folder.
+* 6. Change location of include to point to new project folder. 
+*     - Project Properties -> C++ -> General -> Additional Include Directories
 * 7. makefile for wasm builds.
 * 
 * 

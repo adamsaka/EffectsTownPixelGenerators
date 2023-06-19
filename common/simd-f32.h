@@ -302,6 +302,7 @@ inline FallbackFloat32 blend(const FallbackFloat32 if_false, const FallbackFloat
 #include <immintrin.h>
 
 
+
 /****************************************************************************************************************************************************************************************************
  * SIMD 512 type.  Contains 16 x 32bit Floats
  * Requires AVX-512F support.
