@@ -46,14 +46,16 @@ TODO: 8-BIT Support
 
 
 #include <bit>
+#include <memory>
 
 
 //Contains data that will be sent to different threads.
 template <SimdFloat S>
 struct RenderThreadData {
-    Renderer<S>* renderer;
-    ClipHolder* output;
-    OfxRectI* render_window;
+    Renderer<S>* renderer {};
+    ClipHolder* output{};
+    std::unique_ptr<ClipHolder> input{};
+    OfxRectI* render_window{};
 };
 
 
@@ -62,9 +64,10 @@ static void ReplaceTransparentWithSource(OfxRectI renderWindow, ClipHolder& sour
 static ParameterList read_parameters(ParameterHelper& parameter_helper, OfxTime time);
 template <SimdFloat S> void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsigned int threadMax, void* customArg);
 template <SimdFloat S> static void render_line(RenderThreadData<S>* rd, int y);
-template <SimdFloat S> static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output);
+template <SimdFloat S> static void do_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output, const OfxTime& time);
 template <SimdFloat S> static void setup_render(Renderer<S>& renderer, int width, int height, ParameterHelper& parameter_helper, OfxTime time);
-
+template <SimdFloat S> static inline void render_pixel32(RenderThreadData<S>* rd, int x, int y);
+template <SimdFloat S> static void render_line32(RenderThreadData<S>* rd, int y);
 
 
 
@@ -100,10 +103,14 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
     //Get the output clip handle 
     ClipHolder output_clip(instance, "Output", time);
 
+
+
     //Get Dimensions
     const int width = output_clip.bounds.x2 - output_clip.bounds.x1;
     const int height = output_clip.bounds.y2 - output_clip.bounds.y1;
     //dev_log(std::string("Size: " + std::to_string(width) + " x " + std::to_string(height)));
+
+
 
 
     //CPU Dispatch (assuming x86_64 for now)
@@ -112,12 +119,12 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
         //AVX-512 & AVX-512DQ supported by compiler.
         Renderer<Simd512Float32> renderer{};
         setup_render(renderer, width, height, instance_data->parameter_helper, time);
-        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+        do_render(instance, renderWindow, renderer, width, height, output_clip, time);
     }
     else if constexpr (mt::environment::compiler_has_avx2 && mt::environment::compiler_has_avx && mt::environment::compiler_has_fma) {
         Renderer<Simd256Float32> renderer{};
         setup_render(renderer, width, height, instance_data->parameter_helper, time);
-        do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+        do_render(instance, renderWindow, renderer, width, height, output_clip, time);
     }
     else {
         //Compiler mode just supports basic x86_64 (SSE2), so we will perform runtime dispatch to AVX2 code if supported.
@@ -126,19 +133,19 @@ OfxStatus openfx_render(const OfxImageEffectHandle instance, OfxPropertySetHandl
             //AVX & AVX2
             Renderer<Simd256Float32> renderer{};
             setup_render(renderer, width, height, instance_data->parameter_helper, time);
-            do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+            do_render(instance, renderWindow, renderer, width, height, output_clip, time);
         }
         else {
             //SSE2 (Generic x86_64)
             Renderer<Simd128Float32> renderer{};
             setup_render(renderer, width, height, instance_data->parameter_helper, time);
-            do_pixel_render(instance, renderWindow, renderer, width, height, output_clip);
+            do_render(instance, renderWindow, renderer, width, height, output_clip, time);
         }
     }
 
 
     //Get & Mix Souce image.
-    if constexpr (project_uses_input) {
+    if constexpr (project_uses_input && project_overlay_on_input) {
         if (context == OFXContext::general || context == OFXContext::filter) {
             //There should be an input image. 
             ClipHolder inputClip(instance, "Source", time);
@@ -170,7 +177,6 @@ static void setup_render(Renderer<S>& renderer, int width, int height, Parameter
     if (params.contains(ParameterID::seed)) {
         renderer.set_seed_int(static_cast<uint64_t>(std::bit_cast<uint32_t>(params.get_value_integer(ParameterID::seed))));
     }
-
 
     renderer.set_parameters(std::move(params));
 }
@@ -303,57 +309,23 @@ void thread_entry_pixel_render(unsigned int threadIndex, [[maybe_unused]] unsign
 }
 
 /*******************************************************************************************************
-32-bit
-Renders a pixel (or a simd vector's worth of pixels)
-Passes of to actual project renderer
-*******************************************************************************************************/
-template <SimdFloat S>
-static inline void render_pixel(RenderThreadData<S>* rd, int x, int y) {
-    if constexpr (project_uses_input) {
-        
-        ColourRGBA<S> input_colour {S(1.0f),S(0.0f),S(0.0f),S(1.0f)};
-        
-        const auto c = rd->renderer->render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
-    }
-    else {
-        const auto c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));
-        copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
-    }
-}
-
-/*******************************************************************************************************
-Render a line.  
+Do a full render.
+Dispatches lines to worker threads.
 (Called on a worker thread)
 *******************************************************************************************************/
 template <SimdFloat S>
-static void render_line(RenderThreadData<S>* rd, int y) {
-    //dev_log("Render Line " + std::to_string(y));
+static void do_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output, const OfxTime& time) {
 
-    int x = rd->render_window->x1;
-    for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements()) {
-        render_pixel(rd, x, y);
-    }
-    //Handle the case where the width is not a multiple of S::number_of_elements
-    if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
-        x -= S::number_of_elements() - (rd->render_window->x2 - x);
-        render_pixel(rd, x, y);
-
-    }
-}
-
-
-
-/*******************************************************************************************************
-Render a pixel (or more likely a SIMD vector's worth of them).
-(Called on a worker thread)
-*******************************************************************************************************/
-template <SimdFloat S>
-static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_window, Renderer<S>& renderer, [[maybe_unused]] int width, [[maybe_unused]] int height, ClipHolder& output) {
     RenderThreadData<S> rd{};
     rd.renderer = &renderer;
     rd.output = &output;
     rd.render_window = &render_window;
+    rd.input = nullptr;
+
+    //Get input clup handle (if input will be used at rendering phase)
+    if constexpr (project_uses_input && !project_overlay_on_input) {
+        rd.input = std::make_unique<ClipHolder>(instance, "Source", time);
+    }
 
     unsigned int num_threads;
     global_MultiThreadSuite->multiThreadNumCPUs(&num_threads);
@@ -369,3 +341,70 @@ static void do_pixel_render(OfxImageEffectHandle instance, OfxRectI& render_wind
         }
     }
 }
+
+
+/*******************************************************************************************************
+Render a line.
+(Called on a worker thread)
+*******************************************************************************************************/
+template <SimdFloat S>
+static void render_line(RenderThreadData<S>* rd, int y) {
+    if (rd->output->bitDepth == 32 && rd->output->componentsPerPixel == 4) {
+        render_line32(rd, y);
+    }
+    //TODO.  Other Bit Depths
+}
+
+/*******************************************************************************************************
+Render a line.  
+(Called on a worker thread)
+*******************************************************************************************************/
+template <SimdFloat S>
+static void render_line32(RenderThreadData<S>* rd, int y) {
+    //dev_log("Render Line " + std::to_string(y));
+
+    int x = rd->render_window->x1;
+    for (; x < rd->render_window->x2 - S::number_of_elements() + 1; x += S::number_of_elements()) {
+        render_pixel32(rd, x, y);
+    }
+    //Handle the case where the width is not a multiple of S::number_of_elements
+    if (x < rd->render_window->x2 && rd->render_window->x2 > S::number_of_elements()) [[unlikely]] {
+        x -= S::number_of_elements() - (rd->render_window->x2 - x);
+        render_pixel32(rd, x, y);
+
+    }
+}
+
+
+
+/*******************************************************************************************************
+32-bit
+Renders a pixel (or a simd vector's worth of pixels)
+Passes of to actual project renderer
+*******************************************************************************************************/
+template <SimdFloat S>
+static inline void render_pixel32(RenderThreadData<S>* rd, int x, int y) {
+    ColourRGBA<S> c;
+    if constexpr (project_uses_input) {
+        
+        //Loads pixels from input buffer. 
+        auto ptr = rd->input->pixelAddressFloat(x, y);
+        ColourRGBA<S> input_colour;
+        if (ptr) {
+            for (int i = 0; i < S::number_of_elements(); i++) {
+                input_colour.red.set_element(i, *(ptr++));
+                input_colour.green.set_element(i, *(ptr++));
+                input_colour.blue.set_element(i, *(ptr++));
+                input_colour.alpha.set_element(i, *(ptr++));
+            }
+        }
+        c = rd->renderer->render_pixel_with_input(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)), input_colour);        
+    }
+    else {
+        c = rd->renderer->render_pixel(S::make_sequential(static_cast<S::F>(x)), S(static_cast<S::F>(y)));        
+    }
+    copy_pixel_to_output_buffer(*rd->output, x, y, rd->render_window->x2, c);
+}
+
+
+

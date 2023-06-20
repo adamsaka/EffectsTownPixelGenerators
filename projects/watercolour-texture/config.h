@@ -40,8 +40,9 @@ Description:
 #define	PluginBugVersion			0
 #define	PluginBuildVersion			1
 
-constexpr bool project_is_generator = true;
-constexpr bool project_uses_input = false;
+constexpr bool project_is_generator = true;      // Project can operate in generator context (with no input)
+constexpr bool project_uses_input = false;         // Does the project accept an input image.  (Effect & General context in OpenFX)
+constexpr bool project_overlay_on_input = false;  // Does the project perform a transparent render that needs to be overlayed on the input afterwards.
 
 //Indicates that a project will not return any transparent pixels.
 constexpr bool project_is_solid_render = true;
