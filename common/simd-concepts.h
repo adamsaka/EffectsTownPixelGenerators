@@ -225,7 +225,7 @@ concept SimdCompareOps = Simd<T>&& requires (T t) {
 template <typename T>
 concept SimdFloat = Simd<T> && SimdSigned<T> && SimdReal<T> && requires (T t) {
 	reciprocal_approx(t);
-	t.reciprocal_approx();
+	
 
 	fma(T(1.0), T(2.0), t);
 	fms(T(1.0), T(2.0), t);

@@ -151,45 +151,45 @@ struct FallbackUInt64 {
 };
 
 //*****Addition Operators*****
-inline FallbackUInt64 operator+(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs += rhs; return lhs; }
+inline static FallbackUInt64 operator+(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs += rhs; return lhs; }
 
 
-inline FallbackUInt64 operator+(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
-inline FallbackUInt64 operator+(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs += lhs; return rhs; }
+inline static FallbackUInt64 operator+(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline static FallbackUInt64 operator+(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs += lhs; return rhs; }
 
 //*****Subtraction Operators*****
-inline FallbackUInt64 operator-(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt64 operator-(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline FallbackUInt64 operator-(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
+inline static FallbackUInt64 operator-(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline static FallbackUInt64 operator-(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline static FallbackUInt64 operator-(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs - rhs.v; return rhs; }
 
 //*****Multiplication Operators*****
-inline FallbackUInt64 operator*(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt64 operator*(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline FallbackUInt64 operator*(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+inline static FallbackUInt64 operator*(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline static FallbackUInt64 operator*(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline static FallbackUInt64 operator*(uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs *= lhs; return rhs; }
 
 //*****Division Operators*****
-inline FallbackUInt64 operator/(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
-inline FallbackUInt64 operator/(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
-inline FallbackUInt64 operator/(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
+inline static FallbackUInt64 operator/(FallbackUInt64  lhs, const FallbackUInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline static FallbackUInt64 operator/(FallbackUInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline static FallbackUInt64 operator/(const uint64_t lhs, FallbackUInt64 rhs) noexcept { rhs.v = lhs / rhs.v; return rhs; }
 
 
 //*****Bitwise Logic Operators*****
-inline FallbackUInt64 operator&(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v & rhs.v); }
-inline FallbackUInt64 operator|(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v | rhs.v); }
-inline FallbackUInt64 operator^(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v ^ rhs.v); }
-inline FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept { return FallbackUInt64(~lhs.v); }
+inline static FallbackUInt64 operator&(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v & rhs.v); }
+inline static FallbackUInt64 operator|(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v | rhs.v); }
+inline static FallbackUInt64 operator^(const FallbackUInt64& lhs, const FallbackUInt64& rhs) noexcept { return FallbackUInt64(lhs.v ^ rhs.v); }
+inline static FallbackUInt64 operator~(FallbackUInt64 lhs) noexcept { return FallbackUInt64(~lhs.v); }
 
 
 //*****Shifting Operators*****
-inline FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
-inline FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
+inline static FallbackUInt64 operator<<(FallbackUInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
+inline static FallbackUInt64 operator>>(FallbackUInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
 
-inline FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return a << bits | a >> (64 - bits); };
-inline FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return a >> bits | a<< (64 - bits); };
+inline static FallbackUInt64 rotl(const FallbackUInt64& a, int bits) { return a << bits | a >> (64 - bits); };
+inline static FallbackUInt64 rotr(const FallbackUInt64& a, int bits) { return a >> bits | a<< (64 - bits); };
 
 //*****Min/Max*****
-inline FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }
-inline FallbackUInt64 max(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::max(a.v, b.v)); }
+inline static FallbackUInt64 min(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::min(a.v, b.v)); }
+inline static FallbackUInt64 max(FallbackUInt64 a, FallbackUInt64 b) { return FallbackUInt64(std::max(a.v, b.v)); }
 
 
 
@@ -280,43 +280,43 @@ struct Simd512UInt64 {
 };
 
 //*****Addition Operators*****
-inline Simd512UInt64 operator+(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd512UInt64 operator+(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd512UInt64 operator+(uint64_t lhs, Simd512UInt64 rhs) noexcept { rhs += lhs; return rhs; }
+inline static Simd512UInt64 operator+(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd512UInt64 operator+(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd512UInt64 operator+(uint64_t lhs, Simd512UInt64 rhs) noexcept { rhs += lhs; return rhs; }
 
 //*****Subtraction Operators*****
-inline Simd512UInt64 operator-(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd512UInt64 operator-(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd512UInt64 operator-(const uint64_t lhs, const Simd512UInt64& rhs) noexcept { return Simd512UInt64(_mm512_sub_epi64(_mm512_set1_epi64(lhs), rhs.v)); }
+inline static Simd512UInt64 operator-(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd512UInt64 operator-(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd512UInt64 operator-(const uint64_t lhs, const Simd512UInt64& rhs) noexcept { return Simd512UInt64(_mm512_sub_epi64(_mm512_set1_epi64(lhs), rhs.v)); }
 
 //*****Multiplication Operators*****
-inline Simd512UInt64 operator*(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd512UInt64 operator*(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd512UInt64 operator*(uint64_t lhs, Simd512UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+inline static Simd512UInt64 operator*(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd512UInt64 operator*(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd512UInt64 operator*(uint64_t lhs, Simd512UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
 
 //*****Division Operators*****
-inline Simd512UInt64 operator/(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
-inline Simd512UInt64 operator/(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
-inline Simd512UInt64 operator/(const uint64_t lhs, const Simd512UInt64& rhs) noexcept { return Simd512UInt64(_mm512_div_epi64(_mm512_set1_epi64(lhs), rhs.v)); }
+inline static Simd512UInt64 operator/(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline static Simd512UInt64 operator/(Simd512UInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline static Simd512UInt64 operator/(const uint64_t lhs, const Simd512UInt64& rhs) noexcept { return Simd512UInt64(_mm512_div_epi64(_mm512_set1_epi64(lhs), rhs.v)); }
 
 
 //*****Bitwise Logic Operators*****
-inline Simd512UInt64 operator&(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
-inline Simd512UInt64 operator|(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
-inline Simd512UInt64 operator^(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
-inline Simd512UInt64 operator~(const Simd512UInt64& lhs) noexcept { return Simd512UInt64(_mm512_xor_epi64(lhs.v, _mm512_set1_epi64(0xFFFFFFFFFFFFFFFF))); } //No bitwise not in AVX512 so we use xor with a constant..
+inline static Simd512UInt64 operator&(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
+inline static Simd512UInt64 operator|(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
+inline static Simd512UInt64 operator^(Simd512UInt64  lhs, const Simd512UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
+inline static Simd512UInt64 operator~(const Simd512UInt64& lhs) noexcept { return Simd512UInt64(_mm512_xor_epi64(lhs.v, _mm512_set1_epi64(0xFFFFFFFFFFFFFFFF))); } //No bitwise not in AVX512 so we use xor with a constant..
 
 
 //*****Shifting Operators*****
-inline Simd512UInt64 operator<<(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_slli_epi64(lhs.v, bits)); }
-inline Simd512UInt64 operator>>(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_srli_epi64(lhs.v, bits)); }
+inline static Simd512UInt64 operator<<(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_slli_epi64(lhs.v, bits)); }
+inline static Simd512UInt64 operator>>(const Simd512UInt64& lhs, int bits) noexcept { return Simd512UInt64(_mm512_srli_epi64(lhs.v, bits)); }
 
-inline Simd512UInt64 rotl(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rolv_epi64(a.v, _mm512_set1_epi64(bits))); }
-inline Simd512UInt64 rotr(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rorv_epi64(a.v, _mm512_set1_epi64(bits))); }
+inline static Simd512UInt64 rotl(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rolv_epi64(a.v, _mm512_set1_epi64(bits))); }
+inline static Simd512UInt64 rotr(const Simd512UInt64& a, const int bits) noexcept { return Simd512UInt64(_mm512_rorv_epi64(a.v, _mm512_set1_epi64(bits))); }
 
 //*****Min/Max*****
-inline Simd512UInt64 min(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_min_epu64(a.v, b.v)); }
-inline Simd512UInt64 max(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_max_epu64(a.v, b.v)); }
+inline static Simd512UInt64 min(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_min_epu64(a.v, b.v)); }
+inline static Simd512UInt64 max(Simd512UInt64 a, Simd512UInt64 b) { return Simd512UInt64(_mm512_max_epu64(a.v, b.v)); }
 
 
 
@@ -423,42 +423,42 @@ struct Simd256UInt64 {
 };
 
 //*****Addition Operators*****
-inline Simd256UInt64 operator+(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd256UInt64 operator+(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd256UInt64 operator+(uint64_t lhs, Simd256UInt64 rhs) noexcept { rhs += lhs; return rhs; }
+inline static Simd256UInt64 operator+(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd256UInt64 operator+(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd256UInt64 operator+(uint64_t lhs, Simd256UInt64 rhs) noexcept { rhs += lhs; return rhs; }
 
 //*****Subtraction Operators*****
-inline Simd256UInt64 operator-(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd256UInt64 operator-(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd256UInt64 operator-(const uint64_t lhs, const Simd256UInt64&  rhs) noexcept { return Simd256UInt64(_mm256_sub_epi64(_mm256_set1_epi64x(lhs), rhs.v)); }
+inline static Simd256UInt64 operator-(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd256UInt64 operator-(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd256UInt64 operator-(const uint64_t lhs, const Simd256UInt64&  rhs) noexcept { return Simd256UInt64(_mm256_sub_epi64(_mm256_set1_epi64x(lhs), rhs.v)); }
 
 //*****Multiplication Operators*****
-inline Simd256UInt64 operator*(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd256UInt64 operator*(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd256UInt64 operator*(uint64_t lhs, Simd256UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+inline static Simd256UInt64 operator*(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd256UInt64 operator*(Simd256UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd256UInt64 operator*(uint64_t lhs, Simd256UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
 
 //*****Division Operators*****
-inline Simd256UInt64 operator/(Simd256UInt64  lhs, const Simd256UInt64 & rhs) noexcept { lhs /= rhs;	return lhs; }
-inline Simd256UInt64 operator/(Simd256UInt64  lhs, uint64_t rhs) noexcept {lhs /= rhs; return lhs; }
-inline Simd256UInt64 operator/(const uint64_t lhs, const Simd256UInt64& rhs) noexcept { return Simd256UInt64(_mm256_div_epi64(_mm256_set1_epi64x(lhs), rhs.v)); }
+inline static Simd256UInt64 operator/(Simd256UInt64  lhs, const Simd256UInt64 & rhs) noexcept { lhs /= rhs;	return lhs; }
+inline static Simd256UInt64 operator/(Simd256UInt64  lhs, uint64_t rhs) noexcept {lhs /= rhs; return lhs; }
+inline static Simd256UInt64 operator/(const uint64_t lhs, const Simd256UInt64& rhs) noexcept { return Simd256UInt64(_mm256_div_epi64(_mm256_set1_epi64x(lhs), rhs.v)); }
 
 
 //*****Bitwise Logic Operators*****
-inline Simd256UInt64 operator&(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
-inline Simd256UInt64 operator|(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
-inline Simd256UInt64 operator^(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
-inline Simd256UInt64 operator~(const Simd256UInt64& lhs) noexcept { return Simd256UInt64(_mm256_xor_si256(lhs.v, _mm256_set1_epi64x(0xFFFFFFFFFFFFFFFF))); } //No bitwise not in AVX2 so we use xor with a constant..
+inline static Simd256UInt64 operator&(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
+inline static Simd256UInt64 operator|(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
+inline static Simd256UInt64 operator^(Simd256UInt64  lhs, const Simd256UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
+inline static Simd256UInt64 operator~(const Simd256UInt64& lhs) noexcept { return Simd256UInt64(_mm256_xor_si256(lhs.v, _mm256_set1_epi64x(0xFFFFFFFFFFFFFFFF))); } //No bitwise not in AVX2 so we use xor with a constant..
 	
 
 //*****Shifting Operators*****
-inline Simd256UInt64 operator<<(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_slli_epi64(lhs.v, bits)); }
-inline Simd256UInt64 operator>>(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_srli_epi64(lhs.v, bits)); }
-inline Simd256UInt64 rotl(const Simd256UInt64& a, int bits) {return a << bits | a >> (64 - bits);};
-inline Simd256UInt64 rotr(const Simd256UInt64& a, int bits) {return a >> bits | a << (64 - bits);};
+inline static Simd256UInt64 operator<<(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_slli_epi64(lhs.v, bits)); }
+inline static Simd256UInt64 operator>>(const Simd256UInt64& lhs, int bits) noexcept { return Simd256UInt64(_mm256_srli_epi64(lhs.v, bits)); }
+inline static Simd256UInt64 rotl(const Simd256UInt64& a, int bits) {return a << bits | a >> (64 - bits);};
+inline static Simd256UInt64 rotr(const Simd256UInt64& a, int bits) {return a >> bits | a << (64 - bits);};
 
 //*****Min/Max*****
-inline Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_min_epu64(a.v, b.v)); }
-inline Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_max_epu64(a.v, b.v)); }
+inline static Simd256UInt64 min(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_min_epu64(a.v, b.v)); }
+inline static Simd256UInt64 max(Simd256UInt64 a, Simd256UInt64 b) noexcept { return Simd256UInt64(_mm256_max_epu64(a.v, b.v)); }
 
 
 
@@ -564,7 +564,7 @@ struct Simd128UInt64 {
 	private:
 
     //32-bit mullo multiply using only sse2
-	inline static __m128i software_mullo_epu32(__m128i a, __m128i b) {
+	__m128i software_mullo_epu32(__m128i a, __m128i b) {
 		auto result02 = _mm_mul_epu32(a, b);  //Multiply words 0 and 2.  
 		auto result13 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4));  //Multiply words 1 and 3, by shifting them into 0,2.
 		return  _mm_unpacklo_epi32(_mm_shuffle_epi32(result02, _MM_SHUFFLE(0, 0, 2, 0)), _mm_shuffle_epi32(result13, _MM_SHUFFLE(0, 0, 2, 0))); // shuffle and pack
@@ -573,38 +573,38 @@ struct Simd128UInt64 {
 };
 
 //*****Addition Operators*****
-inline Simd128UInt64 operator+(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd128UInt64 operator+(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
-inline Simd128UInt64 operator+(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs += lhs; return rhs; }
+inline static Simd128UInt64 operator+(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd128UInt64 operator+(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs += rhs; return lhs; }
+inline static Simd128UInt64 operator+(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs += lhs; return rhs; }
 
 //*****Subtraction Operators*****
-inline Simd128UInt64 operator-(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd128UInt64 operator-(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
-inline Simd128UInt64 operator-(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_sub_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
+inline static Simd128UInt64 operator-(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd128UInt64 operator-(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs -= rhs; return lhs; }
+inline static Simd128UInt64 operator-(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_sub_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
 
 //*****Multiplication Operators*****
-inline Simd128UInt64 operator*(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd128UInt64 operator*(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
-inline Simd128UInt64 operator*(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
+inline static Simd128UInt64 operator*(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd128UInt64 operator*(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs *= rhs; return lhs; }
+inline static Simd128UInt64 operator*(uint64_t lhs, Simd128UInt64 rhs) noexcept { rhs *= lhs; return rhs; }
 
 //*****Division Operators*****
-inline Simd128UInt64 operator/(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
-inline Simd128UInt64 operator/(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
-inline Simd128UInt64 operator/(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_div_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
+inline static Simd128UInt64 operator/(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs /= rhs;	return lhs; }
+inline static Simd128UInt64 operator/(Simd128UInt64  lhs, uint64_t rhs) noexcept { lhs /= rhs; return lhs; }
+inline static Simd128UInt64 operator/(const uint64_t lhs, const Simd128UInt64& rhs) noexcept { return Simd128UInt64(_mm_div_epi64(_mm_set1_epi64x(lhs), rhs.v)); }
 
 
 //*****Bitwise Logic Operators*****
-inline Simd128UInt64 operator&(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
-inline Simd128UInt64 operator|(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
-inline Simd128UInt64 operator^(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
-inline Simd128UInt64 operator~(const Simd128UInt64& lhs) noexcept { return Simd128UInt64(_mm_xor_si128(lhs.v, _mm_set1_epi64x(0xFFFFFFFFFFFFFFFF))); } 
+inline static Simd128UInt64 operator&(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs &= rhs; return lhs; }
+inline static Simd128UInt64 operator|(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs |= rhs; return lhs; }
+inline static Simd128UInt64 operator^(Simd128UInt64  lhs, const Simd128UInt64& rhs) noexcept { lhs ^= rhs; return lhs; }
+inline static Simd128UInt64 operator~(const Simd128UInt64& lhs) noexcept { return Simd128UInt64(_mm_xor_si128(lhs.v, _mm_set1_epi64x(0xFFFFFFFFFFFFFFFF))); } 
 
 
 //*****Shifting Operators*****
-inline Simd128UInt64 operator<<(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_slli_epi64(lhs.v, bits)); } //sse2
-inline Simd128UInt64 operator>>(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_srli_epi64(lhs.v, bits)); }
+inline static Simd128UInt64 operator<<(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_slli_epi64(lhs.v, bits)); } //sse2
+inline static Simd128UInt64 operator>>(const Simd128UInt64& lhs, int bits) noexcept { return Simd128UInt64(_mm_srli_epi64(lhs.v, bits)); }
 
-inline Simd128UInt64 rotl(const Simd128UInt64& a, int bits) {
+inline static Simd128UInt64 rotl(const Simd128UInt64& a, int bits) {
 	if constexpr (mt::environment::compiler_has_avx512f) {
 		return _mm_rolv_epi64(a.v, _mm_set1_epi64x(bits));
 	}
@@ -614,7 +614,7 @@ inline Simd128UInt64 rotl(const Simd128UInt64& a, int bits) {
 };
 
 
-inline Simd128UInt64 rotr(const Simd128UInt64& a, int bits) {
+inline static Simd128UInt64 rotr(const Simd128UInt64& a, int bits) {
 	if constexpr (mt::environment::compiler_has_avx512f) {
 		return _mm_rorv_epi64(a.v, _mm_set1_epi64x(bits));
 	}
@@ -624,7 +624,7 @@ inline Simd128UInt64 rotr(const Simd128UInt64& a, int bits) {
 };
 
 //*****Min/Max*****
-inline Simd128UInt64 min(Simd128UInt64 a, Simd128UInt64 b) noexcept {
+inline static Simd128UInt64 min(Simd128UInt64 a, Simd128UInt64 b) noexcept {
 	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
 		return Simd128UInt64(_mm_min_epu64(a.v, b.v)); //AVX-512
 	}
@@ -637,7 +637,7 @@ inline Simd128UInt64 min(Simd128UInt64 a, Simd128UInt64 b) noexcept {
 }
 
 	
-inline Simd128UInt64 max(Simd128UInt64 a, Simd128UInt64 b) noexcept {
+inline static Simd128UInt64 max(Simd128UInt64 a, Simd128UInt64 b) noexcept {
 	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
 		return Simd128UInt64(_mm_max_epu64(a.v, b.v)); //AVX-512
 	}
