@@ -1335,9 +1335,9 @@ static_assert(SimdCompareOps<Simd512Float64>, "Simd512Float64 does not implement
 	typedef Simd256Float64 SimdNativeFloat64;
 	#else
 	#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-	typedef FallbackFloat64 SimdNativeFloat64;
+	typedef Simd128Float64 SimdNativeFloat64;
 	#else
-	typedef FallbackFloat64 SimdNativeFloat64;
+	typedef Simd128Float64 SimdNativeFloat64;
 	#endif	
 	#endif	
 	#endif

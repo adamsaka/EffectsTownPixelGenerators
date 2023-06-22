@@ -668,9 +668,9 @@ typedef Simd512UInt32 SimdNativeUInt32;
 typedef Simd256UInt32 SimdNativeUInt32;
 #else
 #if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-typedef FallbackUInt32 SimdNativeUInt32;
+typedef Simd128UInt32 SimdNativeUInt32;
 #else
-typedef FallbackUInt32 SimdNativeUInt32;
+typedef Simd128UInt32 SimdNativeUInt32;
 #endif	
 #endif	
 #endif

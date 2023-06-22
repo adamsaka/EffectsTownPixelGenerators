@@ -699,19 +699,19 @@ static_assert(SimdUInt64<Simd512UInt64>, "Simd512UInt64 does not implement the c
  Define SimdNativeUInt64 as the best supported type at compile time.
 *************************************************************************************************/
 #if defined(_M_X64) || defined(__x86_64)
-#if defined(__AVX512F__) && defined(__AVX512DQ__) 
-typedef Simd512UInt64 SimdNativeUInt64;
+	#if defined(__AVX512F__) && defined(__AVX512DQ__) 
+	typedef Simd512UInt64 SimdNativeUInt64;
+	#else
+	#if defined(__AVX2__) && defined(__AVX__) 
+	typedef Simd256UInt64 SimdNativeUInt64;
+	#else
+	#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
+	typedef Simd128UInt64 SimdNativeUInt64;
+	#else
+	typedef Simd128UInt64 SimdNativeUInt64;
+	#endif	
+	#endif	
+	#endif
 #else
-#if defined(__AVX2__) && defined(__AVX__) 
-typedef Simd256UInt64 SimdNativeUInt64;
-#else
-#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-typedef FallbackUInt64 SimdNativeUInt64;
-#else
-typedef FallbackUInt64 SimdNativeUInt64;
-#endif	
-#endif	
-#endif
-#else
-typedef FallbackUInt64 SimdNativeUInt64;
+	typedef FallbackUInt64 SimdNativeUInt64;
 #endif
