@@ -69,9 +69,11 @@ I've included FallbackFloat64 for use with Emscripen, but use SimdNativeFloat64 
 #pragma once
 
 
-
+#include "environment.h"
 #include "simd-cpuid.h"
 #include "simd-concepts.h"
+
+
 #include <cmath>
 
 
