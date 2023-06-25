@@ -599,8 +599,8 @@ inline static Simd128Int64 operator>>(const Simd128Int64& lhs, const int bits) n
 
 //*****Min/Max*****
 inline static Simd128Int64 min(Simd128Int64 a, Simd128Int64 b) {
-	if constexpr (mt::environment::compiler_has_sse4_1) {
-		return Simd128Int64(mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq); //AVX-512
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+		return Simd128Int64(_mm_min_epi64(a.v, b.v)); //AVX-512
 	}
 	else {
 		//No min/max or compare for Signed ints in SSE2 so we will just unroll.
@@ -614,7 +614,7 @@ inline static Simd128Int64 min(Simd128Int64 a, Simd128Int64 b) {
 
 inline static Simd128Int64 max(Simd128Int64 a, Simd128Int64 b) {
 	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
-		return Simd128Int64(_mm_max_epi64(a.v, b.v));  //SSE4.1
+		return Simd128Int64(_mm_max_epi64(a.v, b.v));  //avx-512
 	}
 	else {
 		//No min/max or compare for Signed ints in SSE2 so we will just unroll.
@@ -652,27 +652,27 @@ inline static Simd128Int64 abs(Simd128Int64 a) {
  * ************************************************************************************************/
 static_assert(Simd<FallbackInt64>, "FallbackInt64 does not implement the concept Simd");
 static_assert(SimdSigned<FallbackInt64>, "FallbackInt64 does not implement the concept SimdSigned");
-//static_assert(SimdInt<FallbackInt64>, "FallbackInt64 does not implement the concept SimdInt");
-//static_assert(SimdInt64<FallbackInt64>, "FallbackInt64 does not implement the concept SimdInt64");
+static_assert(SimdInt<FallbackInt64>, "FallbackInt64 does not implement the concept SimdInt");
+static_assert(SimdInt64<FallbackInt64>, "FallbackInt64 does not implement the concept SimdInt64");
 
 #if defined(_M_X64) || defined(__x86_64)
 static_assert(Simd<Simd128Int64>, "Simd128Int64 does not implement the concept Simd");
 static_assert(Simd<Simd256Int64>, "Simd256Int64 does not implement the concept Simd");
 static_assert(Simd<Simd512Int64>, "Simd512Int64 does not implement the concept Simd");
 
-//static_assert(SimdSigned<Simd128Int64>, "Simd128Int64 does not implement the concept SimdSigned");
-//static_assert(SimdSigned<Simd256Int64>, "Simd256Int64 does not implement the concept SimdSigned");
-//static_assert(SimdSigned<Simd512Int64>, "Simd512Int64 does not implement the concept SimdSigned");
+static_assert(SimdSigned<Simd128Int64>, "Simd128Int64 does not implement the concept SimdSigned");
+static_assert(SimdSigned<Simd256Int64>, "Simd256Int64 does not implement the concept SimdSigned");
+static_assert(SimdSigned<Simd512Int64>, "Simd512Int64 does not implement the concept SimdSigned");
 
-//static_assert(SimdInt<Simd128Int64>, "Simd256Int64 does not implement the concept SimdInt");
-//static_assert(SimdInt<Simd256Int64>, "Simd256Int64 does not implement the concept SimdInt");
-//static_assert(SimdInt<Simd512Int64>, "Simd512Int64 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd128Int64>, "Simd256Int64 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd256Int64>, "Simd256Int64 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd512Int64>, "Simd512Int64 does not implement the concept SimdInt");
 
 
 
-//static_assert(SimdInt64<Simd128Int64>, "Simd128Int64 does not implement the concept SimdInt64");
-//static_assert(SimdInt64<Simd256Int64>, "Simd256Int64 does not implement the concept SimdInt64");
-//static_assert(SimdInt64<Simd512Int64>, "Simd512Int64 does not implement the concept SimdInt64");
+static_assert(SimdInt64<Simd128Int64>, "Simd128Int64 does not implement the concept SimdInt64");
+static_assert(SimdInt64<Simd256Int64>, "Simd256Int64 does not implement the concept SimdInt64");
+static_assert(SimdInt64<Simd512Int64>, "Simd512Int64 does not implement the concept SimdInt64");
 #endif
 
 

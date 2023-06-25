@@ -693,8 +693,8 @@ inline static Simd128Int32 abs(Simd128Int32 a) {
  * ************************************************************************************************/
 static_assert(Simd<FallbackInt32>, "FallbackInt32 does not implement the concept Simd");
 static_assert(SimdSigned<FallbackInt32>, "FallbackInt32 does not implement the concept SimdSigned");
-//static_assert(SimdInt<FallbackInt32>, "FallbackInt32 does not implement the concept SimdInt");
-//static_assert(SimdInt32<FallbackInt32>, "FallbackInt32 does not implement the concept SimdInt32");
+static_assert(SimdInt<FallbackInt32>, "FallbackInt32 does not implement the concept SimdInt");
+static_assert(SimdInt32<FallbackInt32>, "FallbackInt32 does not implement the concept SimdInt32");
 
 #if defined(_M_X64) || defined(__x86_64)
 static_assert(Simd<Simd128Int32>, "Simd128Int32 does not implement the concept Simd");
@@ -705,15 +705,15 @@ static_assert(SimdSigned<Simd128Int32>, "Simd128Int32 does not implement the con
 static_assert(SimdSigned<Simd256Int32>, "Simd256Int32 does not implement the concept SimdSigned");
 static_assert(SimdSigned<Simd512Int32>, "Simd512Int32 does not implement the concept SimdSigned");
 
-//static_assert(SimdInt<Simd128Int32>, "Simd256Int32 does not implement the concept SimdInt");
-//static_assert(SimdInt<Simd256Int32>, "Simd256Int32 does not implement the concept SimdInt");
-//static_assert(SimdInt<Simd512Int32>, "Simd512Int32 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd128Int32>, "Simd256Int32 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd256Int32>, "Simd256Int32 does not implement the concept SimdInt");
+static_assert(SimdInt<Simd512Int32>, "Simd512Int32 does not implement the concept SimdInt");
 
 
 
-//static_assert(SimdInt32<Simd128Int32>, "Simd128Int32 does not implement the concept SimdInt32");
-//static_assert(SimdInt32<Simd256Int32>, "Simd256Int32 does not implement the concept SimdInt32");
-//static_assert(SimdInt32<Simd512Int32>, "Simd512Int32 does not implement the concept SimdInt32");
+static_assert(SimdInt32<Simd128Int32>, "Simd128Int32 does not implement the concept SimdInt32");
+static_assert(SimdInt32<Simd256Int32>, "Simd256Int32 does not implement the concept SimdInt32");
+static_assert(SimdInt32<Simd512Int32>, "Simd512Int32 does not implement the concept SimdInt32");
 #endif
 
 
