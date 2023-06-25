@@ -270,27 +270,10 @@ struct Simd512Int64 {
 
 	//*****Division Operators*****
 	Simd512Int64& operator/=(const Simd512Int64& rhs) noexcept { v = _mm512_div_epi64(v, rhs.v); return *this; }
-	Simd512Int64& operator/=(int64_t rhs) noexcept {
-		if constexpr (mt::environment::compiler_has_avx512f) {
-			v = _mm512_div_epi64(v, _mm512_set1_epi64(rhs));
-			return *this;
-		}
-		else {
-			//I don't know why but visual studio linker was hanging when compiling this without AVX.
-			//Since we wish to support runtime dispatch in visual studio, we fallback to scaler division in this case.
-			//For future investigation.
-			v = _mm512_set_epi64(
-				v.m512i_i64[7] / rhs,
-				v.m512i_i64[6] / rhs,
-				v.m512i_i64[5] / rhs,
-				v.m512i_i64[4] / rhs,
-				v.m512i_i64[3] / rhs,
-				v.m512i_i64[2] / rhs,
-				v.m512i_i64[1] / rhs,
-				v.m512i_i64[0] / rhs
-			);
-			return *this;
-		}
+	Simd512Int64& operator/=(int64_t rhs) noexcept {		
+		v = _mm512_div_epi64(v, _mm512_set1_epi64(rhs));
+		return *this;
+		
 	}
 
 	//*****Negate Operators*****
@@ -414,23 +397,9 @@ struct Simd256Int64 {
 	Simd256Int64& operator/=(const Simd256Int64& rhs) noexcept {
 		v = _mm256_div_epi64(v, rhs.v);
 	}
-	Simd256Int64& operator/=(int64_t rhs) noexcept {
-		if constexpr (mt::environment::compiler_has_avx2) {
-			v = _mm256_div_epi64(v, _mm256_set1_epi64x(rhs));
-			return *this;
-		}
-		else {
-			//I don't know why but visual studio was hanging when compiling this without AVX.
-			//Since we wish to support runtime dispatch in visual studio, we fallback to scaler division in this case.
-			v = _mm256_set_epi64x(
-				v.m256i_i64[3] / rhs,
-				v.m256i_i64[2] / rhs,
-				v.m256i_i64[1] / rhs,
-				v.m256i_i64[0] / rhs
-			);
-			return *this;
-		}
-
+	Simd256Int64& operator/=(int64_t rhs) noexcept {		
+		v = _mm256_div_epi64(v, _mm256_set1_epi64x(rhs));
+		return *this;
 	}
 
 	//*****Negate Operators*****
