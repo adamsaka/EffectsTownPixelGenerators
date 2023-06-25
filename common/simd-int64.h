@@ -182,8 +182,8 @@ inline static FallbackInt64 operator~(FallbackInt64 lhs) noexcept { return Fallb
 
 
 //*****Shifting Operators*****
-//inline static FallbackInt64 operator<<(FallbackInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
-//inline static FallbackInt64 operator>>(FallbackInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
+inline static FallbackInt64 operator<<(FallbackInt64 lhs, int bits) noexcept { lhs.v <<= bits; return lhs; }
+inline static FallbackInt64 operator>>(FallbackInt64 lhs, int bits) noexcept { lhs.v >>= bits; return lhs; }
 
 
 //*****Min/Max*****
@@ -320,8 +320,10 @@ inline static Simd512Int64 operator~(const Simd512Int64& lhs) noexcept { return 
 
 
 //*****Shifting Operators*****
-//inline static Simd512Int64 operator<<(const Simd512Int64& lhs, int bits) noexcept { return Simd512Int64(_mm512_slli_epi64(lhs.v, bits)); }
-//inline static Simd512Int64 operator>>(const Simd512Int64& lhs, int bits) noexcept { return Simd512Int64(_mm512_srli_epi64(lhs.v, bits)); }
+inline static Simd512Int64 operator<<(const Simd512Int64& lhs, int bits) noexcept { return Simd512Int64(_mm512_slli_epi64(lhs.v, bits)); }
+
+//Arithmatic Shift is used for signed integers
+inline static Simd512Int64 operator>>(const Simd512Int64& lhs, int bits) noexcept { return Simd512Int64(_mm512_srai_epi64(lhs.v, bits)); }
 
 
 
@@ -447,8 +449,8 @@ inline static Simd256Int64 operator~(const Simd256Int64& lhs) noexcept { return 
 
 
 //*****Shifting Operators*****
-//inline static Simd256Int64 operator<<(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_slli_epi64(lhs.v, bits)); }
-//inline static Simd256Int64 operator>>(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_srli_epi64(lhs.v, bits)); }
+inline static Simd256Int64 operator<<(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_slli_epi64(lhs.v, bits)); }
+inline static Simd256Int64 operator>>(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_srai_epi64(lhs.v, bits)); }
 
 
 //*****Min/Max*****
@@ -588,20 +590,12 @@ inline static Simd128Int64 operator~(const Simd128Int64& lhs) noexcept { return 
 
 
 //*****Shifting Operators*****
-//inline static Simd128Int64 operator<<(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_slli_epi64(lhs.v, bits)); } //SSE2
-//inline static Simd128Int64 operator>>(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_srli_epi64(lhs.v, bits)); }
+inline static Simd128Int64 operator<<(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_slli_epi64(lhs.v, bits)); } //SSE2
+//Arithmatic Shift is used for signed integers
+inline static Simd128Int64 operator>>(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_srli_epi64(lhs.v, bits)); }
 
 
 
-
-/*inline static Simd128Int64 rotr(const Simd128Int64& a, int bits) {
-	if constexpr (mt::environment::compiler_has_avx512f) {
-		return _mm_rorv_epi64(a.v, _mm_set1_epi64x(bits));
-	}
-	else {
-		return a >> bits | a << (64 - bits);
-	}
-};*/
 
 //*****Min/Max*****
 inline static Simd128Int64 min(Simd128Int64 a, Simd128Int64 b) {
