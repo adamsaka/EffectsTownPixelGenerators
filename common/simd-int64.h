@@ -222,26 +222,26 @@ struct Simd512Int64 {
 		cpu_supported(cpuid);
 	}
 	static bool cpu_supported(CpuInformation cpuid) {
-		return cpuid.has_avx512_f();
+		return cpuid.has_avx512_dq() &&  cpuid.has_avx512_f();
 	}
 
 	//Performs a compile time support. Checks this type ONLY (integers in same class may not be supported) 
 	static constexpr bool compiler_supported() {
-		return mt::environment::compiler_has_avx512f;
+		return mt::environment::compiler_has_avx512dq &&  mt::environment::compiler_has_avx512f;
 	}
 
-	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  
 	static bool cpu_level_supported() {
 		CpuInformation cpuid{};
 		cpu_level_supported(cpuid);
 	}
 
-	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  
 	static bool cpu_level_supported(CpuInformation cpuid) {
-		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
+		return cpuid.has_avx512_f() && cpuid.has_avx512_dq() && cpuid.has_avx512_vl() && cpuid.has_avx512_bw() && cpuid.has_avx512_cd();
 	}
 
-	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
+	//Performs a compile time support to see if the microarchitecture level is supported. 
 	static constexpr bool compiler_level_supported() {
 		return mt::environment::compiler_has_avx512f && mt::environment::compiler_has_avx512dq && mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512bw && mt::environment::compiler_has_avx512cd;
 	}
@@ -450,15 +450,62 @@ inline static Simd256Int64 operator~(const Simd256Int64& lhs) noexcept { return 
 
 //*****Shifting Operators*****
 inline static Simd256Int64 operator<<(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_slli_epi64(lhs.v, bits)); }
-inline static Simd256Int64 operator>>(const Simd256Int64& lhs, int bits) noexcept { return Simd256Int64(_mm256_srai_epi64(lhs.v, bits)); }
+inline static Simd256Int64 operator>>(const Simd256Int64& lhs, int bits) noexcept {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd256Int64(_mm256_srai_epi64(lhs.v, bits)); //AVX-512
+	}
+	else {
+		//No Arithmatic Shift Right for AVX2
+		auto m3 = lhs.v.m256i_i64[3] >> bits;
+		auto m2 = lhs.v.m256i_i64[2] >> bits;
+		auto m1 = lhs.v.m256i_i64[1] >> bits;
+		auto m0 = lhs.v.m256i_i64[0] >> bits;
+		return Simd256Int64(_mm256_set_epi64x(m3,m2, m1, m0));
+	}
+}
 
 
 //*****Min/Max*****
-inline static Simd256Int64 min(Simd256Int64 a, Simd256Int64 b) { return Simd256Int64(_mm256_min_epi64(a.v, b.v)); }
-inline static Simd256Int64 max(Simd256Int64 a, Simd256Int64 b) { return Simd256Int64(_mm256_max_epi64(a.v, b.v)); }
+inline static Simd256Int64 min(Simd256Int64 a, Simd256Int64 b) {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd256Int64(_mm256_min_epi64(a.v, b.v)); 
+	}
+	else {
+		auto m3 = std::min(a.v.m256i_i64[3], b.v.m256i_i64[3]);
+		auto m2 = std::min(a.v.m256i_i64[2], b.v.m256i_i64[2]);
+		auto m1 = std::min(a.v.m256i_i64[1], b.v.m256i_i64[1]);
+		auto m0 = std::min(a.v.m256i_i64[0], b.v.m256i_i64[0]);
+		return Simd256Int64(_mm256_set_epi64x(m3, m2, m1, m0));
+	}
+}
+inline static Simd256Int64 max(Simd256Int64 a, Simd256Int64 b) {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd256Int64(_mm256_max_epi64(a.v, b.v)); 
+	}
+	else {
+		auto m3 = std::max(a.v.m256i_i64[3], b.v.m256i_i64[3]);
+		auto m2 = std::max(a.v.m256i_i64[2], b.v.m256i_i64[2]);
+		auto m1 = std::max(a.v.m256i_i64[1], b.v.m256i_i64[1]);
+		auto m0 = std::max(a.v.m256i_i64[0], b.v.m256i_i64[0]);
+		return Simd256Int64(_mm256_set_epi64x(m3, m2, m1, m0));
+	}
+}
 
 //*****Mathematical*****
-inline static Simd256Int64 abs(Simd256Int64 a) { return Simd256Int64(_mm256_abs_epi64(a.v)); }
+inline static Simd256Int64 abs(Simd256Int64 a) {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd256Int64(_mm256_abs_epi64(a.v));
+	}
+	else {
+		//No AVX2
+		auto m3 = std::abs(a.v.m256i_i64[3]);
+		auto m2 = std::abs(a.v.m256i_i64[2]);
+		auto m1 = std::abs(a.v.m256i_i64[1]);
+		auto m0 = std::abs(a.v.m256i_i64[0]);
+		return Simd256Int64(_mm256_set_epi64x(m3, m2, m1, m0));
+	}
+}
+
 
 
 
@@ -525,7 +572,7 @@ struct Simd128Int64 {
 
 	//*****Multiplication Operators*****
 	Simd128Int64& operator*=(const Simd128Int64& rhs) noexcept {
-		if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+		if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
 			v = _mm_mullo_epi64(v, rhs.v); //AVX-512
 			return *this;
 		}
@@ -592,14 +639,24 @@ inline static Simd128Int64 operator~(const Simd128Int64& lhs) noexcept { return 
 //*****Shifting Operators*****
 inline static Simd128Int64 operator<<(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_slli_epi64(lhs.v, bits)); } //SSE2
 //Arithmatic Shift is used for signed integers
-inline static Simd128Int64 operator>>(const Simd128Int64& lhs, const int bits) noexcept { return Simd128Int64(_mm_srli_epi64(lhs.v, bits)); }
+inline static Simd128Int64 operator>>(const Simd128Int64& lhs, const int bits) noexcept { 
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd128Int64(_mm_srai_epi64(lhs.v, bits)); //AVX-512
+	}
+	else {
+		//No Arithmatic Shift Right for SSE or AVX2
+		auto m1 = lhs.v.m128i_i64[1] >> bits;
+		auto m0 = lhs.v.m128i_i64[0] >> bits;
+		return Simd128Int64(_mm_set_epi64x(m1, m0));
+	}
+}
 
 
 
 
 //*****Min/Max*****
 inline static Simd128Int64 min(Simd128Int64 a, Simd128Int64 b) {
-	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
 		return Simd128Int64(_mm_min_epi64(a.v, b.v)); //AVX-512
 	}
 	else {
@@ -613,7 +670,7 @@ inline static Simd128Int64 min(Simd128Int64 a, Simd128Int64 b) {
 
 
 inline static Simd128Int64 max(Simd128Int64 a, Simd128Int64 b) {
-	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512dq) {
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
 		return Simd128Int64(_mm_max_epi64(a.v, b.v));  //avx-512
 	}
 	else {
@@ -626,8 +683,8 @@ inline static Simd128Int64 max(Simd128Int64 a, Simd128Int64 b) {
 
 //*****Mathematical*****
 inline static Simd128Int64 abs(Simd128Int64 a) {
-	if constexpr (mt::environment::compiler_has_ssse3) {
-		return Simd128Int64(_mm_abs_epi64(a.v));
+	if constexpr (mt::environment::compiler_has_avx512vl && mt::environment::compiler_has_avx512f) {
+		return Simd128Int64(_mm_abs_epi64(a.v));  //avx-512
 	}
 	else {
 		//Not supported by SSE2, so we need to emulate it.

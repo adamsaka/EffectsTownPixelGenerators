@@ -26,7 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include <concepts>
-
+#include <cstdint>
 
 /**************************************************************************************************
 * Concept for all our SIMD types.
@@ -73,7 +73,7 @@ concept Simd = requires (T t) {
 
 	//Typedefs		
 	static_cast<typename T::F>(1);  //T::F  must exist and by castable from a numberic type
-	requires std::same_as<decltype(t.element(0)), decltype(static_cast<T::F>(1))>; //T::F must be same type as the elements.
+	requires std::same_as<decltype(t.element(0)), decltype(static_cast<typename T::F>(1))>; //T::F must be same type as the elements.
 
 	//Operators
 	t + t;
