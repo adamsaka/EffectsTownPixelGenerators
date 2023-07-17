@@ -22,7 +22,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 
 Description:
-
 	The main entry for point for After Effects Plug-ins
 	This is a .dll (renamed .aex) 
 ********************************************************************************************************/
