@@ -26,7 +26,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include <concepts>
-
+#include <cstdint>
 
 /**************************************************************************************************
 * Concept for all our SIMD types.
@@ -73,7 +73,7 @@ concept Simd = requires (T t) {
 
 	//Typedefs		
 	static_cast<typename T::F>(1);  //T::F  must exist and by castable from a numberic type
-	requires std::same_as<decltype(t.element(0)), decltype(static_cast<T::F>(1))>; //T::F must be same type as the elements.
+	requires std::same_as<decltype(t.element(0)), decltype(static_cast<typename T::F>(1))>; //T::F must be same type as the elements.
 
 	//Operators
 	t + t;
@@ -261,24 +261,22 @@ concept SimdFloat32 = SimdFloat<T> && requires (T t) {
 		requires sizeof(t.element(0)) == 4;	
 };
 
-
-
-
 /**************************************************************************************************
-* Concept for types that are based on unsigned ints (any size).
-* 
+* Concept for types that are Integers.  (Signed or Unsigned)
+*
 * Must implement "Simd" concept and the following:
-* 
+*
 * Required Operators:
-* <<, >>						Shift Operators
+* <<, >>						Shift Operators (Bitwise right-shift for unsigned, arithmatic right-shift for signed)							
 * |, |=							Bitwise Or
 * &, &=							Bitwise And
 * ^, ^=							Bitwise Xor
 * ~								Bitwise Not
-* 
+* min, max					
+*
 *************************************************************************************************/
 template <typename T>
-concept SimdUInt = Simd<T> && requires (T t) {
+concept SimdInteger = Simd<T> && requires (T t) {
 	//Operators
 	t << 2;
 	t >> 2;
@@ -289,9 +287,38 @@ concept SimdUInt = Simd<T> && requires (T t) {
 	t &= 0xff;
 	t |= 0xff;
 	t ^= 0xff;
+	min(t, T(1));
+	max(t, T(1));
+};
+
+
+/**************************************************************************************************
+* Concept for types that are based on unsigned ints (any size).
+* 
+* Must implement "Simd" concept and the following:
+* 
+* Required Operators:
+* rotl. rotr					Bitwise Rotate Left/Right
+* 
+*************************************************************************************************/
+template <typename T>
+concept SimdUInt = Simd<T> && SimdInteger<T> && requires (T t) {
+	//Operators
 	rotl(t, 2);
 	rotr(t, 4);
 };
+
+/**************************************************************************************************
+* Concept for types that are based on signed ints (any size).
+*
+* Must implement "Simd" concept and the following:
+*
+* Required Operators:
+* 
+*
+*************************************************************************************************/
+template <typename T>
+concept SimdInt = SimdSigned<T> && SimdInteger<T>;
 
 
 /**************************************************************************************************
@@ -314,6 +341,28 @@ template <typename T>
 concept SimdUInt32 = Simd<T> && SimdUInt<T> && requires (T t) {
 	{t.element(0)} -> std::same_as<uint32_t>;
 	requires sizeof(t.element(0)) == 4;
+};
+
+/**************************************************************************************************
+* Concept for types that are based on 64-bit unsigned ints
+*
+* Must implement "SimdUInt" concept and have elements of uint64_t:
+*************************************************************************************************/
+template <typename T>
+concept SimdInt64 = SimdInt<T> && requires (T t) {
+	{t.element(0)} -> std::same_as<int64_t>;
+		requires sizeof(t.element(0)) == 8;
+};
+
+/**************************************************************************************************
+* Concept for types that are based on 32-bit unsigned ints
+*
+* Must implement "SimdUInt" concept and have elements of uint32_t:
+*************************************************************************************************/
+template <typename T>
+concept SimdInt32 = SimdInt<T> && requires (T t) {
+	{t.element(0)} -> std::same_as<int32_t>;
+		requires sizeof(t.element(0)) == 4;
 };
 
 

@@ -237,7 +237,7 @@ struct Simd512UInt32 {
 
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation cpuid) {
-		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
+		return cpuid.has_avx512_f() && cpuid.has_avx512_dq() && cpuid.has_avx512_vl() && cpuid.has_avx512_bw() && cpuid.has_avx512_cd();
 	}
 
 	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
@@ -668,9 +668,9 @@ typedef Simd512UInt32 SimdNativeUInt32;
 typedef Simd256UInt32 SimdNativeUInt32;
 #else
 #if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-typedef FallbackUInt32 SimdNativeUInt32;
+typedef Simd128UInt32 SimdNativeUInt32;
 #else
-typedef FallbackUInt32 SimdNativeUInt32;
+typedef Simd128UInt32 SimdNativeUInt32;
 #endif	
 #endif	
 #endif

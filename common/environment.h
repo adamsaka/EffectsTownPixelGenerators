@@ -34,7 +34,7 @@ namespace mt::environment {
 
 //Setup some compiler constants
 #if defined(_MSC_VER)
-	constexpr bool is_visual_studio = true;
+	constexpr static bool is_visual_studio = true;
 #else
 	constexpr bool is_visual_studio = false;
 #endif
@@ -42,28 +42,28 @@ namespace mt::environment {
 #if defined(__clang__)
 	constexpr bool is_clang = true;
 #else
-	constexpr bool is_clang = false;
+	constexpr static bool is_clang = false;
 #endif
 
 #if defined(__GNUC__)
 	constexpr bool is_gcc = true;
 #else
-	constexpr bool is_gcc = false;
+	constexpr static bool is_gcc = false;
 #endif
 
 
 #if defined(__EMSCRIPTEN__)
 	constexpr bool emsctipten = true;
 #else
-	constexpr bool is_emsctipten = false;
+	constexpr static bool is_emsctipten = false;
 #endif 
 
 
 //Check the arhitecture
 #if defined(_M_X64) || defined(__x86_64)
-	constexpr bool is_x64 = true;
+	constexpr static bool is_x64 = true;
 #else
-	constexpr bool is_x64 = false;
+	constexpr static bool is_x64 = false;
 #endif
 
 
@@ -94,88 +94,88 @@ namespace mt::environment {
 //Setup some constexpr variables that we can use to provide some consistancy with different compilers.
 
 #if defined(__SSE__) || defined(__AVX__)
-	constexpr bool compiler_has_sse = true;
+	constexpr static bool compiler_has_sse = true;
 #else
-	constexpr bool compiler_has_sse = false;
+	constexpr static bool compiler_has_sse = false;
 #endif
 
 #if defined(__SSE2__) || defined(__AVX__)
-	constexpr bool compiler_has_sse2 = true;
+	constexpr static bool compiler_has_sse2 = true;
 #else
-	constexpr bool compiler_has_sse2 = false;
+	constexpr static bool compiler_has_sse2 = false;
 #endif
 
 #if defined(__SSE3__) || defined(__AVX__)
-	constexpr bool compiler_has_sse3 = true;
+	constexpr static bool compiler_has_sse3 = true;
 #else
-	constexpr bool compiler_has_sse3 = false;
+	constexpr static bool compiler_has_sse3 = false;
 #endif
 
 #if defined(__SSSE3__) || defined(__AVX__)
-	constexpr bool compiler_has_ssse3 = true;
+	constexpr static bool compiler_has_ssse3 = true;
 #else
-	constexpr bool compiler_has_ssse3 = false;
+	constexpr static bool compiler_has_ssse3 = false;
 #endif
 
 #if defined(__SSE4_1__) || defined(__AVX__)
-	constexpr bool compiler_has_sse4_1 = true;
+	constexpr static bool compiler_has_sse4_1 = true;
 #else
-	constexpr bool compiler_has_sse4_1 = false;
+	constexpr static bool compiler_has_sse4_1 = false;
 #endif
 
 #if defined(__SSE4_2__) || defined(__AVX__)
-	constexpr bool compiler_has_sse4_2 = true;
+	constexpr static bool compiler_has_sse4_2 = true;
 #else
-	constexpr bool compiler_has_sse4_2 = false;
+	constexpr static bool compiler_has_sse4_2 = false;
 #endif
 
 #if defined(__AVX__)
-	constexpr bool compiler_has_avx = true;
+	constexpr static bool compiler_has_avx = true;
 #else
-	constexpr bool compiler_has_avx = false;
+	constexpr static bool compiler_has_avx = false;
 #endif
 
 #if defined(__AVX2__)
-	constexpr bool compiler_has_avx2 = true;
+	constexpr static bool compiler_has_avx2 = true;
 #else
-	constexpr bool compiler_has_avx2 = false;
+	constexpr static bool compiler_has_avx2 = false;
 #endif
 
 #if defined(__FMA__)
-	constexpr bool compiler_has_fma = true;
+	constexpr static bool compiler_has_fma = true;
 #else
-	constexpr bool compiler_has_fma = false;
+	constexpr static bool compiler_has_fma = false;
 #endif
 
 #if defined(__AVX512F__)
-	constexpr bool compiler_has_avx512f = true;
+	constexpr static bool compiler_has_avx512f = true;
 #else
-	constexpr bool compiler_has_avx512f = false;
+	constexpr static bool compiler_has_avx512f = false;
 #endif
 
 #if defined(__AVX512DQ__)
-	constexpr bool compiler_has_avx512dq = true;
+	constexpr static bool compiler_has_avx512dq = true;
 #else
-	constexpr bool compiler_has_avx512dq = false;
+	constexpr static bool compiler_has_avx512dq = false;
 #endif
 
 #if defined(__AVX512VL__)
-	constexpr bool compiler_has_avx512vl = true;
+	constexpr static bool compiler_has_avx512vl = true;
 #else
-	constexpr bool compiler_has_avx512vl = false;
+	constexpr static bool compiler_has_avx512vl = false;
 #endif
 
 
 #if defined(__AVX512BW__)
-	constexpr bool compiler_has_avx512bw = true;
+	constexpr static bool compiler_has_avx512bw = true;
 #else
-	constexpr bool compiler_has_avx512bw = false;
+	constexpr static bool compiler_has_avx512bw = false;
 #endif
 
 #if defined(__AVX512CD__)
-	constexpr bool compiler_has_avx512cd = true;
+	constexpr static bool compiler_has_avx512cd = true;
 #else
-	constexpr bool compiler_has_avx512cd = false;
+	constexpr static bool compiler_has_avx512cd = false;
 #endif
 
 

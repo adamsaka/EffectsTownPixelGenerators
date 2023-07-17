@@ -66,12 +66,12 @@ I've included FallbackFloat32 for use with Emscripen, but use SimdNativeFloat32 
 *********************************************************************************************************/
 #pragma once
 
-#include <stdint.h>
-#include <bit>
-
 #include "simd-cpuid.h"
 #include "simd-concepts.h"
 
+#include <stdint.h>
+#include <bit>
+#include <algorithm>
 
 /**************************************************************************************************
 * Fallback I64 type.
@@ -233,7 +233,7 @@ struct Simd512UInt64 {
 
 	//Performs a runtime CPU check to see if this type's microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
 	static bool cpu_level_supported(CpuInformation cpuid) {
-		return cpuid.has_avx512_f() && cpuid.has_avx512_dq();
+		return cpuid.has_avx512_f() && cpuid.has_avx512_dq() && cpuid.has_avx512_vl() && cpuid.has_avx512_bw() && cpuid.has_avx512_cd();
 	}
 
 	//Performs a compile time support to see if the microarchitecture level is supported.  (This will ensure that referernced integer types are also supported)
@@ -684,19 +684,19 @@ static_assert(SimdUInt64<Simd512UInt64>, "Simd512UInt64 does not implement the c
  Define SimdNativeUInt64 as the best supported type at compile time.
 *************************************************************************************************/
 #if defined(_M_X64) || defined(__x86_64)
-#if defined(__AVX512F__) && defined(__AVX512DQ__) 
-typedef Simd512UInt64 SimdNativeUInt64;
+	#if defined(__AVX512F__) && defined(__AVX512DQ__) 
+	typedef Simd512UInt64 SimdNativeUInt64;
+	#else
+	#if defined(__AVX2__) && defined(__AVX__) 
+	typedef Simd256UInt64 SimdNativeUInt64;
+	#else
+	#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
+	typedef Simd128UInt64 SimdNativeUInt64;
+	#else
+	typedef Simd128UInt64 SimdNativeUInt64;
+	#endif	
+	#endif	
+	#endif
 #else
-#if defined(__AVX2__) && defined(__AVX__) 
-typedef Simd256UInt64 SimdNativeUInt64;
-#else
-#if defined(__SSE4_1__) && defined(__SSE4_1__) && defined(__SSE3__) && defined(__SSSE3__) 
-typedef FallbackUInt64 SimdNativeUInt64;
-#else
-typedef FallbackUInt64 SimdNativeUInt64;
-#endif	
-#endif	
-#endif
-#else
-typedef FallbackUInt64 SimdNativeUInt64;
+	typedef FallbackUInt64 SimdNativeUInt64;
 #endif
