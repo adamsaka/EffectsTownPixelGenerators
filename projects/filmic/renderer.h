@@ -156,9 +156,6 @@ ColourRGBA<S> Renderer<S>::render_pixel(S x [[maybe_unused]], S y [[maybe_unused
  * ************************************************************************************************/
 template <SimdFloat S>
 static ColourRGBA<S> apply1DLut(const std::array<float,4096>& lut, ColourRGBA<S> c) {
-    //TODO.  Should use lerp rather than nearest neighbour.    
-    //TODO.  Vectorize.
-
     S idx_n = clamp(c.red) * lut_size;
     S idx_f = floor(idx_n);    
     for (int i = 0; i < idx_f.number_of_elements(); i++) {
@@ -204,24 +201,46 @@ static ColourRGBA<S> apply1DLut(const std::array<float,4096>& lut, ColourRGBA<S>
  * ************************************************************************************************/
 template <SimdFloat S>
 static ColourRGBA<S> unapply1DLut(const std::array<float, 4096>& lut, ColourRGBA<S>c) {   
-    //TODO.  Should use lerp rather than nearest neighbour.
-    //TODO.  Vectorize.
-
+  
     for (int i = 0; i < c.red.number_of_elements(); i++) {
-        auto lower = std::lower_bound(lut.begin(), lut.end(), c.red.element(i));
-        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : 4096;
-        c.red.set_element(i, d / 4096.0f);
+        auto v = c.red.element(i);
+        auto lower = std::lower_bound(lut.begin(), lut.end(), v);
+        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : lut_size - 2;
+        d = std::min(d, lut_size - 2);
+        
+        auto v1 = lut[d];
+        auto v2 = lut[d + 1];
+        auto t = (v - v1) / (v2 - v1);
+        auto d_f = std::lerp(static_cast<float>(d), static_cast<float>(d + 1), t);
+
+        c.red.set_element(i, d_f / 4096.0f);
 
     }
     for (int i = 0; i < c.green.number_of_elements(); i++) {
-        auto lower = std::lower_bound(lut.begin(), lut.end(), c.green.element(i));
-        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : 4096;
-        c.green.set_element(i, d / 4096.0f);
+        auto v = c.green.element(i);
+        auto lower = std::lower_bound(lut.begin(), lut.end(), v);
+        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : lut_size - 2;
+        d = std::min(d, lut_size - 2);
+
+        auto v1 = lut[d];
+        auto v2 = lut[d + 1];
+        auto t = (v - v1) / (v2 - v1);
+        auto d_f = std::lerp(static_cast<float>(d), static_cast<float>(d + 1), t);
+
+        c.green.set_element(i, d_f / 4096.0f);
     }
     for (int i = 0; i < c.blue.number_of_elements(); i++) {
-        auto lower = std::lower_bound(lut.begin(), lut.end(), c.blue.element(i));
-        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : 4096;
-        c.blue.set_element(i, d / 4096.0f);
+        auto v = c.blue.element(i);
+        auto lower = std::lower_bound(lut.begin(), lut.end(), v);
+        auto d = (lower != lut.end()) ? std::distance(lut.begin(), lower) : lut_size - 2;
+        d = std::min(d, lut_size - 2);
+
+        auto v1 = lut[d];
+        auto v2 = lut[d + 1];
+        auto t = (v - v1) / (v2 - v1);
+        auto d_f = std::lerp(static_cast<float>(d), static_cast<float>(d + 1), t);
+
+        c.blue.set_element(i, d_f / 4096.0f);
     }
     return c;
 }
