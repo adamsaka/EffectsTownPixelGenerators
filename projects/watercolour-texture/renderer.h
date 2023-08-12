@@ -59,9 +59,9 @@ class Renderer{
     private:
         int width {};
         int height {};
-        S::F width_f {};
-        S::F height_f {};
-        S::F aspect {};
+        typename S::F width_f {};
+        typename S::F height_f {};
+        typename S::F aspect {};
         std::string seed_string{};
         uint32_t seed{};
         ParameterList params{};
@@ -109,8 +109,8 @@ template <SimdFloat S>
 void Renderer<S>::set_size(int w, int h) noexcept {
     this->width = w;
     this->height = h;
-    this->width_f = static_cast<S::F>(w);
-    this->height_f = static_cast<S::F>(h);
+    this->width_f = static_cast<typename S::F>(w);
+    this->height_f = static_cast<typename S::F>(h);
     if (height==0) return;
     this->aspect = width_f/height_f;
 }
@@ -128,10 +128,10 @@ ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
     if (width <=0 || height <=0) return ColourRGBA<S>{};
     next_random<typename S::F>(seed); //Reset random seed so it is the same for each pixel
     
-    auto parameter_scale = static_cast<S::F>(params.get_value(ParameterID::scale));
-    const auto parameter_directional_bias = static_cast<S::F>(params.get_value(ParameterID::directional_bias));
-    const auto parameter_evolve1 = 0.1f * static_cast<S::F>(params.get_value(ParameterID::evolve1));
-    const auto parameter_evolve2 = static_cast<S::F>(2.0* std::numbers::pi) * static_cast<S::F>(params.get_value(ParameterID::evolve2));
+    auto parameter_scale = static_cast<typename S::F>(params.get_value(ParameterID::scale));
+    const auto parameter_directional_bias = static_cast<typename S::F>(params.get_value(ParameterID::directional_bias));
+    const auto parameter_evolve1 = 0.1f * static_cast<typename S::F>(params.get_value(ParameterID::evolve1));
+    const auto parameter_evolve2 = static_cast<typename S::F>(2.0* std::numbers::pi) * static_cast<typename S::F>(params.get_value(ParameterID::evolve2));
     
     if (parameter_scale <= 0.0f) parameter_scale = 0.000001f;
 
@@ -140,7 +140,7 @@ ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
 
 
     //Normalise to range: Hight = -1..1  Width = proportional zero centered.
-    vec2<S> p(aspect * (static_cast<S::F>(2.0) * xf / width_f - static_cast<S::F>(1.0)), static_cast<S::F>(2.0) * yf / height_f - static_cast<S::F>(1.0));
+    vec2<S> p(aspect * (static_cast<typename S::F>(2.0) * xf / width_f - static_cast<typename S::F>(1.0)), static_cast<typename S::F>(2.0) * yf / height_f - static_cast<typename S::F>(1.0));
  
     //Apply Input Transforms
     p = perform_input_transform(params.get_string(ParameterID::input_transform_type),p, params);
@@ -149,7 +149,7 @@ ColourRGBA<S> Renderer<S>::render_pixel(S x, S y) const {
     //Apply Directional Bias
     vec2<S> d{1.0,1.0};
     if (signbit(parameter_directional_bias)) d.x -= parameter_directional_bias; else d.y += parameter_directional_bias;
-    p = p * normalize(d) * static_cast<S::F>(sqrt(2)) * parameter_scale;
+    p = p * normalize(d) * static_cast<typename S::F>(sqrt(2)) * parameter_scale;
     
     auto evolve_x = S(parameter_evolve1 * cos(parameter_evolve2));
     auto evolve_y = S(parameter_evolve1 * sin(parameter_evolve2));

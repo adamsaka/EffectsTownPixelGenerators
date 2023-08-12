@@ -87,20 +87,20 @@ vec2<S> perform_input_transform(const std::string& transform_name, vec2<S> p, co
 	//Pre-Transform (don't compute null-ops as they can affect image quality)
 	const auto tx = params.get_value(ParameterID::input_transform_translate_x);
 	if (tx != 0.0) {
-		p.x += static_cast<S::F>(tx / 100.0f);
+		p.x += static_cast<typename S::F>(tx / 100.0f);
 	}
 	const auto ty = params.get_value(ParameterID::input_transform_translate_y);
 	if (ty != 0.0) {
-		p.y += static_cast<S::F>(ty / 100.0f);
+		p.y += static_cast<typename S::F>(ty / 100.0f);
 	}
 	const auto ts = params.get_value(ParameterID::input_transform_scale);
 	if (ts != 1.0 ) {
-		p *= static_cast<S::F>(ts);
+		p *= static_cast<typename S::F>(ts);
 	}
 	
 
-	const auto special1 = static_cast<S::F>(params.get_value(ParameterID::input_transform_special1));
-	const auto special2 = static_cast<S::F>(params.get_value(ParameterID::input_transform_special2));
+	const auto special1 = static_cast<typename S::F>(params.get_value(ParameterID::input_transform_special1));
+	const auto special2 = static_cast<typename S::F>(params.get_value(ParameterID::input_transform_special2));
 
 	
 	if (transform_name == "None") return p;
