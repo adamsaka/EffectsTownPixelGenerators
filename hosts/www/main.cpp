@@ -25,7 +25,7 @@ Description:
     Main Entry point. Runs on GUI thread.
     (EMSCRIPTEN only)     
     Host actually consists of 3 seperate wasm programs which run on different threads. (GUI, Background, Workers)
-    No shared memory objects are used on the fx(hash) host. Everything is managed by messages. 
+    No shared memory objects are used on the WWW host. Everything is managed by messages. 
 *******************************************************************************************************/
 #include "jsutil.h"
 #include "ui.h"

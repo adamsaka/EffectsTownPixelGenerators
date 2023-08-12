@@ -124,6 +124,7 @@ EM_JS (emscripten::EM_VAL, setup_workers, (), {
     * A resize event is sent via message from the GUI thread, but we need to resize canvas here.
     * ************************************************************************************************/
     function resizeCanvas(width,height){
+        
         ctx.width = offscreen.width = width;
         ctx.height = offscreen.height = height;
         backBuffer = new ImageData(offscreen.width,offscreen.height);

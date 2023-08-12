@@ -22,6 +22,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ********************************************************************************************************
 
 Description:
+    WWW Host.
     Manages user iterface, and iterfacing with javascript.
     (EMSCRIPTEN only)
     Runs on main GUI thread.
@@ -48,8 +49,7 @@ emscripten::val main_worker {};
  * Browser compatability checks should already be done.
  * ************************************************************************************************/
 EM_JS (bool, javascript_run_ui, (), {
-    let seed = eval("fxhash"); //wrapped in eval to prevent minification
-    let isPreview = eval("isFxpreview");  
+    let seed = "Effecs Town";
     console.log("Seed: " + seed);
     
     //Start background worker.  We will eventually hand over the canvas to the background worker.
@@ -63,8 +63,9 @@ EM_JS (bool, javascript_run_ui, (), {
     }
 
     //Setup Events
-    window.addEventListener('resize',onResize);    
-    
+    window.addEventListener('resize',onResize);  
+
+
     /**************************************************************************************************
     * Javascript function:
     * ************************************************************************************************/
@@ -77,7 +78,7 @@ EM_JS (bool, javascript_run_ui, (), {
     * Javascript function:
     * ************************************************************************************************/
     function sendCanvasToWorker(worker){
-        let canvas = document.getElementById("canvas");
+        let canvas = document.getElementById("canvas");        
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
         let offscreen = canvas.transferControlToOffscreen();
@@ -89,7 +90,7 @@ EM_JS (bool, javascript_run_ui, (), {
     * ************************************************************************************************/
     function handelMessage(msg){                
         if(msg.data.hasOwnProperty('loaded')){  //Initial Worker Loaded Message
-            worker.postMessage({'seed':seed, 'isPreview':isPreview});
+            worker.postMessage({'seed':seed, 'isPreview':false});
             sendCanvasToWorker(worker);
             Module["on_worker_load"]();   //callback to c++         
             return;
