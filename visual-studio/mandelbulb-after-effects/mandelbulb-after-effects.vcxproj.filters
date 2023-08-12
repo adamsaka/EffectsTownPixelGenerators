@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\AEGP_SuiteHandler.cpp" />
+    <ClCompile Include="..\..\3rd-party\AfterEffectsSDK\Examples\Util\MissingSuiteError.cpp" />
+    <ClCompile Include="..\..\common\input-transforms.h" />
+    <ClCompile Include="..\..\common\util.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-main.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-parameter-helper.cpp" />
+    <ClCompile Include="..\..\hosts\after-effects\after-effects-render.cpp" />
+    <ClCompile Include="..\..\projects\mandelbulb\parameters.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\common\colour.h" />
+    <ClInclude Include="..\..\common\environment.h" />
+    <ClInclude Include="..\..\common\linear-algebra.h" />
+    <ClInclude Include="..\..\common\noise.h" />
+    <ClInclude Include="..\..\common\parameter-list.h" />
+    <ClInclude Include="..\..\common\simd-concepts.h" />
+    <ClInclude Include="..\..\common\simd-cpuid.h" />
+    <ClInclude Include="..\..\common\simd-f32.h" />
+    <ClInclude Include="..\..\common\simd-f64.h" />
+    <ClInclude Include="..\..\common\simd-uint32.h" />
+    <ClInclude Include="..\..\common\simd-uint64.h" />
+    <ClInclude Include="..\..\common\util.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-sdk.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-parameter-helper.h" />
+    <ClInclude Include="..\..\hosts\after-effects\after-effects-render.h" />
+    <ClInclude Include="..\..\projects\mandelbulb\parameters.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\projects\mandelbulb\renderer.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\projects\mandelbulb\parameter-id.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\projects\mandelbulb\config.h">
+      <Filter>Project</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="ae.r" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ae.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Project">
+      <UniqueIdentifier>{24c69604-b01f-485a-a17b-47f44476ea21}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
