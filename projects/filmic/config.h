@@ -63,6 +63,7 @@ typedef float Precision;
 * 1. Copy and rename visual studio project folder.
 * 2. Copy ..\..\projects folder.
 * 3. Add existing project to VS and rename.
+* 4. Remove files in "projects" from folder (5 files), then re-add them in correct location.
 * 4. Set custom build for ac.r
 * 5. Rename plug-in within ac.r & this file to match.
 * 6. Change location of include to point to new project folder. 
